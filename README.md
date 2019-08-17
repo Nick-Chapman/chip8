@@ -7,19 +7,19 @@ Chip8 interpreter/simulator/debugger, written in Haskell.
 - FPS (Frames/second). Fixed in code as 60. Determines continuous single-stepping speed.
 - Run windowed or fullscreen (`--full`); `Escape` key quits..
 - See disassembled code (`--dump`).
-- Supports single-stepping with trace to `stdout`.
+- Single-stepping with register/instruction tracing. (Press `Return` or `Tab`)
 
 ## Simulator control keys
 
     Return : Begin single-stepping. Step a single instruction.
     Tab    : Continuous single stepping, while key is depressed.
-    Insert : Toggle between full speed running and single-stepping.
+    ShiftR : Toggle between full speed running and single-stepping.
     F5     : Resume running at full speed.
-    F6     : Resume running at full speed (with trace).
+    F6     : Resume running at full speed. (Tracing)
     Up     : Increase running speed by 60 IPS.
     Down   : Decrease running speed by 60 IPS (min 60).
     Escape : Quit simulator.
-    Delete : Reset simulator (except for randomness).
+    Delete : Reset program execution.
 
 ## Chip8 keypad mapping
 

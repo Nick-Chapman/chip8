@@ -7,7 +7,7 @@
 
 module Main (main) where
 
-import Control.Monad (ap,liftM,when)
+import Control.Monad (ap,liftM)
 import Control.Monad.State (State,execState,get,put)
 import Data.Bits
 import Data.Map (Map)
@@ -43,7 +43,7 @@ framesPerSecond = 60 -- this can be varied (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 24
+theScale = 20
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (300,100)
@@ -79,15 +79,20 @@ runChip8 Args{file,full} rands progBytes = do
     where
         model0 = initModel (initCS rands progBytes)
         dis = if full then FullScreen else InWindow title size nonFullWindowPos
-        size = (xmax * theScale + 2, ymax * theScale + 2)
+        size = (xmax * theScale + 2 + 2*extraX, ymax * theScale + 2 + 2*extraY)
         title = "Chip8: " <> file
 
 ----------------------------------------------------------------------
 -- making pictures
 
 pictureModel :: Model -> Picture
-pictureModel Model{cs=ChipState{screen}} =
-    myTranslate (border <> myScale (pictureFromScreen screen))
+pictureModel Model{cs,ss} = do
+    let ChipState{screen} = cs
+    myTranslate $ pictures
+        [ border
+        , myScale (pictureFromScreen screen)
+        , picInternals ss cs
+        ]
 
 myTranslate :: Picture -> Picture
 myTranslate =
@@ -96,7 +101,7 @@ myTranslate =
     (- fromIntegral (theScale * ymax `div` 2))
 
 border :: Picture
-border = color red $ line [(0,0),(0,y),(x,y),(x,0),(0,0)]
+border = color red $ square (0,0) (x,y)
     where (x,y) = (fromIntegral (theScale * xmax), fromIntegral (theScale * ymax))
 
 myScale :: Picture -> Picture
@@ -112,6 +117,61 @@ pictureFromScreen Screen{on} = Gloss.pictures $ do
 
 pixel :: Point -> Picture
 pixel (x,y) = color white $ polygon [(x,y),(x,y+1),(x+1,y+1),(x+1,y)]
+
+square :: Point -> Point -> Picture
+square (x1,y1) (x2,y2) = line [(x1,y1),(x1,y2),(x2,y2),(x2,y1),(x1,y1)]
+
+extraX :: Int
+extraX = 200
+
+extraY :: Int
+extraY = 100
+
+picInternals :: SimState -> ChipState -> Picture
+picInternals SimState{tracing,speed} ChipState{nExec,mem,regs,delay,regI,pc} =
+    if tracing then translate (-150) (145) $ scale 0.2 0.2 $ pic else blank
+    where
+        pic = picIPS <> picCount <> pictures (map picReg [0..15])
+            <> picD <> picI <> picPC <> picInstr <> picOp
+
+        picIPS = onLine (-3) $ labBoxText "ips" (show ips) 320
+            where ips = delayTickHertz * speed
+
+        picCount = translate 600 0 $ onLine (-3) $ labBoxText "#i" (show nExec) 1200
+
+        picReg :: Int -> Picture
+        picReg n = onLine n $ labBoxText s1 s2 170
+            where
+                nib = nibOfInt n
+                reg = Reg nib
+                value = fromMaybe byte0 $ Map.lookup reg regs
+                s1 = show reg
+                s2 = show value
+
+        picD = onLine 17 $ labBoxText "D" (show delay) 170
+        picI = onLine 18 $ labBoxText "I" (show regI) 380
+        picPC = onLine 19 $ labBoxText "PC" (show pc) 380
+
+        picInstr = onLine 22 $ labBoxText "i" (show instr) 320
+        picOp = translate 600 0 $ onLine 22 $ labBoxText "op" (show op) 1200
+
+        instr = instructionLookup pc mem
+        op = decode instr
+
+        onLine :: Int -> Picture -> Picture
+        onLine n = translate 0 (150 * (15 - fromIntegral n))
+
+labBoxText :: String -> String -> Float -> Picture
+labBoxText s1 s2 w = pictures
+    [ translate (-160) 0 $ scale 0.7 0.7 $ color red $ text s1
+    , boxText s2 15.0 (100.0,w)
+    ]
+
+boxText :: String -> Float -> (Float,Float) -> Picture
+boxText mes x (h,w) = pictures
+    [ color cyan $ Text mes,
+      color red $ square (-x,-x) (w + x, h + x)
+    ]
 
 ----------------------------------------------------------------------
 -- read, dissassemble
@@ -168,31 +228,33 @@ handleEventModel model0 event model@Model{keys,ss=ss@SimState{mode,speed}} =
         EventKey (SpecialKey KeyDown) Down _ _ -> model { ss = doSlower }
 
         EventKey (SpecialKey KeyF5) Down _ _ -> model { ss = doRun }
-        EventKey (SpecialKey KeyF6) Down _ _ -> model { ss = doRunTracing }
-
-        EventKey (SpecialKey KeyInsert) Down _ _ -> model { ss = doToggleRun }
+        EventKey (SpecialKey KeyF6) Down _ _ -> model { ss = doRunTrace }
+        EventKey (SpecialKey KeyShiftR) Down _ _ -> model { ss = doToggleRun }
         EventKey (SpecialKey KeyEnter) Down _ _ -> model { ss = doOneStep }
         EventKey (SpecialKey KeyTab) Down _ _ -> model { ss = doStepContinuous }
         EventKey (SpecialKey KeyTab) Up _ _ -> model { ss = doStop }
 
         EventKey (SpecialKey KeyEsc) Down _ _ -> model { ss = doQuit }
-        EventKey (SpecialKey KeyDelete) Down _ _ -> doResetExceptRandomness
+        EventKey (SpecialKey KeyDelete) Down _ _ -> doReset
 
         _ -> model
     where
         doFaster = ss { speed = speed + 1 }
         doSlower = ss { speed = max 1 (speed - 1) }
 
-        doRun = ss { mode = Running, traceWhenRunning = False }
-        doRunTracing = ss { mode = Running, traceWhenRunning = True }
+        doRun = ss { mode = Running, tracing = False}
+        doRunTrace = ss { mode = Running, tracing = True}
         doToggleRun = ss { mode = case mode of Running -> Stopped; _ -> Running }
-
-        doOneStep = ss { mode = Stepping StepNext}
-        doStepContinuous = ss { mode = Stepping StepContinuous }
+        doOneStep = ss { mode = Stepping StepNext, tracing = True}
+        doStepContinuous = ss { mode = Stepping StepContinuous, tracing = True }
         doStop = ss { mode = Stopped }
 
         doQuit = error "quit"
-        doResetExceptRandomness = model0 { cs = (cs model0) { rands = rands $ cs model } }
+        doReset =
+            model0
+            { cs = (cs model0) { rands = rands $ cs model } -- dont reset rands
+            , ss -- dont reset sim-state
+            }
 
 chipKeys :: Keys -> ChipKeys
 chipKeys keys nib = mapKey nib `elem` keys
@@ -217,7 +279,7 @@ initModel cs = do
 
 updateCS :: Float -> Model -> IO Model
 updateCS _delta model@Model{frame,cs,keys,ss} = do
-    let SimState{mode,speed,traceWhenRunning} = ss
+    let SimState{mode,speed} = ss
     let ips = delayTickHertz * speed
     let ChipState{nExec=nSoFar} = cs
 
@@ -232,8 +294,7 @@ updateCS _delta model@Model{frame,cs,keys,ss} = do
     let nTarget = nSoFar + nI
 
     --when (mode == Running) $ print (frame, ips)
-
-    let trace = case mode of Running -> traceWhenRunning; _ -> True
+    --let trace = case mode of Running -> traceWhenRunning; _ -> True
 
     let loop cs0@ChipState{nExec} =
             if nExec == nTarget
@@ -242,7 +303,7 @@ updateCS _delta model@Model{frame,cs,keys,ss} = do
                 let cs1 = step1 (chipKeys keys) cs0
                 let timeToTick = nExec `mod` speed == 0
                 let cs2 = if timeToTick then tick cs1 else cs1
-                when trace $ putStrLn $ "(" <> show ips <> ") " <> showChipStateLine cs2
+                --when trace $ putStrLn $ "(" <> show ips <> ") " <> showChipStateLine cs2
                 loop cs2
 
     cs' <- loop cs
@@ -292,7 +353,7 @@ data SimMode = Running | Stepping StepMode | Stopped
 data SimState = SimState
     { mode :: SimMode
     , speed :: Int -- ips/60
-    , traceWhenRunning :: Bool
+    , tracing :: Bool
     }
     deriving (Show)
 
@@ -300,7 +361,7 @@ initSS :: SimState
 initSS = SimState
     { speed = initialIPS `div` delayTickHertz
     , mode = Running
-    , traceWhenRunning = False
+    , tracing = False
     }
 
 ----------------------------------------------------------------------
@@ -401,7 +462,6 @@ data Op
     | OpStoreDigitSpriteI Reg
     | OpIncreaseI Reg
     | OpWaitKeyPress Reg
-    deriving (Show)
 
 opAddresses :: Op -> [Addr]
 opAddresses = \case
@@ -410,6 +470,55 @@ opAddresses = \case
     OpCall a -> [a]
     OpStoreI a -> [a]
     _ -> []
+
+instance Show Op where
+    show = \case
+        OpUnknown i             -> "?[" <> show i <> "]"
+        OpCls                   -> "CLS"
+        OpReturn                -> "RET"
+        OpJump a                -> una "JMP" a
+        OpJumpOffset a          -> bin "JMP" (Reg N0) a
+        OpCall a                -> una "CALL" a
+        OpSkipEqLit x b         -> skip (eq x b)
+        OpSkipNotEqLit x b      -> skip (neq x b)
+        OpSkipEq x y            -> skip (eq x y)
+        OpSkipNotEq x y         -> skip (neq x y)
+        OpStoreLit x b          -> set x b
+        OpAddLit x b            -> bin "ADD" x b
+        OpStore x y             -> set x y
+        OpStoreI a              -> set I a
+        OpDraw x y n            -> tri "DRAW" x y n
+        OpSetDelay x            -> set D x
+        OpReadDelay x           -> set x D
+        OpRandom x b            -> bin "RAND" x b
+        OpSkipKey x             -> skip ("PRESS " <> show x)
+        OpSkipNotKey x          -> skip ("!PRESS " <> show x)
+        OpAnd x y               -> bin "AND" x y
+        OpOr  x y               -> bin "OR" x y
+        OpXor x y               -> bin "XOR" x y
+        OpAddCarry x y          -> bin "ADD" x y
+        OpShiftL x y            -> bin "SHL" x y
+        OpShiftR x y            -> bin "SHR" x y
+        OpSubtractBorrow x y    -> bin "SUB" x y
+        OpSetSound x            -> una "SOUND" x
+        OpStoreBCD x            -> una "BCD" x
+        OpSaveRegs x            -> una "SAVE" x
+        OpRestoreRegs x         -> una "RESTORE" x
+        OpStoreDigitSpriteI x   -> una "SPRITE" x
+        OpIncreaseI x           -> bin "ADD" I x
+        OpWaitKeyPress x        -> una "WAIT" x
+        OpMinus x y             -> bin "MINUS" x y
+     where
+        una tag a = tag <> " " <> show a
+        skip p = "SKP " <> p
+        eq a b = show a <> " = " <> show b
+        neq a b = show a <> " != " <> show b
+        set a b = "SET " <> show a <> " <- " <> show b
+        bin tag a b = tag <> " " <> show a <> " " <> show b
+        tri tag a b c = tag <> " " <> show a <> " " <> show b <> " " <> show c
+
+data I = I deriving (Show)
+data D = D deriving (Show)
 
 ----------------------------------------------------------------------
 -- exec
@@ -623,8 +732,8 @@ data ChipState = ChipState
     , rands :: [Byte]
     }
 
-showChipStateLine :: ChipState -> String
-showChipStateLine ChipState{delay,regI,regs,mem,pc,stack,nExec} = do
+_showChipStateLine :: ChipState -> String
+_showChipStateLine ChipState{delay,regI,regs,mem,pc,stack,nExec} = do
     let instr = instructionLookup pc mem
     let op = decode instr
     unwords (["#" <> show nExec, show delay, show regI, "--"]
