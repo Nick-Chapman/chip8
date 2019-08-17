@@ -1,0 +1,32 @@
+name:                chip8
+version:             0.1.0.0
+description:         Chip8 interpreter in Haskell
+license:             BSD3
+author:              Nick Chapman
+maintainer:          nic@amadido.co.uk
+github:              https://github.com/Nick-Chapman/chip8.git
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+dependencies:
+- base >= 4.7 && < 5
+- bytestring
+- containers
+- extra
+- gloss
+- mtl
+- random
+- word8
+
+ghc-options:
+- -Wall
+- -threaded
+- -rtsopts
+- -with-rtsopts=-N
+
+executables:
+  chip8-exe:
+    main:                Main.hs
+    source-dirs:         app
