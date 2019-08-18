@@ -396,8 +396,8 @@ decodeMatch tup = case tup of
     (N8,x,y,N1) -> OpOr (Reg x) (Reg y)
     (N8,x,y,N2) -> OpAnd (Reg x) (Reg y)
     (N8,x,y,N3) -> OpXor (Reg x) (Reg y)
-    (N8,x,y,N4) -> OpAddCarry (Reg x) (Reg y)
-    (N8,x,y,N5) -> OpSubtractBorrow (Reg x) (Reg y)
+    (N8,x,y,N4) -> OpAdd (Reg x) (Reg y)
+    (N8,x,y,N5) -> OpSub (Reg x) (Reg y)
     (N8,x,y,N6) -> OpShiftR (Reg x) (Reg y)
     (N8,x,y,N7) -> OpMinus (Reg x) (Reg y)
     (N8,x,y,NE) -> OpShiftL (Reg x) (Reg y)
@@ -448,11 +448,11 @@ data Op
     | OpAnd Reg Reg
     | OpOr Reg Reg
     | OpXor Reg Reg
-    | OpMinus Reg Reg
     | OpShiftL Reg Reg
     | OpShiftR Reg Reg
-    | OpAddCarry Reg Reg
-    | OpSubtractBorrow Reg Reg
+    | OpAdd Reg Reg
+    | OpSub Reg Reg
+    | OpMinus Reg Reg
     | OpSetSound Reg
     | OpStoreBCD Reg
     | OpSaveRegs Reg
@@ -494,10 +494,11 @@ instance Show Op where
         OpAnd x y               -> bin "AND" x y
         OpOr  x y               -> bin "OR" x y
         OpXor x y               -> bin "XOR" x y
-        OpAddCarry x y          -> bin "ADD" x y
+        OpAdd x y               -> bin "ADD" x y
+        OpSub x y               -> bin "SUB" x y
+        OpMinus x y             -> bin "MINUS" x y
         OpShiftL x y            -> bin "SHL" x y
         OpShiftR x y            -> bin "SHR" x y
-        OpSubtractBorrow x y    -> bin "SUB" x y
         OpSetSound x            -> una "SOUND" x
         OpStoreBCD x            -> una "BCD" x
         OpSaveRegs x            -> una "SAVE" x
@@ -505,7 +506,6 @@ instance Show Op where
         OpStoreDigitSpriteI x   -> una "SPRITE" x
         OpIncreaseI x           -> bin "ADD" I x
         OpWaitKeyPress x        -> una "WAIT" x
-        OpMinus x y             -> bin "TODO/MINUS" x y
      where
         una tag a = tag <> " " <> show a
         skip p = "SKP " <> p
@@ -557,10 +557,20 @@ exec i = case i of
     OpOr  x y -> (orByte <$> Read x <*> Read y) >>= Write x
     OpXor x y -> (xorByte <$> Read x <*> Read y) >>= Write x
 
-    OpAddCarry x y -> do
+    OpAdd x y -> do
         (v,carry) <- addByteCarry <$> Read x <*> Read y
         Write x v
         setFlag carry
+
+    OpSub x y -> do
+        (v,borrow) <- subByteBorrow <$> Read x <*> Read y
+        Write x v
+        setFlag (not borrow)
+
+    OpMinus x y -> do -- (Sub with args reversed)
+        (v,borrow) <- subByteBorrow <$> Read y <*> Read x
+        Write x v
+        setFlag (not borrow)
 
     OpShiftL x y -> do
         (shifted,overflow) <- byteShiftL <$> Read y
@@ -571,11 +581,6 @@ exec i = case i of
         (shifted,overflow) <- byteShiftR <$> Read y
         Write x shifted
         setFlag overflow
-
-    OpSubtractBorrow x y -> do
-        (v,borrow) <- subByteBorrow <$> Read x <*> Read y
-        Write x v
-        setFlag (not borrow)
 
     OpSetSound x -> Read x >>= SetSound
 
@@ -614,11 +619,6 @@ exec i = case i of
     OpWaitKeyPress x -> -- TODO: first, should wait for keys to be released
         AnyKey >>= \case Nothing -> Stall
                          Just nib -> Write x (byte N0 nib)
-
-    OpMinus _x _y ->
-        todo
-
-    where todo = do Crash; Stall
 
 skipInstructionIf :: Bool -> Action ()
 skipInstructionIf cond = if cond then (PC >>= SetPC . nextInstr) else return ()
