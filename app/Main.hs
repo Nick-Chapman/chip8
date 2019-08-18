@@ -7,7 +7,7 @@
 
 module Main (main) where
 
-import Control.Monad (ap,liftM)
+import Control.Monad (ap,liftM,when)
 import Control.Monad.State (State,execState,get,put)
 import Data.Bits
 import Data.Map (Map)
@@ -23,6 +23,9 @@ import qualified Data.ByteString as BS
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+
+debug :: Bool
+debug = False
 
 ----------------------------------------------------------------------
 -- parameters of the Chip Machine
@@ -281,7 +284,6 @@ updateCS :: Float -> Model -> IO Model
 updateCS _delta model@Model{frame,cs,keys,ss} = do
     let SimState{mode,speed} = ss
     let ips = delayTickHertz * speed
-    let ChipState{nExec=nSoFar} = cs
 
     let frame' = case mode of Running -> frame + 1; _ -> frame
 
@@ -291,28 +293,24 @@ updateCS _delta model@Model{frame,cs,keys,ss} = do
                 Stepping _ -> 1
                 Stopped -> 0
 
-    let nTarget = nSoFar + nI
+    when debug $ print (frame, ips)
 
-    --when (mode == Running) $ print (frame, ips)
-    --let trace = case mode of Running -> traceWhenRunning; _ -> True
+    let loop n cs0@ChipState{nExec} = if n == 0 then return cs0 else do
+            let cs1 = step1 (chipKeys keys) cs0
+            let timeToTick = nExec `mod` speed == 0
+            let cs2 = if timeToTick then tick cs1 else cs1
+            when debug $ putStrLn $ showChipStateLine cs2
+            loop (n - 1) cs2
 
-    let loop cs0@ChipState{nExec} =
-            if nExec == nTarget
-            then return cs0
-            else do
-                let cs1 = step1 (chipKeys keys) cs0
-                let timeToTick = nExec `mod` speed == 0
-                let cs2 = if timeToTick then tick cs1 else cs1
-                --when trace $ putStrLn $ "(" <> show ips <> ") " <> showChipStateLine cs2
-                loop cs2
-
-    cs' <- loop cs
+    cs' <- loop nI cs
     let ss' = case mode of Stepping StepNext -> ss { mode = Stopped }; _ -> ss
+
+    let ss'' = if crashed cs' then ss' { tracing = True } else ss'
 
     return $ model
         { frame = frame'
         , cs = cs'
-        , ss = ss'
+        , ss = ss''
         }
 
 step1 :: ChipKeys -> ChipState -> ChipState
@@ -322,7 +320,7 @@ fetchDecodeExec :: Action ()
 fetchDecodeExec = do
     pc <- PC
     SetPC (nextInstr pc)
-    Fetch pc >>= (exec pc . decode)
+    Fetch pc >>= (exec . decode)
 
 tick :: ChipState -> ChipState
 tick cs = cs { delay = tickDelay (delay cs) }
@@ -473,7 +471,7 @@ opAddresses = \case
 
 instance Show Op where
     show = \case
-        OpUnknown i             -> "?[" <> show i <> "]"
+        OpUnknown _i            -> "???"
         OpCls                   -> "CLS"
         OpReturn                -> "RET"
         OpJump a                -> una "JMP" a
@@ -507,7 +505,7 @@ instance Show Op where
         OpStoreDigitSpriteI x   -> una "SPRITE" x
         OpIncreaseI x           -> bin "ADD" I x
         OpWaitKeyPress x        -> una "WAIT" x
-        OpMinus x y             -> bin "MINUS" x y
+        OpMinus x y             -> bin "TODO/MINUS" x y
      where
         una tag a = tag <> " " <> show a
         skip p = "SKP " <> p
@@ -523,9 +521,9 @@ data D = D deriving (Show)
 ----------------------------------------------------------------------
 -- exec
 
-exec :: Addr -> Op -> Action ()
-exec pc i = case i of
-    OpUnknown _ -> fail $ "exec, pc=(" <> show pc <> "), unknown op: " <> show i
+exec :: Op -> Action ()
+exec i = case i of
+    OpUnknown _ -> do Crash; Stall
     OpCls -> Cls
     OpReturn -> PopStack >>= SetPC
     OpJump a -> SetPC a
@@ -613,11 +611,14 @@ exec pc i = case i of
         b <- Read x
         StoreI (incAddr a $ byteToInt b)
 
-    OpWaitKeyPress x -> todo x
-    OpMinus x y -> todo x y
+    OpWaitKeyPress x -> -- TODO: first, should wait for keys to be released
+        AnyKey >>= \case Nothing -> Stall
+                         Just nib -> Write x (byte N0 nib)
 
-    where todo :: a
-          todo = error $ "exec, " <> show i
+    OpMinus _x _y ->
+        todo
+
+    where todo = do Crash; Stall
 
 skipInstructionIf :: Bool -> Action ()
 skipInstructionIf cond = if cond then (PC >>= SetPC . nextInstr) else return ()
@@ -642,6 +643,7 @@ data Action a where
     PushStack :: Addr -> Action ()
     PopStack :: Action Addr
     KeyStatus :: Nib -> Action Bool
+    AnyKey :: Action (Maybe Nib)
     RandomByte :: Action Byte
     StoreI :: Addr -> Action ()
     ReadI :: Action Addr
@@ -649,6 +651,8 @@ data Action a where
     WriteMem :: Addr -> Byte -> Action ()
     Draw :: XY -> [Byte] -> Action Bool
     Cls :: Action ()
+    Crash :: Action ()
+    Stall :: Action ()
 
 instance Functor Action where fmap = liftM
 instance Applicative Action where pure = return; (<*>) = ap
@@ -677,6 +681,7 @@ runAction keys steps = do
         PushStack a -> put $ cs { stack = a : stack }
         PopStack -> do put $ cs { stack = tail stack }; return $ head stack
         KeyStatus n -> return $ keys n
+        AnyKey -> return $ checkAnyKey keys
         RandomByte -> do put $ cs { rands = tail rands }; return $ head rands
         StoreI a -> put $ cs { regI = a }
         ReadI -> return regI
@@ -687,6 +692,14 @@ runAction keys steps = do
             put $ cs { screen = screen' }
             return collide
         Cls -> put $ cs { screen = emptyScreen }
+        Crash -> put $ cs { crashed = True }
+        Stall -> put $ cs { pc = backupInstr pc, nExec = nExec - 1 }
+
+checkAnyKey :: ChipKeys -> Maybe Nib
+checkAnyKey keys = do
+    let look n = (n,keys n)
+    let xs = map fst $ filter snd $ map (look . nibOfInt) [0..15]
+    case xs of [] -> Nothing; nib:_ -> Just nib
 
 drawSprite :: Screen -> XY -> [Byte] -> (Screen,Bool)
 drawSprite screen (x0,y0) bytes = do
@@ -718,6 +731,7 @@ initCS rands progBytes = do
     let regI = addrOfInt 0
     let screen = emptyScreen
     let nExec = 0
+    let crashed = False
     ChipState{..}
 
 data ChipState = ChipState
@@ -730,10 +744,11 @@ data ChipState = ChipState
     , screen :: Screen
     , nExec :: Int -- number of intructions executed so far
     , rands :: [Byte]
+    , crashed :: Bool
     }
 
-_showChipStateLine :: ChipState -> String
-_showChipStateLine ChipState{delay,regI,regs,mem,pc,stack,nExec} = do
+showChipStateLine :: ChipState -> String
+showChipStateLine ChipState{delay,regI,regs,mem,pc,stack,nExec} = do
     let instr = instructionLookup pc mem
     let op = decode instr
     unwords (["#" <> show nExec, show delay, show regI, "--"]
@@ -830,6 +845,9 @@ addr = Addr -- TODO: inline if keep this rep
 nextInstr :: Addr -> Addr
 nextInstr a = incAddr a 2
 
+backupInstr :: Addr -> Addr
+backupInstr a = incAddr a (-2)
+
 incAddr :: Addr -> Int -> Addr
 incAddr a i = addrOfInt (addrToInt a + i)
 
@@ -853,7 +871,7 @@ data Byte = Byte Nib Nib -- 8 bit, 2 nibbles
 instance Show Byte where show (Byte n1 n2) = show n1 <> show n2
 
 byte :: Nib -> Nib -> Byte
-byte = Byte  -- TODO: inline if keep this rep
+byte = Byte -- TODO: inline if keep this rep
 
 byte1 :: Byte
 byte1 = Byte N0 N1
