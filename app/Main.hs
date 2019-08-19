@@ -1,4 +1,3 @@
-
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -7,9 +6,10 @@
 
 module Main (main) where
 
-import Control.Monad (ap,liftM,when)
+import Control.Monad (ap,liftM)
 import Control.Monad.State (State,execState,get,put)
 import Data.Bits
+import Data.List.Extra (upper)
 import Data.Map (Map)
 import Data.Maybe (fromMaybe)
 import Data.Set (Set,(\\))
@@ -24,8 +24,8 @@ import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-debug :: Bool
-debug = False
+maxHistory :: Int
+maxHistory = 100
 
 ----------------------------------------------------------------------
 -- parameters of the Chip Machine
@@ -33,14 +33,14 @@ debug = False
 delayTickHertz :: Int
 delayTickHertz = 60 -- this is fixed in the chip8 spec
 
-initialIPS :: Int
-initialIPS = 600 -- this can be varied dynamically
+initialIPS :: Int -- instructions/second
+initialIPS = 512 -- this can be varied dynamically
 
 ----------------------------------------------------------------------
 -- parameter of the Gloss simulation
 
-framesPerSecond :: Int
-framesPerSecond = 60 -- this can be varied (but is fixed for the simulation)
+fps :: Int -- frames/second
+fps = 50 -- this can be changed (but is fixed for the simulation)
 
 ----------------------------------------------------------------------
 -- display parameters
@@ -49,7 +49,7 @@ theScale :: Int
 theScale = 20
 
 nonFullWindowPos :: (Int,Int)
-nonFullWindowPos = (300,100)
+nonFullWindowPos = (150,100)
 
 ----------------------------------------------------------------------
 
@@ -75,10 +75,10 @@ parseCommandLine = \case
 
 runChip8 :: Args -> [Byte] -> [Byte] -> IO ()
 runChip8 Args{file,full} rands progBytes = do
-    Gloss.playIO dis black framesPerSecond model0
-        (\m   -> return $ pictureModel m)
-        (\e m -> return $ handleEventModel model0 e m)
-        updateCS
+    Gloss.playIO dis black fps model0
+        pictureModel
+        (handleEventModel model0)
+        updateModel
     where
         model0 = initModel (initCS rands progBytes)
         dis = if full then FullScreen else InWindow title size nonFullWindowPos
@@ -88,11 +88,11 @@ runChip8 Args{file,full} rands progBytes = do
 ----------------------------------------------------------------------
 -- making pictures
 
-pictureModel :: Model -> Picture
+pictureModel :: Model -> IO Picture
 pictureModel Model{cs,ss} = do
     let ChipState{screen} = cs
-    myTranslate $ pictures
-        [ border
+    return $ myTranslate $ pictures
+        [ border, oborder
         , myScale (pictureFromScreen screen)
         , picInternals ss cs
         ]
@@ -106,6 +106,12 @@ myTranslate =
 border :: Picture
 border = color red $ square (0,0) (x,y)
     where (x,y) = (fromIntegral (theScale * xmax), fromIntegral (theScale * ymax))
+
+oborder :: Picture
+oborder = color red $ trans$ square (0,0) (x,y)
+    where (x,y) = (fromIntegral (theScale * xmax + 2 * extraX)
+                  , fromIntegral (theScale * ymax + 2 * extraY))
+          trans = translate (fromIntegral (-extraX)) (fromIntegral (-extraY))
 
 myScale :: Picture -> Picture
 myScale = scale (fromIntegral theScale) (fromIntegral theScale)
@@ -125,22 +131,33 @@ square :: Point -> Point -> Picture
 square (x1,y1) (x2,y2) = line [(x1,y1),(x1,y2),(x2,y2),(x2,y1),(x1,y1)]
 
 extraX :: Int
-extraX = 200
+extraX = 10 * theScale
 
 extraY :: Int
-extraY = 100
+extraY = 5 * theScale
 
 picInternals :: SimState -> ChipState -> Picture
-picInternals SimState{tracing,speed} ChipState{nExec,mem,regs,delay,regI,pc} =
-    if tracing then translate (-150) (145) $ scale 0.2 0.2 $ pic else blank
+picInternals SimState{ips,mode,tracing} ChipState{nExec,mem,regs,delay,regI,pc} =
+    if tracing then rescale $ translate (-150) (145) $ scale 0.2 0.2 $ pic else blank
     where
-        pic = picIPS <> picCount <> pictures (map picReg [0..15])
+        rescale = scale (fromIntegral theScale / 20.0) (fromIntegral theScale / 20.0)
+
+        pic = picIPS <> picCount <> picMode
+            <> pictures (map picReg [0..15])
             <> picD <> picI <> picPC <> picInstr <> picOp
 
-        picIPS = onLine (-3) $ labBoxText "ips" (show ips) 320
-            where ips = delayTickHertz * speed
+        picIPS = onLine (-3) $ labBoxText "ips" (show derivedIPS) 320
+            where derivedIPS = case mode of
+                      Running ->  ips
+                      Stopped ->  0
+                      Stepping -> fps
+                      Step1 ->    0
+                      Backing ->  (- fps)
+                      Back1 ->    0
 
-        picCount = translate 600 0 $ onLine (-3) $ labBoxText "#i" (show nExec) 1200
+        picMode = translate 600 0 $ onLine (-3) $ labBoxText "" (upper $ show mode) 600
+
+        picCount = translate 2000 0 $ onLine (-3) $ labBoxText "#i" (show nExec) 1200
 
         picReg :: Int -> Picture
         picReg n = onLine n $ labBoxText s1 s2 170
@@ -221,40 +238,40 @@ type Keys = Set Char
 initKeys :: Keys
 initKeys = Set.empty
 
-handleEventModel :: Model -> Event -> Model -> Model
-handleEventModel model0 event model@Model{keys,ss=ss@SimState{mode,speed}} =
-    case event of
-        EventKey (Char char) Down _ _ -> model { keys = Set.insert char keys }
-        EventKey (Char char) Up _ _ -> model { keys = Set.delete char keys }
-
+handleEventModel :: Model -> Event -> Model -> IO Model
+handleEventModel model0 event model@Model{keys,ss=ss@SimState{tracing,ips}} = do
+    return $ case event of
+        EventKey (SpecialKey KeyInsert) Down _ _ -> model { ss = doFlipTrace }
         EventKey (SpecialKey KeyUp) Down _ _ -> model { ss = doFaster }
         EventKey (SpecialKey KeyDown) Down _ _ -> model { ss = doSlower }
-
-        EventKey (SpecialKey KeyF5) Down _ _ -> model { ss = doRun }
+        EventKey (SpecialKey KeyTab) Down _ _ -> model { ss = doRun }
+        EventKey (SpecialKey KeyF5) Down _ _ -> model { ss = doRunNoTrace }
         EventKey (SpecialKey KeyF6) Down _ _ -> model { ss = doRunTrace }
-        EventKey (SpecialKey KeyShiftR) Down _ _ -> model { ss = doToggleRun }
         EventKey (SpecialKey KeyEnter) Down _ _ -> model { ss = doOneStep }
-        EventKey (SpecialKey KeyTab) Down _ _ -> model { ss = doStepContinuous }
-        EventKey (SpecialKey KeyTab) Up _ _ -> model { ss = doStop }
-
+        EventKey (Char '\b') Down _ _ -> model { ss = doBackStep } -- Backspace
+        EventKey (SpecialKey KeyShiftR) Down _ _ -> model { ss = doStepContinuous }
+        EventKey (SpecialKey KeyShiftL) Down _ _ -> model { ss = doBackContinuous }
+        EventKey (SpecialKey KeyShiftR) Up _ _ -> model { ss = doStop }
+        EventKey (SpecialKey KeyShiftL) Up _ _ -> model { ss = doStop }
+        EventKey (Char char) Down _ _ -> model { keys = Set.insert char keys }
+        EventKey (Char char) Up _ _ -> model { keys = Set.delete char keys }
         EventKey (SpecialKey KeyEsc) Down _ _ -> model { ss = doQuit }
         EventKey (SpecialKey KeyDelete) Down _ _ -> doReset
-
         _ -> model
     where
-        doFaster = ss { speed = speed + 1 }
-        doSlower = ss { speed = max 1 (speed - 1) }
-
-        doRun = ss { mode = Running, tracing = False}
+        doFlipTrace = ss { tracing = not tracing }
+        doFaster = ss { ips = 2 * ips }
+        doSlower = ss { ips = max 1 (ips `div` 2) }
+        doRun = ss { mode = Running }
+        doRunNoTrace = ss { mode = Running, tracing = False}
         doRunTrace = ss { mode = Running, tracing = True}
-        doToggleRun = ss { mode = case mode of Running -> Stopped; _ -> Running }
-        doOneStep = ss { mode = Stepping StepNext, tracing = True}
-        doStepContinuous = ss { mode = Stepping StepContinuous, tracing = True }
+        doOneStep = ss { mode = Step1, tracing = True}
+        doBackStep = ss { mode = Back1, tracing = True}
+        doStepContinuous = ss { mode = Stepping }
+        doBackContinuous = ss { mode = Backing }
         doStop = ss { mode = Stopped }
-
         doQuit = error "quit"
-        doReset =
-            model0
+        doReset = model0
             { cs = (cs model0) { rands = rands $ cs model } -- dont reset rands
             , ss -- dont reset sim-state
             }
@@ -274,47 +291,80 @@ mapKey = \case
 
 initModel :: ChipState -> Model
 initModel cs = do
-    let frame = 0
-    let time = 0.0
     let keys = initKeys
     let ss = initSS
+    let csHistory = []
+    let frame = 0
     Model{..}
 
-updateCS :: Float -> Model -> IO Model
-updateCS _delta model@Model{frame,cs,keys,ss} = do
-    let SimState{mode,speed} = ss
-    let ips = delayTickHertz * speed
+updateModel :: Float -> Model -> IO Model
+updateModel _delta model0 = do
+    let model = incFrameCount model0
+    let Model{ss} = model
+    let SimState{mode} = ss
+    return $ case mode of
+        Running ->      stepRunning model
+        Stopped ->      model
+        Stepping ->     stepForward model
+        Step1 ->        stepForward (stop model)
+        Backing ->      stepBack model
+        Back1 ->        stepBack (stop model)
 
-    let frame' = case mode of Running -> frame + 1; _ -> frame
+incFrameCount :: Model -> Model
+incFrameCount model = do model { frame = frame model + 1 }
 
-    let nI =
-            case mode of
-                Running -> max 1 (ips `div` framesPerSecond)
-                Stepping _ -> 1
-                Stopped -> 0
+stepRunning :: Model -> Model
+stepRunning model = stepForwardN (calcRunSteps model) model
 
-    when debug $ print (frame, ips)
+calcRunSteps :: Model -> Int
+calcRunSteps model = do
+    let Model{frame,ss} = model
+    let SimState{ips} = ss
+    fractionalModSeries frame (ips,fps)
 
-    let loop n cs0@ChipState{nExec} = if n == 0 then return cs0 else do
-            let cs1 = step1 (chipKeys keys) cs0
-            let timeToTick = nExec `mod` speed == 0
-            let cs2 = if timeToTick then tick cs1 else cs1
-            when debug $ putStrLn $ showChipStateLine cs2
-            loop (n - 1) cs2
+stepForwardN :: Int -> Model -> Model
+stepForwardN n model = nTimes n stepForward model
 
-    cs' <- loop nI cs
-    let ss' = case mode of Stepping StepNext -> ss { mode = Stopped }; _ -> ss
+stepForward :: Model -> Model
+stepForward model = do
+    let cs2 = stepModel model
+    if noProgress model cs2
+        then if crashed cs2 then stopAndTrace model else model
+        else commitStep model cs2
 
-    let ss'' = if crashed cs' then ss' { tracing = True } else ss'
+stop :: Model -> Model
+stop model@ Model{ss} = model { ss = ss { mode = Stopped } }
 
-    return $ model
-        { frame = frame'
-        , cs = cs'
-        , ss = ss''
-        }
+noProgress :: Model -> ChipState -> Bool
+noProgress model cs2 = do
+    let Model{cs=cs1} = model
+    let ChipState{nExec=n1} = cs1
+    let ChipState{nExec=n2} = cs2
+    n1 == n2
 
-step1 :: ChipKeys -> ChipState -> ChipState
-step1 ck cs = execState (runAction ck $ fetchDecodeExec) $ cs
+stopAndTrace :: Model -> Model
+stopAndTrace model@Model{ss} = model { ss = ss { tracing = True, mode = Stopped } }
+
+commitStep :: Model -> ChipState -> Model
+commitStep model@Model{cs,csHistory} csNew =
+    model { cs = csNew, csHistory = take maxHistory (cs : csHistory) }
+
+stepBack :: Model -> Model
+stepBack model =
+    case csHistory model of
+        [] -> model
+        cs:csHistory -> model { cs, csHistory }
+
+stepModel :: Model -> ChipState
+stepModel model = do
+    let Model{keys,cs,ss} = model
+    let SimState{ips} = ss
+    let ChipState{nExec} = cs
+    let ck = chipKeys keys
+    let cs1 = execState (runAction ck $ fetchDecodeExec) $ cs
+    let nDelayTicks = fractionalModSeries nExec (delayTickHertz,ips)
+    let cs2 = tickN nDelayTicks cs1
+    cs2
 
 fetchDecodeExec :: Action ()
 fetchDecodeExec = do
@@ -322,43 +372,45 @@ fetchDecodeExec = do
     SetPC (nextInstr pc)
     Fetch pc >>= (exec . decode)
 
-tick :: ChipState -> ChipState
-tick cs = cs { delay = tickDelay (delay cs) }
+tickN :: Int -> ChipState -> ChipState
+tickN n cs = cs { delay = tickDelayN n (delay cs) }
 
-tickDelay :: Byte -> Byte
-tickDelay b = byteOfInt (max 0 (byteToInt b - 1))
+fractionalModSeries :: Int -> (Int,Int) -> Int -- TODO: a comment on this would be nice
+fractionalModSeries n (a,b) =
+    (a `div` b) + (if (x * n) `mod` b < x then 1 else 0)
+    where x = a `mod` b
+
+nTimes :: Int -> (a -> a) -> a -> a
+nTimes n f = foldl (.) id $ replicate n f
 
 ----------------------------------------------------------------------
 -- Model
 
 data Model = Model
-    { frame :: Int
-    , time :: Float
+    { keys :: Keys
     , cs :: ChipState
-    , keys :: Keys
-    , ss :: SimState
+    , ss :: SimState -- TODO: inline SimState into Model
+    , csHistory :: [ChipState]
+    , frame :: Int
     }
 
 ----------------------------------------------------------------------
 -- SimState
 
-data StepMode = StepNext | StepContinuous
-    deriving (Eq,Show)
-
-data SimMode = Running | Stepping StepMode | Stopped
+data SimMode = Running | Stopped | Stepping | Step1 | Backing | Back1
     deriving (Eq,Show)
 
 data SimState = SimState
     { mode :: SimMode
-    , speed :: Int -- ips/60
+    , ips :: Int
     , tracing :: Bool
     }
     deriving (Show)
 
 initSS :: SimState
 initSS = SimState
-    { speed = initialIPS `div` delayTickHertz
-    , mode = Running
+    { mode = Running
+    , ips = initialIPS
     , tracing = False
     }
 
@@ -572,13 +624,13 @@ exec i = case i of
         Write x v
         setFlag (not borrow)
 
-    OpShiftL x y -> do
-        (shifted,overflow) <- byteShiftL <$> Read y
+    OpShiftL x _y -> do
+        (shifted,overflow) <- byteShiftL <$> Read x -- ignoring y
         Write x shifted
         setFlag overflow
 
-    OpShiftR x y -> do
-        (shifted,overflow) <- byteShiftR <$> Read y
+    OpShiftR x _y -> do
+        (shifted,overflow) <- byteShiftR <$> Read x -- ignoring y
         Write x shifted
         setFlag overflow
 
@@ -747,8 +799,8 @@ data ChipState = ChipState
     , crashed :: Bool
     }
 
-showChipStateLine :: ChipState -> String
-showChipStateLine ChipState{delay,regI,regs,mem,pc,stack,nExec} = do
+_showChipStateLine :: ChipState -> String
+_showChipStateLine ChipState{delay,regI,regs,mem,pc,stack,nExec} = do
     let instr = instructionLookup pc mem
     let op = decode instr
     unwords (["#" <> show nExec, show delay, show regI, "--"]
@@ -943,6 +995,9 @@ randBytes :: IO [Byte]
 randBytes = do
   g <- newStdGen
   return $ map byteOfInt $ randomRs (0,255) g
+
+tickDelayN :: Int -> Byte -> Byte
+tickDelayN n b = byteOfInt (max 0 (byteToInt b - n))
 
 ----------------------------------------------------------------------
 -- Nib
