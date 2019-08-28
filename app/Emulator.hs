@@ -3,10 +3,11 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Emulator (
-    Byte,
-    byteOfWord8,
+
+    Byte, byteOfNibs,
     randBytes,
     printCode,
 
@@ -14,14 +15,17 @@ module Emulator (
     initCS,
     step, ChipKeys,
     tick,
+    showChipStateLine,
 
-    instructionLookup, Instruction,
-    decode, Op,
+    instructionLookup, Instruction(..),
+
+    encode, decode, Op(..),
     Screen(..), xmax,ymax,
-    Reg(..), Regs,
+    Reg(..),
+    Regs,
     regValue,
-    Nib(..),
-    nibOfInt,
+    Nib, nibKey,
+    Addr, baseProgram, nextInstr,
 
     ) where
 
@@ -31,7 +35,7 @@ import Data.Bits
 import Data.Map (Map)
 import Data.Maybe (fromMaybe)
 import Data.Set (Set,(\\))
-import Data.Word8 (Word8)
+--import Data.Word8 as Word8 -- (Word8)
 import Prelude hiding (pred)
 import System.Random (newStdGen,randomRs)
 import Text.Printf (printf)
@@ -97,7 +101,51 @@ tick :: Int -> ChipState -> ChipState
 tick n cs = cs { delay = tickDelayN n (delay cs) }
 
 ----------------------------------------------------------------------
--- decode
+-- encode
+
+encode :: Op -> Instruction
+encode = mkInstruction . \case
+    OpCls -> (0,0,0xE,0)
+    OpReturn -> (0,0,0xE,0xE)
+    OpJump (Addr a b c) -> (1,a,b,c)
+    OpCall (Addr a b c) -> (2,a,b,c)
+    OpSkipEqLit (Reg x) b -> (3,x,n,m) where (n,m) = byteNibs b
+    OpSkipNotEqLit (Reg x) b -> (4,x,n,m) where (n,m) = byteNibs b
+    OpSkipEq (Reg x) (Reg y) -> (5,x,y,0)
+    OpStoreLit (Reg x) b -> (6,x,n,m) where (n,m) = byteNibs b
+    OpAddLit (Reg x) b -> (7,x,n,m) where (n,m) = byteNibs b
+    OpStore (Reg x) (Reg y) -> (8,x,y,0)
+    OpOr (Reg x) (Reg y) -> (8,x,y,1)
+    OpAnd (Reg x) (Reg y) -> (8,x,y,2)
+    OpXor (Reg x) (Reg y) -> (8,x,y,3)
+    OpAdd (Reg x) (Reg y) -> (8,x,y,4)
+    OpSub (Reg x) (Reg y) -> (8,x,y,5)
+    OpShiftR (Reg x) (Reg y) -> (8,x,y,6)
+    OpMinus (Reg x) (Reg y) -> (8,x,y,7)
+    OpShiftL (Reg x) (Reg y) -> (8,x,y,0xE)
+    OpSkipNotEq (Reg x) (Reg y) -> (9,x,y,0)
+    OpStoreI (Addr a b c) -> (0xA,a,b,c)
+    OpJumpOffset (Addr a b c) -> (0xB,a,b,c)
+    OpRandom (Reg x) b -> (0xC,x,n,m) where (n,m) = byteNibs b
+    OpDraw (Reg x) (Reg y) n -> (0xD,x,y,n)
+    OpSkipKey (Reg x) -> (0xE,x,9,0xE)
+    OpSkipNotKey (Reg x) -> (0xE,x,0xA,1)
+    OpReadDelay (Reg x) -> (0xF,x,0,7)
+    OpWaitKeyPress (Reg x) -> (0xF,x,0,0xA)
+    OpSetDelay (Reg x) -> (0xF,x,1,5)
+    OpSetSound (Reg x) -> (0xF,x,1,8)
+    OpIncreaseI (Reg x) -> (0xF,x,1,0xE)
+    OpStoreDigitSpriteI (Reg x) -> (0xF,x,2,9)
+    OpStoreBCD (Reg x) -> (0xF,x,3,3)
+    OpSaveRegs (Reg x) -> (0xF,x,5,5)
+    OpRestoreRegs (Reg x) -> (0xF,x,6,5)
+    OpUnknown i -> error $ show i
+
+mkInstruction :: (Nib,Nib,Nib,Nib) ->  Instruction
+mkInstruction (a,b,c,d) = Instruction (byteOfNibs a b) (byteOfNibs c d)
+
+----------------------------------------------------------------------
+-- decode,
 
 decode :: Instruction -> Op
 decode (Instruction b1 b2) =
@@ -105,43 +153,43 @@ decode (Instruction b1 b2) =
 
 decodeMatch :: (Nib,Nib,Nib,Nib) -> Op
 decodeMatch tup = case tup of
-    (N0,N0,NE,N0) -> OpCls
-    (N0,N0,NE,NE) -> OpReturn
-    (N1,a,b,c) -> OpJump (addr a b c)
-    (N2,a,b,c) -> OpCall (addr a b c)
-    (N3,x,n,m) -> OpSkipEqLit (Reg x) (byte n m)
-    (N4,x,n,m) -> OpSkipNotEqLit (Reg x) (byte n m)
-    (N5,x,y,N0) -> OpSkipEq (Reg x) (Reg y)
-    (N6,x,n,m) -> OpStoreLit (Reg x) (byte n m)
-    (N7,x,n,m) -> OpAddLit (Reg x) (byte n m)
-    (N8,x,y,N0) -> OpStore (Reg x) (Reg y)
-    (N8,x,y,N1) -> OpOr (Reg x) (Reg y)
-    (N8,x,y,N2) -> OpAnd (Reg x) (Reg y)
-    (N8,x,y,N3) -> OpXor (Reg x) (Reg y)
-    (N8,x,y,N4) -> OpAdd (Reg x) (Reg y)
-    (N8,x,y,N5) -> OpSub (Reg x) (Reg y)
-    (N8,x,y,N6) -> OpShiftR (Reg x) (Reg y)
-    (N8,x,y,N7) -> OpMinus (Reg x) (Reg y)
-    (N8,x,y,NE) -> OpShiftL (Reg x) (Reg y)
-    (N9,x,y,N0) -> OpSkipNotEq (Reg x) (Reg y)
-    (NA,a,b,c) -> OpStoreI (Addr a b c)
-    (NB,a,b,c) -> OpJumpOffset (Addr a b c)
-    (NC,x,n,m) -> OpRandom (Reg x) (Byte n m)
-    (ND,x,y,n) -> OpDraw (Reg x) (Reg y) n
-    (NE,x,N9,NE) -> OpSkipKey (Reg x)
-    (NE,x,NA,N1) -> OpSkipNotKey (Reg x)
-    (NF,x,N0,N7) -> OpReadDelay (Reg x)
-    (NF,x,N0,NA) -> OpWaitKeyPress (Reg x)
-    (NF,x,N1,N5) -> OpSetDelay (Reg x)
-    (NF,x,N1,N8) -> OpSetSound (Reg x)
-    (NF,x,N1,NE) -> OpIncreaseI (Reg x)
-    (NF,x,N2,N9) -> OpStoreDigitSpriteI (Reg x)
-    (NF,x,N3,N3) -> OpStoreBCD (Reg x)
-    (NF,x,N5,N5) -> OpSaveRegs (Reg x)
-    (NF,x,N6,N5) -> OpRestoreRegs (Reg x)
+    (0,0,0xE,0) -> OpCls
+    (0,0,0xE,0xE) -> OpReturn
+    (1,a,b,c) -> OpJump (addr a b c)
+    (2,a,b,c) -> OpCall (addr a b c)
+    (3,x,n,m) -> OpSkipEqLit (Reg x) (byteOfNibs n m)
+    (4,x,n,m) -> OpSkipNotEqLit (Reg x) (byteOfNibs n m)
+    (5,x,y,0) -> OpSkipEq (Reg x) (Reg y)
+    (6,x,n,m) -> OpStoreLit (Reg x) (byteOfNibs n m)
+    (7,x,n,m) -> OpAddLit (Reg x) (byteOfNibs n m)
+    (8,x,y,0) -> OpStore (Reg x) (Reg y)
+    (8,x,y,1) -> OpOr (Reg x) (Reg y)
+    (8,x,y,2) -> OpAnd (Reg x) (Reg y)
+    (8,x,y,3) -> OpXor (Reg x) (Reg y)
+    (8,x,y,4) -> OpAdd (Reg x) (Reg y)
+    (8,x,y,5) -> OpSub (Reg x) (Reg y)
+    (8,x,y,6) -> OpShiftR (Reg x) (Reg y)
+    (8,x,y,7) -> OpMinus (Reg x) (Reg y)
+    (8,x,y,0xE) -> OpShiftL (Reg x) (Reg y)
+    (9,x,y,0) -> OpSkipNotEq (Reg x) (Reg y)
+    (0xA,a,b,c) -> OpStoreI (Addr a b c)
+    (0xB,a,b,c) -> OpJumpOffset (Addr a b c)
+    (0xC,x,n,m) -> OpRandom (Reg x) (byteOfNibs n m)
+    (0xD,x,y,n) -> OpDraw (Reg x) (Reg y) n
+    (0xE,x,9,0xE) -> OpSkipKey (Reg x)
+    (0xE,x,0xA,1) -> OpSkipNotKey (Reg x)
+    (0xF,x,0,7) -> OpReadDelay (Reg x)
+    (0xF,x,0,0xA) -> OpWaitKeyPress (Reg x)
+    (0xF,x,1,5) -> OpSetDelay (Reg x)
+    (0xF,x,1,8) -> OpSetSound (Reg x)
+    (0xF,x,1,0xE) -> OpIncreaseI (Reg x)
+    (0xF,x,2,9) -> OpStoreDigitSpriteI (Reg x)
+    (0xF,x,3,3) -> OpStoreBCD (Reg x)
+    (0xF,x,5,5) -> OpSaveRegs (Reg x)
+    (0xF,x,6,5) -> OpRestoreRegs (Reg x)
     _ -> unknown
     where
-        unknown = OpUnknown (Instruction (Byte a b) (Byte c d)) where (a,b,c,d) = tup
+        unknown = OpUnknown (Instruction (byteOfNibs a b) (byteOfNibs c d)) where (a,b,c,d) = tup
 
 ----------------------------------------------------------------------
 -- Op
@@ -197,7 +245,7 @@ instance Show Op where
         OpCls                   -> "CLS"
         OpReturn                -> "RET"
         OpJump a                -> una "JMP" a
-        OpJumpOffset a          -> bin "JMP" (Reg N0) a
+        OpJumpOffset a          -> bin "JMP" (Reg 0) a
         OpCall a                -> una "CALL" a
         OpSkipEqLit x b         -> skip (eq x b)
         OpSkipNotEqLit x b      -> skip (neq x b)
@@ -249,7 +297,7 @@ exec i = case i of
     OpCls -> Cls
     OpReturn -> PopStack >>= SetPC
     OpJump a -> SetPC a
-    OpJumpOffset a -> Read (Reg N0) >>= (SetPC . incAddr a . byteToInt)
+    OpJumpOffset a -> Read (Reg 0) >>= (SetPC . incAddr a . byteToInt)
     OpCall a -> do PC >>= PushStack; SetPC a
     OpSkipEqLit x b -> do a <- Read x; skipInstructionIf (eqByte a b)
     OpSkipNotEqLit x b -> do a <- Read x; skipInstructionIf (not $ eqByte a b)
@@ -316,16 +364,16 @@ exec i = case i of
 
     OpSaveRegs x -> do
         a <- ReadI
-        let n = nibToInt (unReg x)
-        let rs = map (Reg . nibOfInt) [0..n]
+        let n = unReg x
+        let rs = map Reg [0..n]
         mapM_ (\r -> Read r >>= WriteMem (incAddr a $ nibToInt $ unReg r)) rs
         --StoreI (incAddr a (n+1)) --???
         return ()
 
     OpRestoreRegs x -> do
         a <- ReadI
-        let n = nibToInt (unReg x)
-        let rs = map (Reg . nibOfInt) [0..n]
+        let n = unReg x
+        let rs = map Reg [0..n]
         mapM_ (\r -> ReadMem (incAddr a $ nibToInt $ unReg r) >>= Write r) rs
         --StoreI (incAddr a (n+1)) --???
         return ()
@@ -340,7 +388,7 @@ exec i = case i of
 
     OpWaitKeyPress x -> -- TODO: first, should wait for keys to be released
         AnyKey >>= \case Nothing -> Stall
-                         Just nib -> Write x (byte N0 nib)
+                         Just nib -> Write x (byteOfNibs N0 nib)
 
 skipInstructionIf :: Bool -> Action ()
 skipInstructionIf cond = if cond then (PC >>= SetPC . nextInstr) else return ()
@@ -410,7 +458,7 @@ runAction keys steps = do
         ReadMem a -> return $ fromMaybe byte0 $ Map.lookup a mem
         WriteMem a b -> put $ cs { mem = Map.insert a b mem }
         Draw xy bytes -> do
-            let (screen',collide) = drawSprite screen xy bytes
+            let (screen',collide) = drawSprite screen (wraparound xy) bytes
             put $ cs { screen = screen' }
             return collide
         Cls -> put $ cs { screen = emptyScreen }
@@ -420,7 +468,7 @@ runAction keys steps = do
 checkAnyKey :: ChipKeys -> Maybe Nib
 checkAnyKey keys = do
     let look n = (n,keys n)
-    let xs = map fst $ filter snd $ map (look . nibOfInt) [0..15]
+    let xs = map fst $ filter snd $ map look [0..15]
     case xs of [] -> Nothing; nib:_ -> Just nib
 
 drawSprite :: Screen -> XY -> [Byte] -> (Screen,Bool)
@@ -428,8 +476,13 @@ drawSprite screen (x0,y0) bytes = do
     let xys = do
             (y,by) <- zip [y0..] bytes
             (x,b) <- zip [x0..] $ bitsOfByte by
+            --if b then [wraparound (x,y)] else []  -- pixel based wraparound -- wrong!
             if b then [(x,y)] else []
     flipPixels screen $ Set.fromList xys
+
+wraparound :: XY -> XY
+wraparound (x,y) = (x `mod` xmax,y `mod` ymax)
+         --if b then [] else [] -- pixel based wraparound -- wrong!
 
 flipPixels :: Screen -> Set XY -> (Screen,Bool)
 flipPixels Screen{on=before} sprite = do
@@ -469,8 +522,8 @@ data ChipState = ChipState
     , crashed :: Bool
     }
 
-_showChipStateLine :: ChipState -> String
-_showChipStateLine ChipState{delay,regI,regs,mem,pc,stack,nExec} = do
+showChipStateLine :: ChipState -> String
+showChipStateLine ChipState{delay,regI,regs,mem,pc,stack,nExec} = do
     let instr = instructionLookup pc mem
     let op = decode instr
     unwords (["#" <> show nExec, show delay, show regI, "--"]
@@ -479,17 +532,17 @@ _showChipStateLine ChipState{delay,regI,regs,mem,pc,stack,nExec} = do
                  show pc, ":", show op])
 
 regVals :: Regs -> [Byte]
-regVals regs = map (\i -> fromMaybe byte0 $ Map.lookup (Reg (nibOfInt i)) regs) [0..15]
+regVals regs = map (regValue regs) [Reg 0 .. Reg 0xF]
 
 ----------------------------------------------------------------------
 -- Regs
 
 type Regs = Map Reg Byte
 
-regValue :: Reg -> Regs -> Byte
-regValue reg regs = fromMaybe byte0 $ Map.lookup reg regs
+regValue :: Regs -> Reg -> Byte
+regValue regs reg = fromMaybe byte0 $ Map.lookup reg regs
 
-newtype Reg = Reg { unReg :: Nib } deriving (Eq,Ord)
+newtype Reg = Reg { unReg :: Nib } deriving (Eq,Ord,Enum)
 instance Show Reg where show r = "v" <> show (unReg r)
 
 ----------------------------------------------------------------------
@@ -505,13 +558,13 @@ instructionLookup a mem  = Instruction b1 b2
 initMem :: [Byte] -> Mem
 initMem bytes = Map.fromList $ do
     (i,b) <- zip [addrToInt baseProgram..] bytes
-        ++ zip [addrToInt baseHexSpriteData..] (map byteOfInt digitData)
+        ++ zip [addrToInt baseHexSpriteData..] digitData
     return $ (addrOfInt i, b)
 
 hexDigitSpriteAddr :: Nib -> Addr
 hexDigitSpriteAddr n = incAddr baseHexSpriteData (5 * nibToInt n)
 
-digitData :: [Int]
+digitData :: [Byte]
 digitData = [
     0xF0,0x90,0x90,0x90,0xF0,
     0x20,0x60,0x20,0x20,0x70,
@@ -562,6 +615,14 @@ baseHexSpriteData = addrOfInt 0x0
 data Addr = Addr Nib Nib Nib -- 12 bits, 3 nibble
     deriving (Eq,Ord)
 
+instance Num Addr where
+    (+) = undefined
+    (*) = undefined
+    abs = undefined
+    signum = undefined
+    fromInteger = addrOfInt . fromIntegral
+    negate = undefined
+
 instance Show Addr where show a = printf "0x%03X" (addrToInt a)
 
 addr :: Nib -> Nib -> Nib -> Addr
@@ -577,7 +638,7 @@ incAddr :: Addr -> Int -> Addr
 incAddr a i = addrOfInt (addrToInt a + i)
 
 addrOfInt :: Int -> Addr
-addrOfInt i = if bad then error "addrOfInt" else a
+addrOfInt i = if bad then error $ "addrOfInt: " <> show i else a
     where a = Addr n1 n2 n3
           bad = i < 0 || shiftR i 12 > 0
           n1 = nibOfInt (shiftR i 8 .&. 0xF)
@@ -590,13 +651,25 @@ addrToInt (Addr a b c) = (256 * nibToInt a) + (16 * nibToInt b) + nibToInt c
 ----------------------------------------------------------------------
 -- Byte
 
+
 data Byte = Byte Nib Nib -- 8 bit, 2 nibbles
     deriving (Eq)
 
+instance Num Byte where
+    (+) = undefined
+    (*) = undefined
+    abs = undefined
+    signum = undefined
+    fromInteger = byteOfInt . fromIntegral
+    negate = undefined
+
 instance Show Byte where show (Byte n1 n2) = show n1 <> show n2
 
-byte :: Nib -> Nib -> Byte
-byte = Byte -- TODO: inline if keep this rep
+byteNibs :: Byte -> (Nib,Nib)
+byteNibs (Byte n1 n2) = (n1,n2)
+
+byteOfNibs :: Nib -> Nib -> Byte
+byteOfNibs = Byte -- TODO: inline if keep this rep
 
 byte1 :: Byte
 byte1 = Byte N0 N1
@@ -634,11 +707,8 @@ eqByte = (==)
 lowNib :: Byte -> Nib
 lowNib (Byte _ n) = n
 
-byteOfWord8 :: Word8 -> Byte
-byteOfWord8 = byteOfInt . fromIntegral
-
 byteOfInt :: Int -> Byte
-byteOfInt i = if bad then error "byteOfInt" else a
+byteOfInt i = if bad then error $ "byteOfInt: " <> show i else a
     where a = Byte n1 n2
           bad = i < 0 || shiftR i 8 > 0
           n1 = nibOfInt (shiftR i 4 .&. 0xF)
@@ -675,11 +745,104 @@ randBytes = do
 tickDelayN :: Int -> Byte -> Byte
 tickDelayN n b = byteOfInt (max 0 (byteToInt b - n))
 
+
+----------------------------------------------------------------------
+{-
+newtype Byte = Byte Word8
+    deriving (Eq,Num,Bits)
+
+instance Show Byte where
+    show b = show n1 <> show n2
+        where (n1,n2) = nibsOfByte b
+
+byteOfNibs :: Nib -> Nib -> Byte
+byteOfNibs = undefined
+
+byteNibs :: Byte -> (Nib,Nib)
+byteNibs = undefined
+
+byte1 :: Byte
+byte1 = 1
+
+byte0 :: Byte
+byte0 = 0
+
+andByte :: Byte -> Byte -> Byte
+andByte b1 b2 = b1 .&. b2
+
+orByte :: Byte -> Byte -> Byte
+orByte b1 b2 = b1 .|. b2
+
+xorByte :: Byte -> Byte -> Byte
+xorByte b1 b2 = b1 `xor` b2
+
+addByte :: Byte -> Byte -> Byte
+addByte a b = fst $ addByteCarry a b
+
+addByteCarry :: Byte -> Byte -> (Byte,Bool)
+addByteCarry = undefined
+
+subByteBorrow :: Byte -> Byte -> (Byte,Bool)
+subByteBorrow = undefined
+
+eqByte :: Byte -> Byte -> Bool
+eqByte = (==)
+
+lowNib :: Byte -> Nib
+lowNib = undefined
+
+byteOfInt :: Int -> Byte
+byteOfInt i = if bad then error $ "byteOfInt: " <> show i else a
+    where a = byteOfNibs n1 n2
+          bad = i < 0 || shiftR i 8 > 0
+          n1 = nibOfInt (shiftR i 4 .&. 0xF)
+          n2 = nibOfInt (i .&. 0xF)
+
+byteToInt :: Byte -> Int
+byteToInt = undefined -- fromIntegral . toInteger -- (Byte n m) = nibToInt n * 16 + nibToInt m
+
+nibsOfByte :: Byte -> (Nib,Nib)
+nibsOfByte (Byte n m) = (n,m)
+
+bitsOfByte :: Byte -> [Bool]
+bitsOfByte b = map (testBit (byteToInt b)) (reverse [0..7])
+
+bcd :: Byte -> (Byte,Byte,Byte)
+bcd b = (byteOfInt h, byteOfInt t, byteOfInt u)
+    where
+        h = n `div` 100
+        t = n `div` 10 `mod` 10
+        u = n `mod` 10
+        n = byteToInt b
+
+byteShiftL :: Byte -> (Byte,Bool)
+byteShiftL b = (byteOfInt ((n*2) `mod` 256), n>=128) where n = byteToInt b
+
+byteShiftR :: Byte -> (Byte,Bool)
+byteShiftR b = (byteOfInt (n `div` 2), testBit n 0) where n = byteToInt b
+
+randBytes :: IO [Byte]
+randBytes = do
+  g <- newStdGen
+  return $ map byteOfInt $ randomRs (0,255) g
+
+tickDelayN :: Int -> Byte -> Byte
+tickDelayN n b = byteOfInt (max 0 (byteToInt b - n))
+-}
+
 ----------------------------------------------------------------------
 -- Nib
 
 data Nib = N0 | N1 | N2 | N3 | N4 | N5 | N6 | N7 | N8 | N9 | NA | NB | NC | ND | NE | NF
-    deriving (Eq,Ord)
+    deriving (Eq,Ord,Enum)
+
+instance Num Nib where
+    (+) = undefined
+    (*) = undefined
+    abs = undefined
+    signum = undefined
+    fromInteger = nibOfInt . fromIntegral
+    negate = undefined
 
 instance Show Nib where show n = printf "%01X" (nibToInt n)
 
@@ -697,3 +860,10 @@ nibOfInt = \case
     8  -> N8; 9 ->  N9; 10 -> NA; 11 -> NB
     12 -> NC; 13 -> ND; 14 -> NE; 15 -> NF
     i -> error $ "nibOfInt: " <> show i
+
+nibKey :: Nib -> Char
+nibKey = \case
+    N1 -> '1'; N2 -> '2'; N3 -> '3'; NC -> '4';
+    N4 -> 'q'; N5 -> 'w'; N6 -> 'e'; ND -> 'r';
+    N7 -> 'a'; N8 -> 's'; N9 -> 'd'; NE -> 'f';
+    NA -> 'z'; N0 -> 'x'; NB -> 'c'; NF -> 'v';

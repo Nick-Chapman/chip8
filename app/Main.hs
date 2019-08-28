@@ -15,8 +15,9 @@ import System.Environment (getArgs)
 import qualified Data.ByteString as BS
 import qualified Data.Set as Set
 
-import Emulator(xmax,ymax,Byte,ChipState(..),Screen(..),ChipKeys,Nib(..))
+import Emulator(xmax,ymax,Byte,ChipState(..),Screen(..),ChipKeys)
 import qualified Emulator as EM
+import qualified Assemble as AS
 
 maxHistory :: Int
 maxHistory = 100
@@ -28,7 +29,7 @@ delayTickHertz :: Int
 delayTickHertz = 60 -- this is fixed in the chip8 spec
 
 initialIPS :: Int -- instructions/second
-initialIPS = 512 -- this can be varied dynamically
+initialIPS = 10000 -- 500 -- this can be varied dynamically (super fast for Life)
 
 ----------------------------------------------------------------------
 -- parameter of the Gloss simulation
@@ -40,17 +41,17 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 8
+theScale = 15
 
 nonFullWindowPos :: (Int,Int)
-nonFullWindowPos = (150,100)
+nonFullWindowPos = (400,100)
 
 ----------------------------------------------------------------------
 
 main :: IO ()
 main = do
-    args@Args{dump,file} <- parseCommandLine <$> getArgs
-    progBytes <- readBytes file
+    args@Args{dump,fileOpt} <- parseCommandLine <$> getArgs
+    progBytes <- case fileOpt of Just file -> readBytes file; Nothing -> return AS.myGameBytes
     if dump
         then EM.printCode progBytes
         else
@@ -58,24 +59,27 @@ main = do
             rands <- EM.randBytes
             runChip8 args rands progBytes
 
-data Args = Args { full :: Bool, dump :: Bool, file :: FilePath }
+data Args = Args { full :: Bool, dump :: Bool, fileOpt :: Maybe FilePath }
 
 parseCommandLine :: [String] -> Args -- very basic support!
 parseCommandLine = \case
-    [file] ->  Args { full = False, dump = False, file }
-    [file,"--full"] ->  Args { full = True, dump = False, file }
-    [file,"--dump"] ->  Args { full = False, dump = True, file }
+    [] -> Args { full = False, dump = False, fileOpt = Nothing }
+    ["--full"] ->  Args { full = True, dump = False, fileOpt = Nothing }
+    ["--dump"] ->  Args { full = False, dump = True, fileOpt = Nothing }
+    [file] ->  Args { full = False, dump = False, fileOpt = Just file }
+    [file,"--full"] ->  Args { full = True, dump = False, fileOpt = Just file }
+    [file,"--dump"] ->  Args { full = False, dump = True, fileOpt = Just file }
     xs -> error $ show xs
 
 readBytes :: FilePath -> IO [Byte]
 readBytes path = do
     bs :: BS.ByteString <- BS.readFile path
     let ws :: [Word8] = BS.unpack bs
-    let xs :: [Byte] = map EM.byteOfWord8 ws
+    let xs :: [Byte] = map fromIntegral ws
     return xs
 
 runChip8 :: Args -> [Byte] -> [Byte] -> IO ()
-runChip8 Args{file,full} rands progBytes = do
+runChip8 Args{fileOpt,full} rands progBytes = do
     Gloss.playIO dis black fps model0
         pictureModel
         (handleEventModel model0)
@@ -84,7 +88,8 @@ runChip8 Args{file,full} rands progBytes = do
         model0 = initModel (EM.initCS rands progBytes)
         dis = if full then FullScreen else InWindow title size nonFullWindowPos
         size = (xmax * theScale + 2 + 2*extraX, ymax * theScale + 2 + 2*extraY)
-        title = "Chip8: " <> file
+        title = "Chip8: " <> name
+        name = case fileOpt of Just file -> file; Nothing -> "MyGame"
 
 ----------------------------------------------------------------------
 -- making pictures
@@ -147,8 +152,8 @@ picInternals SimState{ips,mode,tracing} ChipState{nExec,mem,regs,delay,regI,pc} 
             <> pictures (map picReg [0..15])
             <> picD <> picI <> picPC <> picInstr <> picOp
 
-        picIPS = onLine (-3) $ labBoxText "ips" (show derivedIPS) 320
-            where derivedIPS = case mode of
+        picIPS = onLine (-3) $ labBoxText "ips" (show ips) 320
+            where _derivedIPS = case mode of
                       Running ->  ips
                       Stopped ->  0
                       Stepping -> fps
@@ -163,9 +168,8 @@ picInternals SimState{ips,mode,tracing} ChipState{nExec,mem,regs,delay,regI,pc} 
         picReg :: Int -> Picture
         picReg n = onLine n $ labBoxText s1 s2 170
             where
-                nib = EM.nibOfInt n
-                reg = EM.Reg nib
-                value = EM.regValue reg regs
+                reg = EM.Reg $ fromIntegral n
+                value = EM.regValue regs reg
                 s1 = show reg
                 s2 = show value
 
@@ -241,14 +245,7 @@ handleEventModel model0 event model@Model{keys,ss=ss@SimState{tracing,ips}} = do
             }
 
 chipKeys :: Keys -> ChipKeys
-chipKeys keys nib = mapKey nib `elem` keys
-
-mapKey :: Nib -> Char
-mapKey = \case
-    N1 -> '1'; N2 -> '2'; N3 -> '3'; NC -> '4';
-    N4 -> 'q'; N5 -> 'w'; N6 -> 'e'; ND -> 'r';
-    N7 -> 'a'; N8 -> 's'; N9 -> 'd'; NE -> 'f';
-    NA -> 'z'; N0 -> 'x'; NB -> 'c'; NF -> 'v';
+chipKeys keys nib = EM.nibKey nib `elem` keys
 
 ----------------------------------------------------------------------
 -- simulating Chip8
@@ -266,6 +263,7 @@ updateModel _delta model0 = do
     let model = incFrameCount model0
     let Model{ss} = model
     let SimState{mode} = ss
+    --putStrLn $ EM.showChipStateLine (cs model)
     return $ case mode of
         Running ->      stepRunning model
         Stopped ->      model
@@ -366,5 +364,5 @@ initSS :: SimState
 initSS = SimState
     { mode = Running
     , ips = initialIPS
-    , tracing = False
+    , tracing = True --False
     }
