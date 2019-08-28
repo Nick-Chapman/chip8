@@ -37,25 +37,24 @@ _qq = do
 
 myAsm :: Asm ()
 myAsm = do
-    let a1 = 0x500
-    let a2 = 0x700
+    let a1 = 0x700
+    let a2 = 0x800
     --_writePatToScreen
     --writePatToMem a1 -- what is word for Mem intended to be blatted to a screen, a Rect?
 
     --writeGliderToMem a1
-    writeDigitToMem 1 0x500
-    writeDigitToMem 2 0x508
-    --writeDigitToMem 3 0x510
-    --writeDigitToMem 4 0x518
-
-    blatRectToScreen a1
+    writeDigitToMem 1 0x700
+    writeDigitToMem 2 0x708
+    writeDigitToMem 3 0x710
+    writeDigitToMem 4 0x718
 
     forever $ do
-        copyRectByPixel_shiftedR a1 a2
-        copyMemBytes a2 a1 32
-        cls
-        wait
         blatRectToScreen a1
+        zeroRect a2
+        copyRectByPixel_shiftedRD a1 a2
+        copyMemBytes a2 a1 32
+        --wait
+        cls
 
     crash
 
@@ -87,6 +86,9 @@ blatRectToScreen addr = do
                     return ()
 
 
+zeroRect :: Addr -> Asm ()
+zeroRect addr = zeroBytes addr 32
+
 
 rectMaxX,rectMaxY :: Byte
 (rectMaxX,rectMaxY) = (16,16) -- (16,16) -- (64,32)
@@ -98,16 +100,17 @@ copyRectByPixel a b = do
             copyCell (a,x,y) (b,x,y)
 
 
-copyRectByPixel_shiftedR :: Addr -> Addr -> Asm ()
-copyRectByPixel_shiftedR a b = do
+copyRectByPixel_shiftedRD :: Addr -> Addr -> Asm ()
+copyRectByPixel_shiftedRD a b = do
     loopUpto rectMaxX $ \x -> do
         loopUpto rectMaxY $ \y -> do
-            right x $ \x' -> do
-                copyCell (a,x,y) (b,x',y)
+            incMod16 x $ \x' -> do
+                --incMod16 y $ \y' -> do -- run out of regs!
+                    copyCell (a,x,y) (b,x',y)
 
 
-right :: Reg -> (Reg -> Asm ()) -> Asm ()
-right r k = do
+incMod16 :: Reg -> (Reg -> Asm ()) -> Asm ()
+incMod16 r k = do
     copy r $ \s -> do
         incrementReg s
         mod16 s $ \t -> do
@@ -117,7 +120,7 @@ copyCell :: (Addr,Reg,Reg) -> (Addr,Reg,Reg) -> Asm ()
 copyCell (a1,x1,y1) (a2,x2,y2) = do
     WithReg $ \hold -> do
         readCell a1 (x1,y1) $ \v -> do
-            copyReg hold v
+            copyReg v hold
         ifRegNotZero hold $
             setCell a2 (x2,y2)
 
@@ -173,6 +176,11 @@ ifRegNotZero r asm = do
 
 
 
+zeroBytes :: Addr -> Byte -> Asm ()
+zeroBytes a n = do
+    withInitReg 0 $ \zero -> do
+        loopUpto n $ \offset -> do
+            writeMem a offset zero
 
 
 copyMemBytes :: Addr -> Addr -> Byte -> Asm ()
@@ -192,7 +200,7 @@ readMemAtI :: (Reg -> Asm ()) -> Asm ()
 readMemAtI k = do
     Emit $ OpRestoreRegs (Reg 0)
     WithReg $ \r -> do
-        copyReg r (Reg 0)
+        copyReg (Reg 0) r
         k r
 
 writeMem :: Addr -> Reg -> Reg -> Asm ()
@@ -203,7 +211,7 @@ writeMem addr offset v = do
 
 writeMemAtI :: Reg -> Asm ()
 writeMemAtI r = do
-    copyReg (Reg 0) r
+    copyReg r (Reg 0)
     Emit $ OpSaveRegs (Reg 0)
 
 
@@ -367,11 +375,11 @@ _myAsm = do
 copy :: Reg -> (Reg -> Asm a) -> Asm a
 copy x k = do
     WithReg $ \y -> do
-        copyReg y x
+        copyReg x y
         k y
 
 copyReg :: Reg -> Reg -> Asm ()
-copyReg target source =
+copyReg source target  =
     Emit $ OpStore target source
 
 
