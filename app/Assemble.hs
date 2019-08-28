@@ -19,6 +19,7 @@ import Emulator(
     Nib,
     baseProgram,
     nextInstr,
+    incAddr,
     encode,
     )
 
@@ -31,48 +32,62 @@ myGameBytes = assemble myAsm
 
 _qq :: ()
 _qq = do
-    let _ = (waitTime,waitKey,halt,crash,writePatToMem,writeGliderToMem,decrementReg,ifKeyDown,
-             div8,div8mul32,copyRectByPixel,wait)
+    let _ = (waitTime,waitKey,halt,crash,writePatToMem,decrementReg,ifKeyDown,
+             div8,div8mul32,div8mul16,copyRectByPixel,wait)
     ()
+
+
+gliderData :: [Byte]
+gliderData =
+{-
+........
+...x.... 0x10
+.x.x.... 0x50
+..xx.... 0x30
+-}
+    [0,0x10,0x50,0x30]
 
 myAsm :: Asm ()
 myAsm = do
+
+    aGlider <- insertBytes gliderData
+
     let a1 = 0x700
     let a2 = 0x800
     --_writePatToScreen
     --writePatToMem a1 -- what is word for Mem intended to be blatted to a screen, a Rect?
 
-    --writeGliderToMem a1
-    writeDigitToMem 1 0x700
+    copyMemBytes (length gliderData) aGlider 0x700
+
+    --writeDigitToMem 1 0x700
     writeDigitToMem 2 0x708
-    writeDigitToMem 3 0x710
-    writeDigitToMem 4 0x718
+    --writeDigitToMem 3 0x710
+    --writeDigitToMem 4 0x718
 
     forever $ do
         blatRectToScreen a1
         zeroRect a2
         copyRectByPixel_shiftedRD a1 a2
-        copyMemBytes a2 a1 32
+        copyMemBytes 32 a2 a1
         --wait
         cls
 
     crash
 
 
+rectMaxX,rectMaxY :: Byte
+(rectMaxX,rectMaxY) = (16,8) -- (16,16) -- (64,32)
+
+
 writeDigitToMem :: Int -> Addr -> Asm ()
 writeDigitToMem n addr = do
     let a = fromIntegral $ 5*n -- from emulator embedding at 0,5,10...
-    copyMemBytes a addr 5
-
-writeGliderToMem :: Addr -> Asm ()
-writeGliderToMem addr = do
-    let a = undefined
-    copyMemBytes a addr 5
+    copyMemBytes 5 a addr
 
 
 stripesFragX,screenFragY :: (Byte,Byte)
 stripesFragX = (0,2) -- (0,8)
-screenFragY = (0,16) --(0,32)
+screenFragY = (0,8) --(0,32)
 
 blatRectToScreen :: Addr -> Asm ()
 blatRectToScreen addr = do
@@ -90,9 +105,6 @@ zeroRect :: Addr -> Asm ()
 zeroRect addr = zeroBytes addr 32
 
 
-rectMaxX,rectMaxY :: Byte
-(rectMaxX,rectMaxY) = (16,16) -- (16,16) -- (64,32)
-
 copyRectByPixel :: Addr -> Addr -> Asm ()
 copyRectByPixel a b = do
     loopUpto rectMaxX $ \x -> do
@@ -105,16 +117,10 @@ copyRectByPixel_shiftedRD a b = do
     loopUpto rectMaxX $ \x -> do
         loopUpto rectMaxY $ \y -> do
             incMod16 x $ \x' -> do
-                --incMod16 y $ \y' -> do -- run out of regs!
-                    copyCell (a,x,y) (b,x',y)
+                incMod8 y $ \y' -> do -- run out of regs!
+                    copyCell (a,x,y) (b,x',y')
 
 
-incMod16 :: Reg -> (Reg -> Asm ()) -> Asm ()
-incMod16 r k = do
-    copy r $ \s -> do
-        incrementReg s
-        mod16 s $ \t -> do
-            k t
 
 copyCell :: (Addr,Reg,Reg) -> (Addr,Reg,Reg) -> Asm ()
 copyCell (a1,x1,y1) (a2,x2,y2) = do
@@ -154,7 +160,8 @@ _old_xyToOffsetBitnum (x,y) k =
 xyToOffsetBitnum :: (Reg,Reg) -> (Reg -> Reg -> Asm ()) -> Asm ()
 xyToOffsetBitnum (x,y) k = do
     --div8mul32 x $ \xH -> do
-    div8mul16 x $ \xH -> do -- because we are working on a hlf-height screen fragment
+    --div8mul16 x $ \xH -> do -- because we are working on a half-height screen fragment
+    div8mul8 x $ \xH -> do -- because we are working on a quater-height screen fragment
         add xH y $ \offset -> do
             mod8 x $ \bitnum -> do
                 k offset bitnum
@@ -183,9 +190,9 @@ zeroBytes a n = do
             writeMem a offset zero
 
 
-copyMemBytes :: Addr -> Addr -> Byte -> Asm ()
-copyMemBytes a1 a2 n = do
-    loopUpto n $ \offset -> do
+copyMemBytes :: Int -> Addr -> Addr -> Asm ()
+copyMemBytes n a1 a2 = do
+    loopUpto (fromIntegral n) $ \offset -> do
         readMem a1 offset $ \v -> do
             writeMem a2 offset v
 
@@ -275,16 +282,41 @@ div8mul16 x k = do
         lshift 4 y
         k y
 
-mod8 :: Reg -> (Reg -> Asm a) -> Asm a
-mod8 x k = do
-    withInitReg 0x7 $ \mask -> do
-        logicalAnd x mask k
+div8mul8 :: Reg -> (Reg -> Asm a) -> Asm a
+div8mul8 x k = do
+    copy x $ \y -> do
+        -- can reduce the number of instructions here
+        rshift 3 y
+        lshift 3 y
+        k y
+
+
+incMod16 :: Reg -> (Reg -> Asm ()) -> Asm ()
+incMod16 r k = do
+    copy r $ \s -> do
+        incrementReg s
+        mod16 s $ \t -> do
+            k t
+incMod8 :: Reg -> (Reg -> Asm ()) -> Asm ()
+incMod8 r k = do
+    copy r $ \s -> do
+        incrementReg s
+        mod8 s $ \t -> do
+            k t
 
 mod16 :: Reg -> (Reg -> Asm a) -> Asm a
 mod16 x k = do
     withInitReg 0xF $ \mask -> do
-        logicalAnd x mask k
+        --logicalAnd x mask k
+        Emit $ OpAnd mask x -- in place
+        k mask
 
+mod8 :: Reg -> (Reg -> Asm a) -> Asm a
+mod8 x k = do
+    withInitReg 0x7 $ \mask -> do
+        --logicalAnd x mask k
+        Emit $ OpAnd mask x -- in place
+        k mask
 
 logicalAnd :: Reg -> Reg -> (Reg -> Asm a) -> Asm a
 logicalAnd x y k = do
@@ -448,20 +480,24 @@ forever asm = do
     --return x
 
 
-
+insertBytes :: [Byte] -> Asm Addr
+insertBytes bs = do
+    q <- Here
+    JumpOver $ Bytes bs
+    return (nextInstr q)
 
 ----------------------------------------------------------------------
 -- assemble
 
 assemble :: Asm () -> [Byte]
-assemble asm = instructionsToBytes $ map encode ops where
+assemble asm = bytes where -- instructionsToBytes $ map encode ops where
     regs = [Reg 1..Reg 14]
-    (_,(),ops) = assembleAsm baseProgram regs asm
+    (_,(),bytes) = assembleAsm baseProgram regs asm
 
 instructionsToBytes :: [Instruction] -> [Byte]
 instructionsToBytes is = do Instruction b1 b2 <- is; [b1,b2]
 
-assembleAsm :: Addr -> [Reg] -> Asm a -> (Addr,a,[Op])
+assembleAsm :: Addr -> [Reg] -> Asm a -> (Addr,a,[Byte])
 assembleAsm q free asm = do
     case asm of
         Ret a -> (q,a,[])
@@ -470,17 +506,22 @@ assembleAsm q free asm = do
             let (q2,b,ops2) = assembleAsm q1 free $ f a
             (q2,b,ops1<>ops2)
         Here -> (q,q,[])
-        Emit op -> (nextInstr q,(),[op])
+        Bytes bs -> (incAddr q (length bs), (), bs)
+        Emit op -> (nextInstr q, (), bEncode op)
         WithReg k -> case free of [] -> error "free=[]"; next:free' -> assembleAsm q free' (k next)
         JumpOver m -> do
             let (q',a,ops) = assembleAsm (nextInstr q) free m
             let j = OpJump q'
-            (q',a,j:ops)
+            (q',a, bEncode j ++ ops)
+
+bEncode :: Op -> [Byte]
+bEncode op = instructionsToBytes [encode op]
 
 data Asm a where
     Ret :: a -> Asm a
     Bind :: Asm a -> (a -> Asm b) -> Asm b
     Here :: Asm Addr
+    Bytes :: [Byte] -> Asm ()
     Emit :: Op -> Asm ()
     WithReg :: (Reg -> Asm a) -> Asm a
     JumpOver :: Asm a -> Asm a

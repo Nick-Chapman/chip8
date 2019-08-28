@@ -25,7 +25,7 @@ module Emulator (
     Regs,
     regValue,
     Nib, nibKey,
-    Addr, baseProgram, nextInstr,
+    Addr, baseProgram, nextInstr, incAddr,
 
     ) where
 
@@ -49,8 +49,9 @@ import qualified Data.List as List
 printCode :: [Byte] -> IO ()
 printCode progBytes = do
     let instructions = pairUpBytes progBytes
-    putStrLn $ showCode baseProgram instructions
-    putStrLn "--------------------"
+    let _ = showCode
+    --putStrLn $ showCode baseProgram instructions
+    --putStrLn "--------------------"
     putStrLn $ showDisassemble baseProgram instructions
 
 showCode :: Addr -> [Instruction] -> String
@@ -241,7 +242,7 @@ opAddresses = \case
 
 instance Show Op where
     show = \case
-        OpUnknown _i            -> "???"
+        OpUnknown (Instruction b0 b1) -> "???(" <> show b0 <> show b1 <> ")"
         OpCls                   -> "CLS"
         OpReturn                -> "RET"
         OpJump a                -> una "JMP" a
