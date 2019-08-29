@@ -18,13 +18,15 @@ dependencies:
 - gloss
 - mtl
 - random
+- split
 - word8
 
 ghc-options:
 - -Wall
-- -threaded
-- -rtsopts
-- -with-rtsopts=-N
+- -Wno-name-shadowing
+#- -threaded
+#- -rtsopts
+#- -with-rtsopts=-N
 
 executables:
   chip8-exe:

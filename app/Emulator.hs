@@ -32,14 +32,14 @@ module Emulator (
 import Control.Monad (ap,liftM)
 import Control.Monad.State (State,execState,get,put)
 import Data.Bits
-import Data.Map (Map)
-import Data.Maybe (fromMaybe)
+import Data.Map.Strict (Map)
+import Data.Maybe (fromMaybe,mapMaybe)
 import Data.Set (Set,(\\))
 --import Data.Word8 as Word8 -- (Word8)
 import Prelude hiding (pred)
 import System.Random (newStdGen,randomRs)
 import Text.Printf (printf)
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.List as List
 
@@ -64,15 +64,23 @@ showCodeLine a bs = show a <> " : " <> List.intercalate " " (map show bs)
 
 showDisassemble :: Addr -> [Instruction] -> String
 showDisassemble a0 instructions =
-    unlines $ map (showLocatedOp interesting) $ zip addrs ops
+    unlines $ map (showLocatedOp amap) $ zip addrs ops
     where
         addrs = map (incAddr a0) $ map (2*) [0..]
         ops = map decode instructions
-        interesting a = a `Set.member` allAddrs
-        allAddrs = Set.fromList (ops >>= opAddresses)
+        amap = Map.fromList $ zip allAddrs (map Lab [1..])
+        allAddrs = List.nub $ List.sort (ops >>= opAddresses)
 
-showLocatedOp :: (Addr -> Bool) -> (Addr,Op) -> String
-showLocatedOp pred (a,op) = (if pred a then show a <> " : " else replicate 8 ' ') <> show op
+newtype Lab = Lab Int
+instance Show Lab where show (Lab i) = "L" <> printf "%02d" i
+
+showLocatedOp :: Map Addr Lab -> (Addr,Op) -> String
+showLocatedOp aMap (a,op) =
+    show a
+    <> " : "
+    <> case Map.lookup a aMap of Just lab -> show lab; Nothing -> "   "
+    <> " : "
+    <> showOpWithLabels aMap op
 
 ----------------------------------------------------------------------
 -- Instruction
@@ -231,6 +239,12 @@ data Op
     | OpStoreDigitSpriteI Reg
     | OpIncreaseI Reg
     | OpWaitKeyPress Reg
+
+showOpWithLabels :: Map Addr Lab -> Op -> String
+showOpWithLabels m op =
+    show op <> (seeLabs $ mapMaybe (flip Map.lookup m) $ opAddresses op)
+    where seeLabs =
+              \case [] -> ""; xs -> " (" <> unwords (map show xs) <> ")"
 
 opAddresses :: Op -> [Addr]
 opAddresses = \case
@@ -511,16 +525,16 @@ initCS rands progBytes = do
     ChipState{..}
 
 data ChipState = ChipState
-    { mem :: Mem
-    , regs :: Regs
-    , delay :: Byte
-    , pc :: Addr
-    , stack :: [Addr]
-    , regI :: Addr
-    , screen :: Screen
-    , nExec :: Int -- number of intructions executed so far
+    { mem :: !Mem
+    , regs :: !Regs
+    , delay :: !Byte
+    , pc :: !Addr
+    , stack :: ![Addr]
+    , regI :: !Addr
+    , screen :: !Screen
+    , nExec :: !Int -- number of intructions executed so far
     , rands :: [Byte]
-    , crashed :: Bool
+    , crashed :: !Bool
     }
 
 showChipStateLine :: ChipState -> String
@@ -613,7 +627,7 @@ baseProgram = addrOfInt 0x200
 baseHexSpriteData :: Addr
 baseHexSpriteData = addrOfInt 0x0
 
-data Addr = Addr Nib Nib Nib -- 12 bits, 3 nibble
+data Addr = Addr !Nib !Nib !Nib -- 12 bits, 3 nibble
     deriving (Eq,Ord)
 
 instance Num Addr where
@@ -653,7 +667,7 @@ addrToInt (Addr a b c) = (256 * nibToInt a) + (16 * nibToInt b) + nibToInt c
 -- Byte
 
 
-data Byte = Byte Nib Nib -- 8 bit, 2 nibbles
+data Byte = Byte !Nib !Nib -- 8 bit, 2 nibbles
     deriving (Eq)
 
 instance Num Byte where

@@ -5,9 +5,52 @@
 {-# LANGUAGE GADTs #-}
 
 module Assemble (
-    myGameBytes,
+
+    Reg(..), Addr, Byte, --reexport
+
+    halt,
+    break,
+    crash,
+    jump,
+    draw,
+    cls,
+    forever,
+
+    withInitReg,
+    copy,
+
+    copyReg,
+    setReg,
+    incrementReg,
+    decrementReg,
+
+    ifRegIs,
+    ifRegNotZero,
+    loopFor,
+    loopForR,
+    waitKeyUp,
+
+    insertBytes,
+
+    inPlaceAnd,
+    inPlaceOr,
+    inPlaceAdd,
+    inPlaceShiftL,
+    inPlaceShiftR,
+
+    writeMem,
+    readMem,
+
+    setI,
+    increaseI,
+
+    Asm(..),
+
+    assemble,
+
     ) where
 
+import Prelude hiding (break)
 import Control.Monad (ap,liftM)
 
 import Emulator(
@@ -24,183 +67,116 @@ import Emulator(
     )
 
 ----------------------------------------------------------------------
--- myGame...
 
-myGameBytes :: [Byte]
-myGameBytes = assemble myAsm
+halt :: Asm ()
+halt = forever $ return ()
 
+break :: Asm()
+break = do
+    waitKeyUp 4
+    Emit $ OpWaitKeyPress (Reg 0)
 
-_qq :: ()
-_qq = do
-    let _ = (waitTime,waitKey,halt,crash,writePatToMem,decrementReg,ifKeyDown,
-             div8,div8mul32,div8mul16,copyRectByPixel,wait)
-    ()
+crash :: Asm ()
+crash = jump 0
 
+jump :: Addr -> Asm ()
+jump a = Emit $ OpJump a
 
-gliderData :: [Byte]
-gliderData =
-{-
-........
-...x.... 0x10
-.x.x.... 0x50
-..xx.... 0x30
--}
-    [0,0x10,0x50,0x30]
+draw :: Nib -> (Reg,Reg) -> Asm ()
+draw h (x,y) = Emit $ OpDraw x y h
 
-myAsm :: Asm ()
-myAsm = do
+cls ::  Asm ()
+cls = Emit $ OpCls
 
-    aGlider <- insertBytes gliderData
+forever :: Asm () -> Asm ()
+forever asm = do
+    q <- Here
+    asm
+    Emit $ OpJump q
 
-    let a1 = 0x700
-    let a2 = 0x800
-    --_writePatToScreen
-    --writePatToMem a1 -- what is word for Mem intended to be blatted to a screen, a Rect?
+withInitReg :: Byte -> (Reg -> Asm a) -> Asm a
+withInitReg v k = do
+    WithReg $ \x -> do
+        Emit $ OpStoreLit x v
+        k x
 
-    copyMemBytes (length gliderData) aGlider 0x700
+copy :: Reg -> (Reg -> Asm a) -> Asm a
+copy x k = do
+    WithReg $ \y -> do
+        copyReg x y
+        k y
 
-    --writeDigitToMem 1 0x700
-    writeDigitToMem 2 0x708
-    --writeDigitToMem 3 0x710
-    --writeDigitToMem 4 0x718
+copyReg :: Reg -> Reg -> Asm ()
+copyReg source target  = Emit $ OpStore target source
 
-    forever $ do
-        blatRectToScreen a1
-        zeroRect a2
-        copyRectByPixel_shiftedRD a1 a2
-        copyMemBytes 32 a2 a1
-        --wait
-        cls
+setReg :: Reg -> Byte -> Asm ()
+setReg x v = Emit $ OpStoreLit x v
 
-    crash
+incrementReg :: Reg -> Asm ()
+incrementReg reg = Emit $ OpAddLit reg 1
 
+decrementReg :: Reg -> Asm ()
+decrementReg reg = Emit $ OpAddLit reg 0xFF
 
-rectMaxX,rectMaxY :: Byte
-(rectMaxX,rectMaxY) = (16,8) -- (16,16) -- (64,32)
-
-
-writeDigitToMem :: Int -> Addr -> Asm ()
-writeDigitToMem n addr = do
-    let a = fromIntegral $ 5*n -- from emulator embedding at 0,5,10...
-    copyMemBytes 5 a addr
-
-
-stripesFragX,screenFragY :: (Byte,Byte)
-stripesFragX = (0,2) -- (0,8)
-screenFragY = (0,8) --(0,32)
-
-blatRectToScreen :: Addr -> Asm ()
-blatRectToScreen addr = do
-    Emit $ OpStoreI addr
-    withInitReg 1 $ \one -> do
-        loopFromUpto stripesFragX $ \xStripe -> do
-            loopFromUpto screenFragY $ \y -> do
-                mul8 xStripe $ \x -> do
-                    draw 1 (x,y)
-                    Emit $ OpIncreaseI one
-                    return ()
-
-
-zeroRect :: Addr -> Asm ()
-zeroRect addr = zeroBytes addr 32
-
-
-copyRectByPixel :: Addr -> Addr -> Asm ()
-copyRectByPixel a b = do
-    loopUpto rectMaxX $ \x -> do
-        loopUpto rectMaxY $ \y -> do
-            copyCell (a,x,y) (b,x,y)
-
-
-copyRectByPixel_shiftedRD :: Addr -> Addr -> Asm ()
-copyRectByPixel_shiftedRD a b = do
-    loopUpto rectMaxX $ \x -> do
-        loopUpto rectMaxY $ \y -> do
-            incMod16 x $ \x' -> do
-                incMod8 y $ \y' -> do -- run out of regs!
-                    copyCell (a,x,y) (b,x',y')
-
-
-
-copyCell :: (Addr,Reg,Reg) -> (Addr,Reg,Reg) -> Asm ()
-copyCell (a1,x1,y1) (a2,x2,y2) = do
-    WithReg $ \hold -> do
-        readCell a1 (x1,y1) $ \v -> do
-            copyReg v hold
-        ifRegNotZero hold $
-            setCell a2 (x2,y2)
-
-
-readCell :: Addr -> (Reg,Reg) -> (Reg -> Asm ()) -> Asm ()
-readCell addr (x,y) k = do
-    xyToOffsetBitnum (x,y) $ \offset bitnum -> do
-        readMem addr offset $ \loaded -> do
-            bitnum2mask bitnum $ \mask -> do
-                logicalAnd mask loaded k
-
-setCell :: Addr -> (Reg,Reg) -> Asm ()
-setCell addr (x,y) = do
-    xyToOffsetBitnum (x,y) $ \offset bitnum -> do
-        readMem addr offset $ \loaded -> do
-            bitnum2mask bitnum $ \mask -> do
-                logicalOr mask loaded $ \updated ->
-                    writeMem addr offset updated
-
-
-{-
-_old_xyToOffsetBitnum :: (Reg,Reg) -> (Reg -> Reg -> Asm ()) -> Asm ()
-_old_xyToOffsetBitnum (x,y) k =
-    mul8 y $ \y8 -> do
-        div8 x $ \xH -> do
-            add xH y8 $ \offset -> do
-                mod8 x $ \bitnum -> do
-                    k offset bitnum
--}
-
-xyToOffsetBitnum :: (Reg,Reg) -> (Reg -> Reg -> Asm ()) -> Asm ()
-xyToOffsetBitnum (x,y) k = do
-    --div8mul32 x $ \xH -> do
-    --div8mul16 x $ \xH -> do -- because we are working on a half-height screen fragment
-    div8mul8 x $ \xH -> do -- because we are working on a quater-height screen fragment
-        add xH y $ \offset -> do
-            mod8 x $ \bitnum -> do
-                k offset bitnum
-
-
-bitnum2mask :: Reg -> (Reg -> Asm ()) -> Asm () -- couting bits from 0..7
-bitnum2mask r k = do
-    withInitReg 128 $ \res -> do
-        ifRegNotZero r $ do
-            loopUptoR r $ \_ -> do
-                rshift 1 res
-        k res
-
+ifRegIs :: Byte -> Reg -> Asm () -> Asm ()
+ifRegIs n r act = do
+    Emit $ OpSkipEqLit r n
+    JumpOver act
 
 ifRegNotZero :: Reg -> Asm () -> Asm ()
 ifRegNotZero r asm = do
     Emit $ OpSkipNotEqLit r 0
     JumpOver asm
 
+loopFor :: (Int,Int) -> (Reg -> Asm ()) -> Asm ()
+loopFor (a,b) k = do
+    withInitReg (fromIntegral a) $ \x -> do
+        forever $ do
+            k x
+            incrementReg x
+            Emit $ OpSkipEqLit x (fromIntegral b)
 
+loopForR :: (Int,Reg) -> (Reg -> Asm ()) -> Asm ()
+loopForR (a,r) k = do
+    withInitReg (fromIntegral a) $ \x -> do
+        forever $ do
+            k x
+            incrementReg x
+            Emit $ OpSkipEq x r
 
-zeroBytes :: Addr -> Byte -> Asm ()
-zeroBytes a n = do
-    withInitReg 0 $ \zero -> do
-        loopUpto n $ \offset -> do
-            writeMem a offset zero
+waitKeyUp :: Nib -> Asm ()
+waitKeyUp nib = do
+    WithReg $ \r -> do
+        Emit $ OpStoreLit r (byteOfNibs 0 nib)
+        forever $ Emit $ OpSkipNotKey r
 
+insertBytes :: [Byte] -> Asm Addr
+insertBytes bs = do
+    q <- Here
+    JumpOver $ Bytes bs
+    return (nextInstr q)
 
-copyMemBytes :: Int -> Addr -> Addr -> Asm ()
-copyMemBytes n a1 a2 = do
-    loopUpto (fromIntegral n) $ \offset -> do
-        readMem a1 offset $ \v -> do
-            writeMem a2 offset v
+inPlaceAnd :: Reg -> Reg -> Asm ()
+inPlaceAnd x y = Emit $ OpAnd x y
 
+inPlaceOr :: Reg -> Reg -> Asm ()
+inPlaceOr x y = Emit $ OpOr x y
+
+inPlaceAdd :: Reg -> Reg -> Asm ()
+inPlaceAdd x y = Emit $ OpAdd x y
+
+inPlaceShiftL :: Int -> Reg -> Asm ()
+inPlaceShiftL n r = if n < 0 then error "inPlaceShiftL" else
+    sequence_ (replicate n $ Emit $ OpShiftL r r)
+
+inPlaceShiftR :: Int -> Reg -> Asm ()
+inPlaceShiftR n r = if n < 0 then error "inPlaceShiftR" else
+    sequence_ (replicate n $ Emit $ OpShiftR r r)
 
 readMem :: Addr -> Reg -> (Reg -> Asm ()) -> Asm ()
 readMem addr offset k = do
     setI addr
-    offsetI offset
+    increaseI offset
     readMemAtI k
 
 readMemAtI :: (Reg -> Asm ()) -> Asm ()
@@ -213,7 +189,7 @@ readMemAtI k = do
 writeMem :: Addr -> Reg -> Reg -> Asm ()
 writeMem addr offset v = do
     setI addr
-    offsetI offset
+    increaseI offset
     writeMemAtI v
 
 writeMemAtI :: Reg -> Asm ()
@@ -221,270 +197,11 @@ writeMemAtI r = do
     copyReg r (Reg 0)
     Emit $ OpSaveRegs (Reg 0)
 
-
 setI :: Addr -> Asm ()
 setI addr = Emit $ OpStoreI addr
 
-offsetI :: Reg -> Asm ()
-offsetI r = Emit $ OpIncreaseI r
-
-
-writePatToMem :: Addr -> Asm ()
-writePatToMem addr = do
-    Emit $ OpStoreI addr
-    withInitReg 1 $ \one -> do
-        loop00toFF $ \n -> do
-            writeMemAtI n
-            Emit $ OpIncreaseI one
-            return ()
-
-
-{-
-_writePatToScreen :: Asm ()
-_writePatToScreen = do
-    Emit $ OpStoreI 0x300
-    withInitReg 0 $ \n -> do
-        loopUpto 32 $ \y -> do
-            loopUpto 8 $ \xStripe -> do
-                mul8 xStripe $ \x -> do
-                    writeMemAtI n
-                    draw 1 (x,y)
-                    incrementReg n
-                    return ()
--}
-
-
-mul8 :: Reg -> (Reg -> Asm a) -> Asm a
-mul8 x k = do
-    copy x $ \y -> do
-        lshift 3 y
-        k y
-
-div8 :: Reg -> (Reg -> Asm a) -> Asm a
-div8 x k = do
-    copy x $ \y -> do
-        rshift 3 y
-        k y
-
-div8mul32 :: Reg -> (Reg -> Asm a) -> Asm a
-div8mul32 x k = do
-    copy x $ \y -> do
-        -- can reduce the number of instructions here
-        rshift 3 y
-        lshift 5 y
-        k y
-
-div8mul16 :: Reg -> (Reg -> Asm a) -> Asm a
-div8mul16 x k = do
-    copy x $ \y -> do
-        -- can reduce the number of instructions here
-        rshift 3 y
-        lshift 4 y
-        k y
-
-div8mul8 :: Reg -> (Reg -> Asm a) -> Asm a
-div8mul8 x k = do
-    copy x $ \y -> do
-        -- can reduce the number of instructions here
-        rshift 3 y
-        lshift 3 y
-        k y
-
-
-incMod16 :: Reg -> (Reg -> Asm ()) -> Asm ()
-incMod16 r k = do
-    copy r $ \s -> do
-        incrementReg s
-        mod16 s $ \t -> do
-            k t
-incMod8 :: Reg -> (Reg -> Asm ()) -> Asm ()
-incMod8 r k = do
-    copy r $ \s -> do
-        incrementReg s
-        mod8 s $ \t -> do
-            k t
-
-mod16 :: Reg -> (Reg -> Asm a) -> Asm a
-mod16 x k = do
-    withInitReg 0xF $ \mask -> do
-        --logicalAnd x mask k
-        Emit $ OpAnd mask x -- in place
-        k mask
-
-mod8 :: Reg -> (Reg -> Asm a) -> Asm a
-mod8 x k = do
-    withInitReg 0x7 $ \mask -> do
-        --logicalAnd x mask k
-        Emit $ OpAnd mask x -- in place
-        k mask
-
-logicalAnd :: Reg -> Reg -> (Reg -> Asm a) -> Asm a
-logicalAnd x y k = do
-    copy x $ \res -> do
-        Emit $ OpAnd res y
-        k res
-
-logicalOr :: Reg -> Reg -> (Reg -> Asm a) -> Asm a
-logicalOr x y k = do
-    copy x $ \res -> do
-        Emit $ OpOr res y
-        k res
-
-
-add :: Reg -> Reg -> (Reg -> Asm a) -> Asm a
-add a b k = do
-    copy a $ \res -> do
-        Emit $ OpAdd res b
-        k res
-
-
-
-lshift :: Int -> Reg -> Asm ()
-lshift n r = if n < 0 then error "lshift" else
-    sequence_ (replicate n $ Emit $ OpShiftL r r)
-
-rshift :: Int -> Reg -> Asm ()
-rshift n r = if n < 0 then error "rshift" else
-    sequence_ (replicate n $ Emit $ OpShiftR r r)
-
-
-loopUpto :: Byte -> (Reg -> Asm ()) -> Asm ()
-loopUpto b = loopFromUpto (0,b)
-
-loopFromUpto :: (Byte,Byte) -> (Reg -> Asm ()) -> Asm ()
-loopFromUpto (a,b) k = do
-    withInitReg a $ \x -> do
-        forever $ do
-            k x
-            incrementReg x
-            Emit $ OpSkipEqLit x b
-
-
-loopUptoR :: Reg -> (Reg -> Asm ()) -> Asm ()
-loopUptoR r k = do
-    withInitReg 0 $ \x -> do
-        forever $ do
-            k x
-            incrementReg x
-            Emit $ OpSkipEq x r
-
-
-loop00toFF ::  (Reg -> Asm ()) -> Asm ()
-loop00toFF k = do
-    withInitReg 0 $ \x -> do
-        forever $ do
-            k x
-            incrementReg x
-            Emit $ OpSkipEqLit x 0
-
-cls ::  Asm ()
-cls = Emit $ OpCls
-
-halt :: Asm ()
-halt = forever $ return ()
-
-crash ::  Asm ()
-crash = Emit $ OpJump 0
-
-{-
-_myAsm :: Asm ()
-_myAsm = do
-    withInitReg 0 $ \num -> do
-        withInitReg 30 $ \x -> do
-            withInitReg 25 $ \y -> do
-                Emit $ OpStoreDigitSpriteI num
-                draw 5 (x,y) --on
-                forever $ do
-                    waitTime 3
-                copy x $ \x' -> do
-                    copy y $ \y' -> do
-                        ifKeyDown 4 $ decrementReg x
-                        ifKeyDown 6 $ incrementReg x
-                        draw 5 (x',y') --off
-                        draw 5 (x,y) --on
--}
-
-copy :: Reg -> (Reg -> Asm a) -> Asm a
-copy x k = do
-    WithReg $ \y -> do
-        copyReg x y
-        k y
-
-copyReg :: Reg -> Reg -> Asm ()
-copyReg source target  =
-    Emit $ OpStore target source
-
-
-withInitReg :: Byte -> (Reg -> Asm a) -> Asm a
-withInitReg v k = do
-    WithReg $ \x -> do
-        Emit $ OpStoreLit x v
-        k x
-
-_drawDig :: Reg -> (Reg,Reg) -> Asm ()
-_drawDig num (x,y) = do
-    Emit $ OpStoreDigitSpriteI num
-    draw 5 (x,y)
-
-draw :: Nib -> (Reg,Reg) -> Asm ()
-draw h (x,y) = Emit $ OpDraw x y h
-
-
-incrementReg :: Reg -> Asm ()
-incrementReg reg = Emit $ OpAddLit reg 1
-
-decrementReg :: Reg -> Asm ()
-decrementReg reg = Emit $ OpAddLit reg 0xFF
-
-ifKeyDown :: Nib -> Asm () -> Asm ()
-ifKeyDown nib asm = do
-   WithReg $ \r -> do
-    Emit $ OpStoreLit r (byteOfNibs 0 nib)
-    Emit $ OpSkipKey r
-    JumpOver asm
-
-waitTime :: Byte -> Asm ()
-waitTime b = do
-   WithReg $ \r -> do
-    Emit $ OpStoreLit r b
-    Emit $ OpSetDelay r
-    forever $ do
-        Emit $ OpReadDelay r
-        Emit $ OpSkipEqLit r 0
-
-wait :: Asm ()
-wait = do
-    waitKeyUp 4
-    Emit $ OpWaitKeyPress (Reg 0)
-
-waitKey :: Nib -> Asm ()
-waitKey nib = do waitKeyUp nib; waitKeyDown nib
-
-waitKeyUp :: Nib -> Asm ()
-waitKeyUp nib = do
-   WithReg $ \r -> do
-    Emit $ OpStoreLit r (byteOfNibs 0 nib)
-    forever $ Emit $ OpSkipNotKey r
-
-waitKeyDown :: Nib -> Asm ()
-waitKeyDown nib = do
-   WithReg $ \r -> do
-    Emit $ OpStoreLit r (byteOfNibs 0 nib)
-    forever $ Emit $ OpSkipKey r
-
-forever :: Asm () -> Asm ()
-forever asm = do
-    q <- Here
-    asm
-    Emit $ OpJump q
-    --return x
-
-
-insertBytes :: [Byte] -> Asm Addr
-insertBytes bs = do
-    q <- Here
-    JumpOver $ Bytes bs
-    return (nextInstr q)
+increaseI :: Reg -> Asm ()
+increaseI r = Emit $ OpIncreaseI r
 
 ----------------------------------------------------------------------
 -- assemble
@@ -514,6 +231,13 @@ assembleAsm q free asm = do
             let j = OpJump q'
             (q',a, bEncode j ++ ops)
 
+        Switch m1 m2 -> do
+            let (q1,(),ops1) = assembleAsm (nextInstr (nextInstr q)) free m1
+            let (q2,(),ops2) = assembleAsm q1 free m2
+            let j1 = OpJump q1
+            let j2 = OpJump q2
+            (q2,(), bEncode j1 ++ ops1 ++ bEncode j2 ++ ops2)
+
 bEncode :: Op -> [Byte]
 bEncode op = instructionsToBytes [encode op]
 
@@ -525,6 +249,7 @@ data Asm a where
     Emit :: Op -> Asm ()
     WithReg :: (Reg -> Asm a) -> Asm a
     JumpOver :: Asm a -> Asm a
+    Switch :: Asm () -> Asm () -> Asm ()
 
 instance Functor Asm where fmap = liftM
 instance Applicative Asm where pure = return; (<*>) = ap

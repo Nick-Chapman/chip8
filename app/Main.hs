@@ -3,13 +3,17 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE NumericUnderscores #-}
 
 module Main (main) where
 
-import Data.List.Extra (upper)
+--import Control.Monad (when)
+import Data.List.Split(chunksOf)
+import Data.List.Extra(intercalate,upper)
 import Data.Set (Set)
 import Data.Word8 (Word8)
 import Graphics.Gloss.Interface.IO.Game as Gloss
+--import Graphics.Gloss as Gloss
 import Prelude hiding (pred)
 import System.Environment (getArgs)
 import qualified Data.ByteString as BS
@@ -17,10 +21,14 @@ import qualified Data.Set as Set
 
 import Emulator(xmax,ymax,Byte,ChipState(..),Screen(..),ChipKeys)
 import qualified Emulator as EM
-import qualified Assemble as AS
 
-maxHistory :: Int
-maxHistory = 100
+import Life(bytes)
+
+--maxHistory :: Int
+--maxHistory = 2 --100
+
+--debug :: Bool
+--debug = True
 
 ----------------------------------------------------------------------
 -- parameters of the Chip Machine
@@ -29,7 +37,7 @@ delayTickHertz :: Int
 delayTickHertz = 60 -- this is fixed in the chip8 spec
 
 initialIPS :: Int -- instructions/second
-initialIPS = 10000 -- 500 -- this can be varied dynamically (super fast for Life)
+initialIPS = 500_000 -- this can be varied dynamically. This is x1000 a normal speed!
 
 ----------------------------------------------------------------------
 -- parameter of the Gloss simulation
@@ -41,7 +49,7 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 15
+theScale = 10
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (400,100)
@@ -51,7 +59,7 @@ nonFullWindowPos = (400,100)
 main :: IO ()
 main = do
     args@Args{dump,fileOpt} <- parseCommandLine <$> getArgs
-    progBytes <- case fileOpt of Just file -> readBytes file; Nothing -> return AS.myGameBytes
+    progBytes <- case fileOpt of Just file -> readBytes file; Nothing -> return Life.bytes
     if dump
         then EM.printCode progBytes
         else
@@ -81,9 +89,22 @@ readBytes path = do
 runChip8 :: Args -> [Byte] -> [Byte] -> IO ()
 runChip8 Args{fileOpt,full} rands progBytes = do
     Gloss.playIO dis black fps model0
+        (\  m -> return $ pictureModel m)
+        (\e m -> return $ handleEventModel model0 e m)
+        (\d m -> return $ updateModel d m)
+{-
+    Gloss.play dis black fps model0
         pictureModel
         (handleEventModel model0)
         updateModel
+-}
+{-
+    let _ = handleEventModel
+    Gloss.simulate dis black fps model0
+        pictureModel
+        --(handleEventModel model0)
+        (const updateModel)
+-}
     where
         model0 = initModel (EM.initCS rands progBytes)
         dis = if full then FullScreen else InWindow title size nonFullWindowPos
@@ -94,10 +115,13 @@ runChip8 Args{fileOpt,full} rands progBytes = do
 ----------------------------------------------------------------------
 -- making pictures
 
-pictureModel :: Model -> IO Picture
-pictureModel Model{cs,ss} = do
+pictureModel :: Model -> Picture -- IO Picture
+pictureModel model = do
+    --when debug $ putStrLn $ "P." <> show (frame model)
+    let Model{cs,ss} = model
     let ChipState{screen} = cs
-    return $ myTranslate $ pictures
+    --return $
+    myTranslate $ pictures
         [ border, oborder
         , myScale (pictureFromScreen screen)
         , picInternals ss cs
@@ -152,7 +176,7 @@ picInternals SimState{ips,mode,tracing} ChipState{nExec,mem,regs,delay,regI,pc} 
             <> pictures (map picReg [0..15])
             <> picD <> picI <> picPC <> picInstr <> picOp
 
-        picIPS = onLine (-3) $ labBoxText "ips" (show ips) 320
+        picIPS = onLine (-3) $ labBoxText "ips" (showCom ips) 600
             where _derivedIPS = case mode of
                       Running ->  ips
                       Stopped ->  0
@@ -161,9 +185,9 @@ picInternals SimState{ips,mode,tracing} ChipState{nExec,mem,regs,delay,regI,pc} 
                       Backing ->  (- fps)
                       Back1 ->    0
 
-        picMode = translate 600 0 $ onLine (-3) $ labBoxText "" (upper $ show mode) 600
+        picMode = translate 800 0 $ onLine (-3) $ labBoxText "" (upper $ show mode) 600
 
-        picCount = translate 2000 0 $ onLine (-3) $ labBoxText "#i" (show nExec) 1200
+        picCount = translate 2000 0 $ onLine (-3) $ labBoxText "#i" (showCom nExec) 1200
 
         picReg :: Int -> Picture
         picReg n = onLine n $ labBoxText s1 s2 170
@@ -186,6 +210,13 @@ picInternals SimState{ips,mode,tracing} ChipState{nExec,mem,regs,delay,regI,pc} 
         onLine :: Int -> Picture -> Picture
         onLine n = translate 0 (150 * (15 - fromIntegral n))
 
+showCom :: Show a => a -> String
+showCom x = h++t
+    where
+        sp = break (== '.') $ show x
+        h = reverse (intercalate "," $ chunksOf 3 $ reverse $ fst sp)
+        t = snd sp
+
 labBoxText :: String -> String -> Float -> Picture
 labBoxText s1 s2 w = pictures
     [ translate (-160) 0 $ scale 0.7 0.7 $ color red $ text s1
@@ -206,9 +237,11 @@ type Keys = Set Char
 initKeys :: Keys
 initKeys = Set.empty
 
-handleEventModel :: Model -> Event -> Model -> IO Model
+handleEventModel :: Model -> Event -> Model -> Model --IO Model
 handleEventModel model0 event model@Model{keys,ss=ss@SimState{tracing,ips}} = do
-    return $ case event of
+    --when debug $ putStrLn $ "E." <> show (frame model)
+    --return $
+    case event of
         EventKey (SpecialKey KeyInsert) Down _ _ -> model { ss = doFlipTrace }
         EventKey (SpecialKey KeyUp) Down _ _ -> model { ss = doFaster }
         EventKey (SpecialKey KeyDown) Down _ _ -> model { ss = doSlower }
@@ -254,17 +287,19 @@ initModel :: ChipState -> Model
 initModel cs = do
     let keys = initKeys
     let ss = initSS
-    let csHistory = []
+    let csHistory = () --[]
     let frame = 0
     Model{..}
 
-updateModel :: Float -> Model -> IO Model
+updateModel :: Float -> Model -> Model -- IO Model
 updateModel _delta model0 = do
     let model = incFrameCount model0
+    --when debug $ putStrLn $ "u." <> show (frame model)
     let Model{ss} = model
     let SimState{mode} = ss
-    --putStrLn $ EM.showChipStateLine (cs model)
-    return $ case mode of
+    --when (mode == Running) $ putStrLn $ EM.showChipStateLine (cs model)
+    --return $
+    case mode of
         Running ->      stepRunning model
         Stopped ->      model
         Stepping ->     stepForward model
@@ -308,15 +343,16 @@ stopAndTrace :: Model -> Model
 stopAndTrace model@Model{ss} = model { ss = ss { tracing = True, mode = Stopped } }
 
 commitStep :: Model -> ChipState -> Model
-commitStep model@Model{cs,csHistory} csNew =
-    model { cs = csNew, csHistory = take maxHistory (cs : csHistory) }
+commitStep model@Model{cs=_,csHistory} csNew =
+    model { cs = csNew, csHistory } --, csHistory = take maxHistory (cs : csHistory) }
 
 stepBack :: Model -> Model
-stepBack model =
-    case csHistory model of
+stepBack model = model
+{-    case csHistory model of
         [] -> model
         cs:csHistory -> model { cs, csHistory }
-
+-}
+    
 stepModel :: Model -> ChipState
 stepModel model = do
     let Model{keys,cs,ss} = model
@@ -340,11 +376,11 @@ nTimes n f = foldl (.) id $ replicate n f
 -- Model
 
 data Model = Model
-    { keys :: Keys
-    , cs :: ChipState
-    , ss :: SimState -- TODO: inline SimState into Model
-    , csHistory :: [ChipState]
-    , frame :: Int
+    { keys :: !Keys
+    , cs :: !ChipState
+    , ss :: !SimState -- TODO: inline SimState into Model
+    , csHistory :: !() --[ChipState]
+    , frame :: !Int
     }
 
 ----------------------------------------------------------------------
@@ -354,9 +390,9 @@ data SimMode = Running | Stopped | Stepping | Step1 | Backing | Back1
     deriving (Eq,Show)
 
 data SimState = SimState
-    { mode :: SimMode
-    , ips :: Int
-    , tracing :: Bool
+    { mode :: !SimMode
+    , ips :: !Int
+    , tracing :: !Bool
     }
     deriving (Show)
 
