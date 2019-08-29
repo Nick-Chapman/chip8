@@ -35,6 +35,8 @@ bytes = assemble asm
 
 asm :: Asm ()
 asm = do
+    _ <- insertBytes $ map (fromIntegral . fromEnum)
+        "[Conway's Life, Gosper Gun. By Nick Chapman]"
     p2tab <- insertBytes [128,64,32,16,8,4,2,1]
 
     -- write the byte stream to a file. try in other emulators!

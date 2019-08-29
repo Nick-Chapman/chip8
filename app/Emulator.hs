@@ -7,7 +7,7 @@
 
 module Emulator (
 
-    Byte, byteOfNibs,
+    Byte, byteOfNibs, byteToInt,
     randBytes,
     printCode,
 

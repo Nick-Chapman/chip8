@@ -19,7 +19,7 @@ import System.Environment (getArgs)
 import qualified Data.ByteString as BS
 import qualified Data.Set as Set
 
-import Emulator(xmax,ymax,Byte,ChipState(..),Screen(..),ChipKeys)
+import Emulator(xmax,ymax,Byte,ChipState(..),Screen(..),ChipKeys,byteToInt)
 import qualified Emulator as EM
 
 import Life(bytes)
@@ -60,6 +60,7 @@ main :: IO ()
 main = do
     args@Args{dump,fileOpt} <- parseCommandLine <$> getArgs
     progBytes <- case fileOpt of Just file -> readBytes file; Nothing -> return Life.bytes
+    writeBytes "last.ch8" progBytes
     if dump
         then EM.printCode progBytes
         else
@@ -78,6 +79,12 @@ parseCommandLine = \case
     [file,"--full"] ->  Args { full = True, dump = False, fileOpt = Just file }
     [file,"--dump"] ->  Args { full = False, dump = True, fileOpt = Just file }
     xs -> error $ show xs
+
+writeBytes :: FilePath -> [Byte] -> IO ()
+writeBytes path xs = do
+    let ws :: [Word8] = map (fromIntegral . byteToInt) xs
+    let bs :: BS.ByteString = BS.pack ws
+    BS.writeFile path bs
 
 readBytes :: FilePath -> IO [Byte]
 readBytes path = do
