@@ -128,13 +128,24 @@ ifRegNotZero r asm = do
     Emit $ OpSkipNotEqLit r 0
     JumpOver asm
 
-loopFor :: (Int,Int) -> (Reg -> Asm ()) -> Asm ()
-loopFor (a,b) k = do
+_loopFor :: (Int,Int) -> (Reg -> Asm ()) -> Asm ()
+_loopFor (a,b) k = do
     withInitReg (fromIntegral a) $ \x -> do
         forever $ do
             k x
             incrementReg x
             Emit $ OpSkipEqLit x (fromIntegral b)
+
+loopFor :: (Int,Int) -> (Reg -> Asm ()) -> Asm ()
+loopFor (a,b) k = do
+    withInitReg (fromIntegral a) $ \x -> do
+        decrementReg x
+        q <- Here
+        incrementReg x
+        k x
+        Emit $ OpSkipEqLit x (fromIntegral $ b-1)
+        Emit $ OpJump q
+
 
 loopForR :: (Int,Reg) -> (Reg -> Asm ()) -> Asm ()
 loopForR (a,r) k = do

@@ -8,21 +8,24 @@ module Life (bytes) where
 
 import Prelude hiding (break)
 import Assemble
+import Emulator (incAddr)
 
 ----------------------------------------------------------------------
 -- parameters
 xfrag :: Xfrag
 yfrag :: Yfrag
 
---xfrag = Xall -- error: byteOfInt: 512
+xfrag = Xall
 --xfrag = Xhalf -- good
-xfrag = Xquarter
-yfrag = Yquarter
+--xfrag = Xquarter
+--xfrag = Xeighth
 
+yfrag = Yall
+--yfrag = Yhalf
+--yfrag = Yquarter
 
 data Xfrag = Xall | Xhalf | Xquarter | Xeighth
 data Yfrag = Yall | Yhalf | Yquarter
-
 
 ----------------------------------------------------------------------
 -- bytes
@@ -32,30 +35,46 @@ bytes = assemble asm
 
 asm :: Asm ()
 asm = do
+    p2tab <- insertBytes [128,64,32,16,8,4,2,1]
 
     -- write the byte stream to a file. try in other emulators!
     -- TODO: insert text with info about me
-    aGlider <- insertBytes gliderData
+    --aGlider <- insertBytes gliderData
+    aGosper <- insertBytes gosperData
 
-    let a1 = 0x700 -- how to auto pick these to be after all code?
-    let a2 = 0x800
+    let a1 = 0xE00 -- how to auto pick these to be after all code?
+    let a2 = 0xF00
 
-    copyMemBytes (length gliderData) aGlider 0x700
-    --writeDigitToMem 2 0x708
+    --copyMemBytes (length gliderData) aGlider a1
+    -- repeated calls to copyMemBytes duplicates code...
+    let aStart = a1 `incAddr` 1
+    copyMemBytes 9  aGosper                   aStart
+    copyMemBytes 9 (aGosper `incAddr`    9)  (aStart `incAddr`    sizeY)
+    copyMemBytes 9 (aGosper `incAddr` (2*9)) (aStart `incAddr` (2*sizeY))
+    copyMemBytes 9 (aGosper `incAddr` (3*9)) (aStart `incAddr` (3*sizeY))
+    copyMemBytes 9 (aGosper `incAddr` (4*9)) (aStart `incAddr` (4*sizeY))
 
     forever $ do
         blatRectToScreen a1
         zeroBytes a2 screenSizeInBytes
-        lifeStep a1 a2
+        lifeStep p2tab a1 a2
         copyMemBytes screenSizeInBytes a2 a1
         --break
         cls
 
     crash
 
+gosperData :: [Byte]
+gosperData = [
+    0x00, 0x00, 0x00, 0x00, 0xC0, 0xC0, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x0C, 0x11, 0x20, 0x22, 0x20, 0x11, 0x0C,
+    0x00, 0x02, 0x0C, 0x0C, 0x8C, 0xC2, 0x80, 0x00, 0x00,
+    0x80, 0x80, 0x00, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00,
+    0x00, 0x00, 0x30, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00] -- alignment only necessary for dissassembler
 
-gliderData :: [Byte]
-gliderData =
+_gliderData :: [Byte]
+_gliderData =
 {-
 ........
 ...x.... 0x10
@@ -64,27 +83,27 @@ gliderData =
 -}
     [0,0x10,0x50,0x30]
 
-rectMaxX :: Int
-rectMaxX = case xfrag of
+sizeX :: Int
+sizeX = case xfrag of
     Xall -> 64
     Xhalf -> 32
     Xquarter -> 16
     Xeighth -> 8
 
-rectMaxY :: Int
-rectMaxY = case yfrag of
+sizeY :: Int
+sizeY = case yfrag of
     Yall -> 32
     Yhalf -> 16
     Yquarter -> 8
 
 screenSizeInBytes :: Int
-screenSizeInBytes = rectMaxX * rectMaxX `div` 8
+screenSizeInBytes = sizeX * sizeY `div` 8
 
 maskXv :: Byte
-maskXv = fromIntegral $ rectMaxX - 1
+maskXv = fromIntegral $ sizeX - 1
 
 maskYv :: Byte
-maskYv = fromIntegral $ rectMaxY - 1
+maskYv = fromIntegral $ sizeY - 1
 
 xyToOffsetBitnum :: (Reg,Reg) -> (Reg -> Reg -> Asm ()) -> Asm ()
 xyToOffsetBitnum (x,y) k = do
@@ -96,12 +115,12 @@ xyToOffsetBitnum (x,y) k = do
 xHigh :: Reg -> (Reg -> Asm a) -> Asm a
 xHigh = case yfrag of
     Yall ->  div8mul32
-    Yhalf ->  div8mul16 -- half-height screen fragment
-    Yquarter -> div8mul8 -- quarter-height screen fragment
+    Yhalf ->  div8mul16
+    Yquarter -> div8mul8
 
 stripesFragX,screenFragY :: Int
-stripesFragX = rectMaxX `div` 8
-screenFragY = rectMaxY
+stripesFragX = sizeX `div` 8
+screenFragY = sizeY
 
 blatRectToScreen :: Addr -> Asm ()
 blatRectToScreen addr = do
@@ -114,23 +133,23 @@ blatRectToScreen addr = do
                     increaseI one
                     return ()
 
-lifeStep :: Addr -> Addr -> Asm ()
-lifeStep a1 a2 = do
-    loopFor (0,rectMaxX) $ \x -> do
-        loopFor (0,rectMaxY) $ \y -> do
-            lifeStepCell a1 (x,y) a2
+lifeStep :: Addr -> Addr -> Addr -> Asm ()
+lifeStep p2tab a1 a2 = do
+    loopFor (0,sizeX) $ \x -> do
+        loopFor (0,sizeY) $ \y -> do
+            lifeStepCell p2tab a1 (x,y) a2
 
-lifeStepCell :: Addr -> (Reg,Reg) -> Addr -> Asm ()
-lifeStepCell a (x,y) a2 = do
+lifeStepCell :: Addr -> Addr -> (Reg,Reg) -> Addr -> Asm ()
+lifeStepCell p2tab a (x,y) a2 = do
     withInitReg 0 $ \currentlyOn -> do
         withInitReg 0 $ \neigbourCount -> do
             -- do we need this extra register copying?
-            readCell a (x,y) $ \v ->
+            readCell p2tab a (x,y) $ \v ->
                 copyReg v currentlyOn
-            countNeighbours (a,x,y) $ \c ->
+            countNeighbours p2tab (a,x,y) $ \c ->
                 copyReg c neigbourCount
             ifRemainAliveOrBeBorn currentlyOn neigbourCount $
-                setCell a2 (x,y)
+                setCell p2tab a2 (x,y)
 
 ifRemainAliveOrBeBorn :: Reg -> Reg -> Asm () -> Asm ()
 ifRemainAliveOrBeBorn on count act = do
@@ -140,12 +159,12 @@ ifRemainAliveOrBeBorn on count act = do
         ifRegNotZero on $ ifRegIs 2 count $ setFlag
         ifRegIs 1 flag $ act
 
-countNeighbours :: (Addr,Reg,Reg) -> (Reg -> Asm ()) -> Asm ()
-countNeighbours (a,x,y) k = do
+countNeighbours :: Addr -> (Addr,Reg,Reg) -> (Reg -> Asm ()) -> Asm ()
+countNeighbours p2tab (a,x,y) k = do
     withInitReg 0 $ \count -> do
         foreachCellNeigbour (x,y) $ do
             -- the body of this foreach is duplicated 8 times. can we share? call/ret
-            readCell a (x,y) $ \v -> do
+            readCell p2tab a (x,y) $ \v -> do
                 ifRegNotZero v $
                     incrementReg count
         k count
@@ -167,28 +186,25 @@ foreachCellNeigbour (x,y) act = do
             decrementReg x; wrapX
             incrementReg y; wrapY
 
-readCell :: Addr -> (Reg,Reg) -> (Reg -> Asm ()) -> Asm ()
-readCell addr (x,y) k = do
+readCell :: Addr -> Addr -> (Reg,Reg) -> (Reg -> Asm ()) -> Asm ()
+readCell p2tab addr (x,y) k = do
     xyToOffsetBitnum (x,y) $ \offset bitnum -> do
         readMem addr offset $ \loaded -> do
-            bitnum2mask bitnum $ \mask -> do
+            bitnum2mask p2tab bitnum $ \mask -> do
                 logicalAnd mask loaded k
 
-setCell :: Addr -> (Reg,Reg) -> Asm ()
-setCell addr (x,y) = do
+setCell :: Addr -> Addr -> (Reg,Reg) -> Asm ()
+setCell p2tab addr (x,y) = do
     xyToOffsetBitnum (x,y) $ \offset bitnum -> do
         readMem addr offset $ \loaded -> do
-            bitnum2mask bitnum $ \mask -> do
+            bitnum2mask p2tab bitnum $ \mask -> do
                 logicalOr mask loaded $ \updated ->
                     writeMem addr offset updated
 
-bitnum2mask :: Reg -> (Reg -> Asm ()) -> Asm () -- couting bits from 0..7
-bitnum2mask r k = do
-    withInitReg 128 $ \res -> do
-        ifRegNotZero r $ do
-            loopForR (0,r) $ \_ -> do
-                inPlaceShiftR 1 res
-        k res
+bitnum2mask :: Addr -> Reg -> (Reg -> Asm ()) -> Asm () -- couting bits from 0..7
+bitnum2mask p2tab r k = do
+    readMem p2tab r $ \loaded -> do
+        k loaded
 
 zeroBytes :: Addr -> Int -> Asm ()
 zeroBytes a n = do
@@ -216,27 +232,23 @@ mul8 x k = do
 
 div8mul32 :: Reg -> (Reg -> Asm a) -> Asm a
 div8mul32 x k = do
-    copy x $ \y -> do
-        -- can reduce the number of instructions here
-        inPlaceShiftR 3 y
-        inPlaceShiftL 5 y
-        k y
+    withInitReg 0xF8 $ \mask -> do
+        inPlaceAnd mask x
+        inPlaceShiftL 2 mask
+        k mask
 
 div8mul16 :: Reg -> (Reg -> Asm a) -> Asm a
 div8mul16 x k = do
-    copy x $ \y -> do
-        -- can reduce the number of instructions here
-        inPlaceShiftR 3 y
-        inPlaceShiftL 4 y
-        k y
+    withInitReg 0xF8 $ \mask -> do
+        inPlaceAnd mask x
+        inPlaceShiftL 1 mask
+        k mask
 
 div8mul8 :: Reg -> (Reg -> Asm a) -> Asm a
 div8mul8 x k = do
-    copy x $ \y -> do
-        -- can reduce the number of instructions here
-        inPlaceShiftR 3 y
-        inPlaceShiftL 3 y
-        k y
+    withInitReg 0xF8 $ \mask -> do
+        inPlaceAnd mask x
+        k mask
 
 logicalAnd :: Reg -> Reg -> (Reg -> Asm a) -> Asm a
 logicalAnd x y k = do

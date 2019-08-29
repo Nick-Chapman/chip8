@@ -240,3 +240,43 @@ _drawDig num (x,y) = do
     Emit $ OpStoreDigitSpriteI num
     draw 5 (x,y)
 -}
+
+
+{-
+_bitnum2mask :: Addr -> Reg -> (Reg -> Asm ()) -> Asm () -- couting bits from 0..7
+_bitnum2mask _tab r k = do
+    withInitReg 128 $ \res -> do
+        ifRegNotZero r $ do
+            loopForR (0,r) $ \_ -> do
+                inPlaceShiftR 1 res
+        k res
+-}
+
+{-
+_div8mul32 :: Reg -> (Reg -> Asm a) -> Asm a
+_div8mul32 x k = do
+    copy x $ \y -> do
+        -- can reduce the number of instructions here
+        inPlaceShiftR 3 y
+        inPlaceShiftL 5 y
+        k y
+-}
+
+{-
+_div8mul16 :: Reg -> (Reg -> Asm a) -> Asm a
+_div8mul16 x k = do
+    copy x $ \y -> do
+        -- can reduce the number of instructions here
+        inPlaceShiftR 3 y
+        inPlaceShiftL 4 y
+        k y
+-}
+{-
+_div8mul8 :: Reg -> (Reg -> Asm a) -> Asm a
+_div8mul8 x k = do
+    copy x $ \y -> do
+        -- can reduce the number of instructions here
+        inPlaceShiftR 3 y
+        inPlaceShiftL 3 y
+        k y
+-}
