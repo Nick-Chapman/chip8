@@ -8,7 +8,7 @@ module Life (bytes) where
 
 import Prelude hiding (break)
 import Assemble
-import Emulator (incAddr)
+--import Emulator (incAddr)
 
 ----------------------------------------------------------------------
 -- parameters
@@ -20,8 +20,8 @@ xfrag = Xall
 --xfrag = Xquarter
 --xfrag = Xeighth
 
-yfrag = Yall
---yfrag = Yhalf
+--yfrag = Yall
+yfrag = Yhalf
 --yfrag = Yquarter
 
 data Xfrag = Xall | Xhalf | Xquarter | Xeighth
@@ -35,36 +35,42 @@ bytes = assemble asm
 
 asm :: Asm ()
 asm = do
-    _ <- insertBytes $ map (fromIntegral . fromEnum)
-        "[Conway's Life, Gosper Gun. By Nick Chapman]"
+    insertString "[Conway's Life, Gosper Gun. By Nick Chapman]"
     p2tab <- insertBytes [128,64,32,16,8,4,2,1]
-
-    -- write the byte stream to a file. try in other emulators!
-    -- TODO: insert text with info about me
-    --aGlider <- insertBytes gliderData
-    aGosper <- insertBytes gosperData
-
     let a1 = 0xE00 -- how to auto pick these to be after all code?
     let a2 = 0xF00
-
-    --copyMemBytes (length gliderData) aGlider a1
-    -- repeated calls to copyMemBytes duplicates code...
-    let aStart = a1 `incAddr` 1
-    copyMemBytes 9  aGosper                   aStart
-    copyMemBytes 9 (aGosper `incAddr`    9)  (aStart `incAddr`    sizeY)
-    copyMemBytes 9 (aGosper `incAddr` (2*9)) (aStart `incAddr` (2*sizeY))
-    copyMemBytes 9 (aGosper `incAddr` (3*9)) (aStart `incAddr` (3*sizeY))
-    copyMemBytes 9 (aGosper `incAddr` (4*9)) (aStart `incAddr` (4*sizeY))
-
+    setupInitialState a1
     forever $ do
         blatRectToScreen a1
+        --break
         zeroBytes a2 screenSizeInBytes
         lifeStep p2tab a1 a2
         copyMemBytes screenSizeInBytes a2 a1
         --break
         cls
-
     crash
+
+insertString :: String -> Asm ()
+insertString s = do _ <- insertBytes $ map (fromIntegral . fromEnum) s; return ()
+
+setupInitialState :: Addr -> Asm ()
+setupInitialState addr = do
+    aGosper <- insertBytes gosperData
+    WithReg $ \o1 -> do
+        WithReg $ \o2 -> do
+            body <- insertSubroutine $ copyMemBytesOffset 9 (aGosper,o1) (addr,o2)
+            flip mapM_ [0..4] $ \i -> do
+                setReg o1 (fromIntegral (i*9::Int))
+                setReg o2 (fromIntegral (i*sizeY+1))
+                body
+
+copyMemBytesOffset :: Int -> (Addr,Reg) -> (Addr,Reg) -> Asm ()
+copyMemBytesOffset n (a1,o1) (a2,o2) = do
+    loopFor (0, fromIntegral n) $ \i -> do
+        add i o1 $ \offset1 -> do
+            add i o2 $ \offset2 -> do
+                readMem a1 offset1 $ \v -> do
+                    writeMem a2 offset2 v
 
 gosperData :: [Byte]
 gosperData = [

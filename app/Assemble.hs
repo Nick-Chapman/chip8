@@ -30,6 +30,7 @@ module Assemble (
     loopForR,
     waitKeyUp,
 
+    insertSubroutine,
     insertBytes,
 
     inPlaceAnd,
@@ -160,6 +161,14 @@ waitKeyUp nib = do
     WithReg $ \r -> do
         Emit $ OpStoreLit r (byteOfNibs 0 nib)
         forever $ Emit $ OpSkipNotKey r
+
+insertSubroutine :: Asm () -> Asm (Asm ())
+insertSubroutine asm = do
+    q <- Here
+    JumpOver $ do
+        asm
+        Emit $ OpReturn
+    return $ Emit $ OpCall $ nextInstr q
 
 insertBytes :: [Byte] -> Asm Addr
 insertBytes bs = do

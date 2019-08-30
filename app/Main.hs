@@ -49,7 +49,7 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 15
+theScale = 10
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (400,100)
