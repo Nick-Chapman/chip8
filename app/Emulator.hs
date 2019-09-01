@@ -9,7 +9,7 @@ module Emulator (
 
     Byte, byteOfNibs, byteToInt,
     randBytes,
-    printCode,
+    showDisassemble,
 
     ChipState(..),
     initCS,
@@ -32,6 +32,7 @@ module Emulator (
 import Control.Monad (ap,liftM)
 import Control.Monad.State (State,execState,get,put)
 import Data.Bits
+import Data.Char as Char
 import Data.Map.Strict (Map)
 import Data.Maybe (fromMaybe,mapMaybe)
 import Data.Set (Set,(\\))
@@ -46,41 +47,100 @@ import qualified Data.List as List
 ----------------------------------------------------------------------
 -- dissassemble
 
-printCode :: [Byte] -> IO ()
-printCode progBytes = do
-    let instructions = pairUpBytes progBytes
-    let _ = showCode
-    --putStrLn $ showCode baseProgram instructions
-    --putStrLn "--------------------"
-    putStrLn $ showDisassemble baseProgram instructions
-
-showCode :: Addr -> [Instruction] -> String
+{-showCode :: Addr -> [Instruction] -> String
 showCode a is = showCodeLine a xs <> rest
     where (xs,ys) = splitAt size is; size = 8
           rest = if null is then "" else "\n" <> showCode (incAddr a size) ys
 
 showCodeLine :: Addr -> [Instruction] -> String
-showCodeLine a bs = show a <> " : " <> List.intercalate " " (map show bs)
+showCodeLine a bs = show a <> " : " <> List.intercalate " " (map show bs)-}
 
-showDisassemble :: Addr -> [Instruction] -> String
-showDisassemble a0 instructions =
-    unlines $ map (showLocatedOp amap) $ zip addrs ops
+showDisassemble :: [Byte] -> String
+showDisassemble bytes =
+    unlines $ map (showLocatedOp reachSet amap) $ zip addrs ops
     where
+        instructions = pairUpBytes bytes
+        a0 = baseProgram
         addrs = map (incAddr a0) $ map (2*) [0..]
         ops = map decode instructions
-        amap = Map.fromList $ zip allAddrs (map Lab [1..])
-        allAddrs = List.nub $ List.sort (ops >>= opAddresses)
+        amap = Map.fromList $ zip targetAddrs (map Lab [1..])
+        targetAddrs = List.nub $ List.sort (reachableOps >>= opAddresses)
+        reachSet = reachable ops
+
+        reachableOps :: [Op] = map snd $ filter ((`Set.member` reachSet) . fst) $ zip addrs ops
 
 newtype Lab = Lab Int
 instance Show Lab where show (Lab i) = "L" <> printf "%02d" i
 
-showLocatedOp :: Map Addr Lab -> (Addr,Op) -> String
-showLocatedOp aMap (a,op) =
+showLocatedOp :: Set Addr -> Map Addr Lab -> (Addr,Op) -> String
+showLocatedOp reachSet aMap (a,op) =
     show a
-    <> " : "
-    <> case Map.lookup a aMap of Just lab -> show lab; Nothing -> "   "
-    <> " : "
-    <> showOpWithLabels aMap op
+    <> " : " <> case Map.lookup a aMap of Just lab -> show lab; Nothing -> "   "
+    <> " : " <> show (encode op)
+    <> " : " <>
+    if Set.member a reachSet
+    then "     : " <> showOpWithLabels aMap op
+    else showIasChars (encode op) <> " :"
+
+
+
+{-showIasBits :: Instruction -> String
+showIasBits (Instruction b0 b1) = bitString b0 <> " " <> bitString b1
+    where bitString = map (\b -> if b then '1' else '0') . bitsOfByte-}
+
+showIasChars :: Instruction -> String
+showIasChars (Instruction b0 b1) = if length s == 4 then s else "    "
+    where s = show [c0,c1]
+          c0 = Char.chr (byteToInt b0)
+          c1 = Char.chr (byteToInt b1)
+
+showOpWithLabels :: Map Addr Lab -> Op -> String
+showOpWithLabels m op =
+    show op <> (seeLabs $ mapMaybe (flip Map.lookup m) $ opAddresses op)
+    where seeLabs =
+              \case [] -> ""; xs -> " (" <> unwords (map show xs) <> ")"
+
+
+-- static determination of address which contain executable code
+
+reachable :: [Op] -> Set Addr
+reachable ops = reachFromAcc Set.empty [baseProgram] where
+
+    m :: Map Addr Op = Map.fromList $ zip (map (incAddr baseProgram) $ map (2*) [0..]) ops
+
+    step :: Addr -> [Addr]
+    step a = case Map.lookup a m of
+        Nothing -> [] -- the address is outside the static code
+        Just op -> nextPC a op
+
+    reachFromAcc :: Set Addr -> [Addr] -> Set Addr
+    reachFromAcc seen fringe =
+        case fringe of
+            [] -> seen
+            _ -> do
+                let new = filter (not . (`Set.member` seen)) fringe
+                let seen' = seen `Set.union` Set.fromList new
+                let next = new >>= step
+                reachFromAcc seen' next
+
+
+nextPC :: Addr -> Op -> [Addr]
+nextPC pc = \case
+    OpJump a -> [a]
+    OpJumpOffset a -> [a] -- ??
+    OpCall a -> [a,next]
+    OpReturn -> []
+    OpSkipEqLit _ _ -> skippy
+    OpSkipNotEqLit _ _ -> skippy
+    OpSkipEq _ _ -> skippy
+    OpSkipNotEq _ _ -> skippy
+    OpSkipKey _ -> skippy
+    OpSkipNotKey _ -> skippy
+    _ -> [next]
+    where
+        next = nextInstr pc -- +2 (fallthrough)
+        twoAhead = nextInstr next -- +2 (fallthrough)
+        skippy = [next,twoAhead]
 
 ----------------------------------------------------------------------
 -- Instruction
@@ -148,7 +208,8 @@ encode = mkInstruction . \case
     OpStoreBCD (Reg x) -> (0xF,x,3,3)
     OpSaveRegs (Reg x) -> (0xF,x,5,5)
     OpRestoreRegs (Reg x) -> (0xF,x,6,5)
-    OpUnknown i -> error $ show i
+    --OpUnknown i -> error $ show i
+    OpUnknown (Instruction b0 b1) -> (w,x,y,z) where (w,x) = byteNibs b0; (y,z) = byteNibs b1
 
 mkInstruction :: (Nib,Nib,Nib,Nib) ->  Instruction
 mkInstruction (a,b,c,d) = Instruction (byteOfNibs a b) (byteOfNibs c d)
@@ -239,12 +300,6 @@ data Op
     | OpStoreDigitSpriteI Reg
     | OpIncreaseI Reg
     | OpWaitKeyPress Reg
-
-showOpWithLabels :: Map Addr Lab -> Op -> String
-showOpWithLabels m op =
-    show op <> (seeLabs $ mapMaybe (flip Map.lookup m) $ opAddresses op)
-    where seeLabs =
-              \case [] -> ""; xs -> " (" <> unwords (map show xs) <> ")"
 
 opAddresses :: Op -> [Addr]
 opAddresses = \case

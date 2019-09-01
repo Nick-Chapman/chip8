@@ -35,7 +35,7 @@ bytes = assemble asm
 
 asm :: Asm ()
 asm = do
-    insertString "[Conway's Life, Gosper Gun. By Nick Chapman]"
+    insertString "[Conway's Life, Gosper Gun. By Nick Chapman]" -- even message size please!
     p2tab <- insertBytes [128,64,32,16,8,4,2,1]
     let a1 = 0xE00 -- how to auto pick these to be after all code?
     let a2 = 0xF00

@@ -59,25 +59,35 @@ nonFullWindowPos = (400,100)
 main :: IO ()
 main = do
     args@Args{dump,fileOpt} <- parseCommandLine <$> getArgs
-    progBytes <- case fileOpt of Just file -> readBytes file; Nothing -> return Life.bytes
-    writeBytes "last.ch8" progBytes
+    progBytes <-
+        case fileOpt of
+            Right file -> readBytes file
+            Left (name,bytes) -> do
+                writeBytes (name<>".ch8") bytes
+                writeFile (name<>".asm") $ EM.showDisassemble bytes
+                return bytes
     if dump
-        then EM.printCode progBytes
+        then putStrLn $ EM.showDisassemble bytes
         else
         do
             rands <- EM.randBytes
             runChip8 args rands progBytes
 
-data Args = Args { full :: Bool, dump :: Bool, fileOpt :: Maybe FilePath }
+type Internal = (String,[Byte])
+
+data Args = Args { full :: Bool, dump :: Bool, fileOpt :: Either Internal FilePath }
+
+life :: Internal
+life = ("LIFE", Life.bytes)
 
 parseCommandLine :: [String] -> Args -- very basic support!
 parseCommandLine = \case
-    [] -> Args { full = False, dump = False, fileOpt = Nothing }
-    ["--full"] ->  Args { full = True, dump = False, fileOpt = Nothing }
-    ["--dump"] ->  Args { full = False, dump = True, fileOpt = Nothing }
-    [file] ->  Args { full = False, dump = False, fileOpt = Just file }
-    [file,"--full"] ->  Args { full = True, dump = False, fileOpt = Just file }
-    [file,"--dump"] ->  Args { full = False, dump = True, fileOpt = Just file }
+    [] -> Args { full = False, dump = False, fileOpt = Left life }
+    ["--full"] ->  Args { full = True, dump = False, fileOpt = Left life }
+    ["--dump"] ->  Args { full = False, dump = True, fileOpt = Left life }
+    [file] ->  Args { full = False, dump = False, fileOpt = Right file }
+    [file,"--full"] ->  Args { full = True, dump = False, fileOpt = Right file }
+    [file,"--dump"] ->  Args { full = False, dump = True, fileOpt = Right file }
     xs -> error $ show xs
 
 writeBytes :: FilePath -> [Byte] -> IO ()
@@ -99,25 +109,12 @@ runChip8 Args{fileOpt,full} rands progBytes = do
         (\  m -> return $ pictureModel m)
         (\e m -> return $ handleEventModel model0 e m)
         (\d m -> return $ updateModel d m)
-{-
-    Gloss.play dis black fps model0
-        pictureModel
-        (handleEventModel model0)
-        updateModel
--}
-{-
-    let _ = handleEventModel
-    Gloss.simulate dis black fps model0
-        pictureModel
-        --(handleEventModel model0)
-        (const updateModel)
--}
     where
         model0 = initModel (EM.initCS rands progBytes)
         dis = if full then FullScreen else InWindow title size nonFullWindowPos
         size = (xmax * theScale + 2 + 2*extraX, ymax * theScale + 2 + 2*extraY)
         title = "Chip8: " <> name
-        name = case fileOpt of Just file -> file; Nothing -> "MyGame"
+        name = case fileOpt of Right file -> file; Left (name, _) -> name
 
 ----------------------------------------------------------------------
 -- making pictures
@@ -359,7 +356,7 @@ stepBack model = model
         [] -> model
         cs:csHistory -> model { cs, csHistory }
 -}
-    
+
 stepModel :: Model -> ChipState
 stepModel model = do
     let Model{keys,cs,ss} = model
