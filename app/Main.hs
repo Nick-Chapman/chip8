@@ -22,7 +22,7 @@ import qualified Data.Set as Set
 import Emulator(xmax,ymax,Byte,ChipState(..),Screen(..),ChipKeys,byteToInt)
 import qualified Emulator as EM
 
-import Life(bytes)
+import qualified Life(bytes)
 
 --maxHistory :: Int
 --maxHistory = 2 --100
@@ -67,7 +67,7 @@ main = do
                 writeFile (name<>".asm") $ EM.showDisassemble bytes
                 return bytes
     if dump
-        then putStrLn $ EM.showDisassemble bytes
+        then putStrLn $ EM.showDisassemble progBytes
         else
         do
             rands <- EM.randBytes
