@@ -171,16 +171,16 @@ countNeighbours :: Addr -> (Addr,Reg,Reg) -> (Reg -> Asm ()) -> Asm ()
 countNeighbours p2tab (a,x,y) k = do
     withInitReg 0 $ \count -> do
         foreachCellNeigbour (x,y) $ do
-            -- the body of this foreach is duplicated 8 times. can we share? call/ret
             readCell p2tab a (x,y) $ \v -> do
                 ifRegNotZero v $
                     incrementReg count
         k count
 
 foreachCellNeigbour :: (Reg,Reg) -> Asm () -> Asm ()
-foreachCellNeigbour (x,y) act = do
+foreachCellNeigbour (x,y) act0 = do
     withInitReg maskXv $ \maskX -> do
         withInitReg maskYv $ \maskY -> do
+            act <- insertSubroutine act0 -- avoid code duplication
             let wrapX = inPlaceAnd x maskX
             let wrapY = inPlaceAnd y maskY
             incrementReg x; wrapX; act
