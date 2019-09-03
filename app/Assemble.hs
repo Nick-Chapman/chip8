@@ -31,6 +31,7 @@ module Assemble (
     waitKeyUp,
 
     insertSubroutine,
+    insertSubroutineLater,
     insertBytes,
 
     inPlaceAnd,
@@ -53,6 +54,7 @@ module Assemble (
 
 import Prelude hiding (break)
 import Control.Monad (ap,liftM)
+import Control.Monad.Fix (MonadFix,mfix)
 
 import Emulator(
     Instruction(..),
@@ -170,6 +172,22 @@ insertSubroutine asm = do
         Emit $ OpReturn
     return $ Emit $ OpCall $ nextInstr q
 
+
+insertSubroutineLater :: forall a. Asm () -> (Asm () -> Asm a) -> Asm a
+insertSubroutineLater asm k = do
+    (res,_,_) <- mfix $ \p -> do
+        let (_,addr,after) = p
+        let call :: Asm () = do Emit $ OpCall addr
+        res <- k call
+        jump after
+        q1 <- Here
+        asm
+        Emit $ OpReturn
+        q2 <- Here
+        return (res,q1,q2)
+    return res
+
+
 insertBytes :: [Byte] -> Asm Addr
 insertBytes bs = do
     q <- Here
@@ -258,6 +276,11 @@ assembleAsm q free asm = do
             let j2 = OpJump q2
             (q2,(), bEncode j1 ++ ops1 ++ bEncode j2 ++ ops2)
 
+        Mfix f -> do
+            let (q1,x,ops) = assembleAsm q free (f x)
+            (q1,x,ops)
+
+
 bEncode :: Op -> [Byte]
 bEncode op = instructionsToBytes [encode op]
 
@@ -270,7 +293,9 @@ data Asm a where
     WithReg :: (Reg -> Asm a) -> Asm a
     JumpOver :: Asm a -> Asm a
     Switch :: Asm () -> Asm () -> Asm ()
+    Mfix :: (a -> Asm a) -> Asm a
 
 instance Functor Asm where fmap = liftM
 instance Applicative Asm where pure = return; (<*>) = ap
 instance Monad Asm where return = Ret; (>>=) = Bind
+instance MonadFix Asm where mfix = Mfix
