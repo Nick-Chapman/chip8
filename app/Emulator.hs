@@ -25,7 +25,7 @@ module Emulator (
     Regs,
     regValue,
     Nib, nibKey,
-    Addr, baseProgram, nextInstr, incAddr,
+    Addr, baseProgram, nextInstr, addAddr,
 
     ) where
 
@@ -50,7 +50,7 @@ import qualified Data.List as List
 {-showCode :: Addr -> [Instruction] -> String
 showCode a is = showCodeLine a xs <> rest
     where (xs,ys) = splitAt size is; size = 8
-          rest = if null is then "" else "\n" <> showCode (incAddr a size) ys
+          rest = if null is then "" else "\n" <> showCode (addAddr a size) ys
 
 showCodeLine :: Addr -> [Instruction] -> String
 showCodeLine a bs = show a <> " : " <> List.intercalate " " (map show bs)-}
@@ -61,7 +61,7 @@ showDisassemble bytes =
     where
         instructions = pairUpBytes bytes
         a0 = baseProgram
-        addrs = map (incAddr a0) $ map (2*) [0..]
+        addrs = map (addAddr a0) $ map (2*) [0..]
         ops = map decode instructions
         amap = Map.fromList $ zip targetAddrs (map Lab [1..])
         targetAddrs = List.nub $ List.sort (reachableOps >>= opAddresses)
@@ -106,7 +106,7 @@ showOpWithLabels m op =
 reachable :: [Op] -> Set Addr
 reachable ops = reachFromAcc Set.empty [baseProgram] where
 
-    m :: Map Addr Op = Map.fromList $ zip (map (incAddr baseProgram) $ map (2*) [0..]) ops
+    m :: Map Addr Op = Map.fromList $ zip (map (addAddr baseProgram) $ map (2*) [0..]) ops
 
     step :: Addr -> [Addr]
     step a = case Map.lookup a m of
@@ -367,7 +367,7 @@ exec i = case i of
     OpCls -> Cls
     OpReturn -> PopStack >>= SetPC
     OpJump a -> SetPC a
-    OpJumpOffset a -> Read (Reg 0) >>= (SetPC . incAddr a . byteToInt)
+    OpJumpOffset a -> Read (Reg 0) >>= (SetPC . addAddr a . byteToInt)
     OpCall a -> do PC >>= PushStack; SetPC a
     OpSkipEqLit x b -> do a <- Read x; skipInstructionIf (eqByte a b)
     OpSkipNotEqLit x b -> do a <- Read x; skipInstructionIf (not $ eqByte a b)
@@ -429,23 +429,23 @@ exec i = case i of
         b <- Read x
         let (h,t,u) = bcd b
         WriteMem a h
-        WriteMem (incAddr a 1) t
-        WriteMem (incAddr a 2) u
+        WriteMem (addAddr a 1) t
+        WriteMem (addAddr a 2) u
 
     OpSaveRegs x -> do
         a <- ReadI
         let n = unReg x
         let rs = map Reg [0..n]
-        mapM_ (\r -> Read r >>= WriteMem (incAddr a $ nibToInt $ unReg r)) rs
-        --StoreI (incAddr a (n+1)) --???
+        mapM_ (\r -> Read r >>= WriteMem (addAddr a $ nibToInt $ unReg r)) rs
+        --StoreI (addAddr a (n+1)) --???
         return ()
 
     OpRestoreRegs x -> do
         a <- ReadI
         let n = unReg x
         let rs = map Reg [0..n]
-        mapM_ (\r -> ReadMem (incAddr a $ nibToInt $ unReg r) >>= Write r) rs
-        --StoreI (incAddr a (n+1)) --???
+        mapM_ (\r -> ReadMem (addAddr a $ nibToInt $ unReg r) >>= Write r) rs
+        --StoreI (addAddr a (n+1)) --???
         return ()
 
     OpStoreDigitSpriteI x ->
@@ -454,7 +454,7 @@ exec i = case i of
     OpIncreaseI x -> do
         a <- ReadI
         b <- Read x
-        StoreI (incAddr a $ byteToInt b)
+        StoreI (addAddr a $ byteToInt b)
 
     OpWaitKeyPress x -> -- TODO: first, should wait for keys to be released
         AnyKey >>= \case Nothing -> Stall
@@ -623,7 +623,7 @@ type Mem = Map Addr Byte
 instructionLookup :: Addr -> Mem -> Instruction
 instructionLookup a mem  = Instruction b1 b2
     where b1 = fromMaybe byte0 $ Map.lookup a mem
-          b2 = fromMaybe byte0 $ Map.lookup (incAddr a 1) mem
+          b2 = fromMaybe byte0 $ Map.lookup (addAddr a 1) mem
 
 initMem :: [Byte] -> Mem
 initMem bytes = Map.fromList $ do
@@ -632,7 +632,7 @@ initMem bytes = Map.fromList $ do
     return $ (addrOfInt i, b)
 
 hexDigitSpriteAddr :: Nib -> Addr
-hexDigitSpriteAddr n = incAddr baseHexSpriteData (5 * nibToInt n)
+hexDigitSpriteAddr n = addAddr baseHexSpriteData (5 * nibToInt n)
 
 digitData :: [Byte]
 digitData = [
@@ -699,13 +699,13 @@ addr :: Nib -> Nib -> Nib -> Addr
 addr = Addr -- TODO: inline if keep this rep
 
 nextInstr :: Addr -> Addr
-nextInstr a = incAddr a 2
+nextInstr a = addAddr a 2
 
 backupInstr :: Addr -> Addr
-backupInstr a = incAddr a (-2)
+backupInstr a = addAddr a (-2)
 
-incAddr :: Addr -> Int -> Addr
-incAddr a i = addrOfInt (addrToInt a + i)
+addAddr :: Addr -> Int -> Addr
+addAddr a i = addrOfInt (addrToInt a + i)
 
 addrOfInt :: Int -> Addr
 addrOfInt i = if bad then error $ "addrOfInt: " <> show i else a

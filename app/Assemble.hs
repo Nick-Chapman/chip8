@@ -3,6 +3,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE RecursiveDo #-}
 
 module Assemble (
 
@@ -33,6 +34,7 @@ module Assemble (
     insertSubroutine,
     insertSubroutineLater,
     insertBytes,
+    insertBytesLater,
 
     inPlaceAnd,
     inPlaceOr,
@@ -64,8 +66,7 @@ import Emulator(
     Byte, byteOfNibs,
     Nib,
     baseProgram,
-    nextInstr,
-    incAddr,
+    addAddr,
     encode,
     )
 
@@ -77,30 +78,30 @@ halt = forever $ return ()
 break :: Asm()
 break = do
     waitKeyUp 4
-    Emit $ OpWaitKeyPress (Reg 0)
+    emit $ OpWaitKeyPress (Reg 0)
 
 crash :: Asm ()
 crash = jump 0
 
 jump :: Addr -> Asm ()
-jump a = Emit $ OpJump a
+jump a = emit $ OpJump a
 
 draw :: Nib -> (Reg,Reg) -> Asm ()
-draw h (x,y) = Emit $ OpDraw x y h
+draw h (x,y) = emit $ OpDraw x y h
 
 cls ::  Asm ()
-cls = Emit $ OpCls
+cls = emit $ OpCls
 
 forever :: Asm () -> Asm ()
 forever asm = do
     q <- Here
     asm
-    Emit $ OpJump q
+    emit $ OpJump q
 
 withInitReg :: Byte -> (Reg -> Asm a) -> Asm a
 withInitReg v k = do
     WithReg $ \x -> do
-        Emit $ OpStoreLit x v
+        emit $ OpStoreLit x v
         k x
 
 copy :: Reg -> (Reg -> Asm a) -> Asm a
@@ -110,26 +111,26 @@ copy x k = do
         k y
 
 copyReg :: Reg -> Reg -> Asm ()
-copyReg source target  = Emit $ OpStore target source
+copyReg source target = emit $ OpStore target source
 
 setReg :: Reg -> Byte -> Asm ()
-setReg x v = Emit $ OpStoreLit x v
+setReg x v = emit $ OpStoreLit x v
 
 incrementReg :: Reg -> Asm ()
-incrementReg reg = Emit $ OpAddLit reg 1
+incrementReg reg = emit $ OpAddLit reg 1
 
 decrementReg :: Reg -> Asm ()
-decrementReg reg = Emit $ OpAddLit reg 0xFF
+decrementReg reg = emit $ OpAddLit reg 0xFF
 
 ifRegIs :: Byte -> Reg -> Asm () -> Asm ()
 ifRegIs n r act = do
-    Emit $ OpSkipEqLit r n
-    JumpOver act
+    emit $ OpSkipEqLit r n
+    jumpOver act
 
 ifRegNotZero :: Reg -> Asm () -> Asm ()
 ifRegNotZero r asm = do
-    Emit $ OpSkipNotEqLit r 0
-    JumpOver asm
+    emit $ OpSkipNotEqLit r 0
+    jumpOver asm
 
 _loopFor :: (Int,Int) -> (Reg -> Asm ()) -> Asm ()
 _loopFor (a,b) k = do
@@ -137,7 +138,7 @@ _loopFor (a,b) k = do
         forever $ do
             k x
             incrementReg x
-            Emit $ OpSkipEqLit x (fromIntegral b)
+            emit $ OpSkipEqLit x (fromIntegral b)
 
 loopFor :: (Int,Int) -> (Reg -> Asm ()) -> Asm ()
 loopFor (a,b) k = do
@@ -146,8 +147,8 @@ loopFor (a,b) k = do
         q <- Here
         incrementReg x
         k x
-        Emit $ OpSkipEqLit x (fromIntegral $ b-1)
-        Emit $ OpJump q
+        emit $ OpSkipEqLit x (fromIntegral $ b-1)
+        emit $ OpJump q
 
 
 loopForR :: (Int,Reg) -> (Reg -> Asm ()) -> Asm ()
@@ -156,60 +157,68 @@ loopForR (a,r) k = do
         forever $ do
             k x
             incrementReg x
-            Emit $ OpSkipEq x r
+            emit $ OpSkipEq x r
 
 waitKeyUp :: Nib -> Asm ()
 waitKeyUp nib = do
     WithReg $ \r -> do
-        Emit $ OpStoreLit r (byteOfNibs 0 nib)
-        forever $ Emit $ OpSkipNotKey r
+        emit $ OpStoreLit r (byteOfNibs 0 nib)
+        forever $ emit $ OpSkipNotKey r
 
 insertSubroutine :: Asm () -> Asm (Asm ())
-insertSubroutine asm = do
+insertSubroutine asm = mdo
+    jump after
+    loc <- subroutine asm
+    after <- Here
+    return $ call loc
+
+insertSubroutineLater :: Asm () -> Asm (Asm ())
+insertSubroutineLater asm = mdo
+    loc <- Later $ subroutine asm
+    return $ call loc
+
+subroutine :: Asm () -> Asm Addr
+subroutine body = do
     q <- Here
-    JumpOver $ do
-        asm
-        Emit $ OpReturn
-    return $ Emit $ OpCall $ nextInstr q
+    body
+    emit $ OpReturn
+    return q
 
-
-insertSubroutineLater :: forall a. Asm () -> (Asm () -> Asm a) -> Asm a
-insertSubroutineLater asm k = do
-    (res,_,_) <- mfix $ \p -> do
-        let (_,addr,after) = p
-        let call :: Asm () = do Emit $ OpCall addr
-        res <- k call
-        jump after
-        q1 <- Here
-        asm
-        Emit $ OpReturn
-        q2 <- Here
-        return (res,q1,q2)
-    return res
-
+call :: Addr -> Asm ()
+call q = emit $ OpCall q
 
 insertBytes :: [Byte] -> Asm Addr
-insertBytes bs = do
-    q <- Here
-    JumpOver $ Bytes bs
-    return (nextInstr q)
+insertBytes bs = mdo
+    jump q2
+    q1 <- Here
+    Emit bs
+    q2 <- Here
+    return q1
+
+insertBytesLater :: [Byte] -> Asm Addr
+insertBytesLater bs = do
+    Later $ do
+        q <- Here
+        Emit bs
+        return q
+
 
 inPlaceAnd :: Reg -> Reg -> Asm ()
-inPlaceAnd x y = Emit $ OpAnd x y
+inPlaceAnd x y = emit $ OpAnd x y
 
 inPlaceOr :: Reg -> Reg -> Asm ()
-inPlaceOr x y = Emit $ OpOr x y
+inPlaceOr x y = emit $ OpOr x y
 
 inPlaceAdd :: Reg -> Reg -> Asm ()
-inPlaceAdd x y = Emit $ OpAdd x y
+inPlaceAdd x y = emit $ OpAdd x y
 
 inPlaceShiftL :: Int -> Reg -> Asm ()
 inPlaceShiftL n r = if n < 0 then error "inPlaceShiftL" else
-    sequence_ (replicate n $ Emit $ OpShiftL r r)
+    sequence_ (replicate n $ emit $ OpShiftL r r)
 
 inPlaceShiftR :: Int -> Reg -> Asm ()
 inPlaceShiftR n r = if n < 0 then error "inPlaceShiftR" else
-    sequence_ (replicate n $ Emit $ OpShiftR r r)
+    sequence_ (replicate n $ emit $ OpShiftR r r)
 
 readMem :: Addr -> Reg -> (Reg -> Asm ()) -> Asm ()
 readMem addr offset k = do
@@ -219,7 +228,7 @@ readMem addr offset k = do
 
 readMemAtI :: (Reg -> Asm ()) -> Asm ()
 readMemAtI k = do
-    Emit $ OpRestoreRegs (Reg 0)
+    emit $ OpRestoreRegs (Reg 0)
     WithReg $ \r -> do
         copyReg (Reg 0) r
         k r
@@ -233,69 +242,75 @@ writeMem addr offset v = do
 writeMemAtI :: Reg -> Asm ()
 writeMemAtI r = do
     copyReg r (Reg 0)
-    Emit $ OpSaveRegs (Reg 0)
+    emit $ OpSaveRegs (Reg 0)
 
 setI :: Addr -> Asm ()
-setI addr = Emit $ OpStoreI addr
+setI addr = emit $ OpStoreI addr
 
 increaseI :: Reg -> Asm ()
-increaseI r = Emit $ OpIncreaseI r
+increaseI r = emit $ OpIncreaseI r
+
+jumpOver :: Asm a -> Asm a
+jumpOver asm = mdo
+    jump q
+    res <- asm
+    q <- Here
+    return res
+
+emit :: Op -> Asm ()
+emit op = Emit [b1,b2] where Instruction b1 b2 = encode op
+
 
 ----------------------------------------------------------------------
--- assemble
-
-assemble :: Asm () -> [Byte]
-assemble asm = bytes where -- instructionsToBytes $ map encode ops where
-    regs = [Reg 1..Reg 14]
-    (_,(),bytes) = assembleAsm baseProgram regs asm
-
-instructionsToBytes :: [Instruction] -> [Byte]
-instructionsToBytes is = do Instruction b1 b2 <- is; [b1,b2]
-
-assembleAsm :: Addr -> [Reg] -> Asm a -> (Addr,a,[Byte])
-assembleAsm q free asm = do
-    case asm of
-        Ret a -> (q,a,[])
-        Bind m f -> do
-            let (q1,a,ops1) = assembleAsm q free m
-            let (q2,b,ops2) = assembleAsm q1 free $ f a
-            (q2,b,ops1<>ops2)
-        Here -> (q,q,[])
-        Bytes bs -> (incAddr q (length bs), (), bs)
-        Emit op -> (nextInstr q, (), bEncode op)
-        WithReg k -> case free of [] -> error "free=[]"; next:free' -> assembleAsm q free' (k next)
-        JumpOver m -> do
-            let (q',a,ops) = assembleAsm (nextInstr q) free m
-            let j = OpJump q'
-            (q',a, bEncode j ++ ops)
-
-        Switch m1 m2 -> do
-            let (q1,(),ops1) = assembleAsm (nextInstr (nextInstr q)) free m1
-            let (q2,(),ops2) = assembleAsm q1 free m2
-            let j1 = OpJump q1
-            let j2 = OpJump q2
-            (q2,(), bEncode j1 ++ ops1 ++ bEncode j2 ++ ops2)
-
-        Mfix f -> do
-            let (q1,x,ops) = assembleAsm q free (f x)
-            (q1,x,ops)
-
-
-bEncode :: Op -> [Byte]
-bEncode op = instructionsToBytes [encode op]
+-- Asm
 
 data Asm a where
     Ret :: a -> Asm a
     Bind :: Asm a -> (a -> Asm b) -> Asm b
-    Here :: Asm Addr
-    Bytes :: [Byte] -> Asm ()
-    Emit :: Op -> Asm ()
-    WithReg :: (Reg -> Asm a) -> Asm a
-    JumpOver :: Asm a -> Asm a
-    Switch :: Asm () -> Asm () -> Asm ()
     Mfix :: (a -> Asm a) -> Asm a
+    Here :: Asm Addr
+    Emit :: [Byte] -> Asm ()
+    Later :: Asm a -> Asm a
+    WithReg :: (Reg -> Asm a) -> Asm a
 
 instance Functor Asm where fmap = liftM
 instance Applicative Asm where pure = return; (<*>) = ap
 instance Monad Asm where return = Ret; (>>=) = Bind
 instance MonadFix Asm where mfix = Mfix
+
+----------------------------------------------------------------------
+-- assemble
+
+assemble :: Asm () -> [Byte]
+assemble asm = runEmitter baseProgram (assembleAsm asm)
+
+type Emitter a = [Reg] -> Addr -> Addr -> (a,[Byte],[Byte])
+
+runEmitter :: Addr -> Emitter () -> [Byte]
+runEmitter q1 e = do
+    let free = [Reg 1..Reg 14]
+    let q2 = baseProgram `addAddr` length bs1
+        ((),bs1,bs2) = e free q1 q2
+    bs1++bs2
+
+assembleAsm :: Asm a -> Emitter a
+assembleAsm asm free q1 q2 = do
+    case asm of
+        Ret a -> (a,[],[])
+        Bind m f -> do
+            let (x,bs1,bs2) = assembleAsm m free q1 q2
+            let q1' = q1 `addAddr` length bs1
+            let q2' = q2 `addAddr` length bs2
+            let (y,bs3,bs4) = assembleAsm (f x) free q1' q2'
+            (y,bs1++bs3,bs2++bs4)
+        Here -> (q1,[],[])
+        Emit bs -> ((),bs,[])
+        WithReg k ->
+            case free of [] -> error "free=[]"; next:free -> assembleAsm (k next) free q1 q2
+        Mfix f -> do
+            let x@(a,_,_) = assembleAsm (f a) free q1 q2
+            x
+        Later m -> do
+            let (x,bs1,bs2) = assembleAsm m free q2 q3
+                q3 = q2 `addAddr` length bs1
+            (x,[],bs1++bs2)

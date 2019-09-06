@@ -36,7 +36,7 @@ bytes = assemble asm
 asm :: Asm ()
 asm = do
     insertString "[Conway's Life, Gosper Gun. By Nick Chapman]" -- even message size please!
-    p2tab <- insertBytes [128,64,32,16,8,4,2,1]
+    p2tab <- insertBytesLater [128,64,32,16,8,4,2,1]
     let a1 = 0xE00 -- how to auto pick these to be after all code?
     let a2 = 0xF00
     setupInitialState a1
@@ -55,10 +55,10 @@ insertString s = do _ <- insertBytes $ map (fromIntegral . fromEnum) s; return (
 
 setupInitialState :: Addr -> Asm ()
 setupInitialState addr = do
-    aGosper <- insertBytes gosperData
+    aGosper <- insertBytesLater gosperData
     WithReg $ \o1 -> do
         WithReg $ \o2 -> do
-            body <- insertSubroutine $ copyMemBytesOffset 9 (aGosper,o1) (addr,o2)
+            body <- insertSubroutineLater $ copyMemBytesOffset 9 (aGosper,o1) (addr,o2)
             flip mapM_ [0..4] $ \i -> do
                 setReg o1 (fromIntegral (i*9::Int))
                 setReg o2 (fromIntegral (i*sizeY+1))
@@ -180,7 +180,7 @@ foreachCellNeigbour :: (Reg,Reg) -> Asm () -> Asm ()
 foreachCellNeigbour (x,y) act0 = do
     withInitReg maskXv $ \maskX -> do
         withInitReg maskYv $ \maskY -> do
-            act <- insertSubroutine act0 -- avoid code duplication
+            act <- insertSubroutineLater act0 -- avoid code duplication
             let wrapX = inPlaceAnd x maskX
             let wrapY = inPlaceAnd y maskY
             incrementReg x; wrapX; act
