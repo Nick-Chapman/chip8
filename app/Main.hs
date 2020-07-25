@@ -37,7 +37,7 @@ delayTickHertz :: Int
 delayTickHertz = 60 -- this is fixed in the chip8 spec
 
 initialIPS :: Int -- instructions/second
-initialIPS = 500_000 -- this can be varied dynamically. This is x1000 a normal speed!
+initialIPS = 500 -- this can be varied dynamically.
 
 ----------------------------------------------------------------------
 -- parameter of the Gloss simulation
@@ -49,7 +49,7 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 10
+theScale = 18
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (400,100)
