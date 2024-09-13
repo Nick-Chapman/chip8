@@ -4,7 +4,7 @@ description:         Chip8 interpreter in Haskell
 license:             BSD3
 author:              Nick Chapman
 maintainer:          nic@amadido.co.uk
-github:              https://github.com/Nick-Chapman/chip8.git
+github:              Nick-Chapman/chip8.git
 
 extra-source-files:
 - README.md

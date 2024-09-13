@@ -334,7 +334,7 @@ stepForward model = do
         else commitStep model cs2
 
 stop :: Model -> Model
-stop model@ Model{ss} = model { ss = ss { mode = Stopped } }
+stop model@Model{ss} = model { ss = ss { mode = Stopped } }
 
 noProgress :: Model -> ChipState -> Bool
 noProgress model cs2 = do
