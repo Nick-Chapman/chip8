@@ -495,8 +495,8 @@ data Action a where
     Stall :: Action ()
 
 instance Functor Action where fmap = liftM
-instance Applicative Action where pure = return; (<*>) = ap
-instance Monad Action where return = Ret; (>>=) = Bind
+instance Applicative Action where pure = Ret; (<*>) = ap
+instance Monad Action where (>>=) = Bind
 
 ----------------------------------------------------------------------
 -- runAction
@@ -726,7 +726,7 @@ data Byte = Byte !Nib !Nib -- 8 bit, 2 nibbles
     deriving (Eq)
 
 instance Num Byte where
-    (+) = undefined
+    (+) b1 b2 = byteOfInt (byteToInt b1 + byteToInt b2)
     (*) = undefined
     abs = undefined
     signum = undefined

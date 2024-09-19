@@ -14,7 +14,7 @@ import Data.Set (Set)
 import Data.Word8 (Word8)
 import Graphics.Gloss.Interface.IO.Game as Gloss
 --import Graphics.Gloss as Gloss
-import Prelude hiding (pred)
+import Prelude hiding (pred,pi)
 import System.Environment (getArgs)
 import qualified Data.ByteString as BS
 import qualified Data.Set as Set
@@ -22,7 +22,8 @@ import qualified Data.Set as Set
 import Emulator(xmax,ymax,Byte,ChipState(..),Screen(..),ChipKeys,byteToInt)
 import qualified Emulator as EM
 
-import qualified Life(bytes)
+import qualified Life (bytes)
+import qualified Pi (bytes)
 
 --maxHistory :: Int
 --maxHistory = 2 --100
@@ -49,45 +50,50 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 18
+theScale = 8
 
 nonFullWindowPos :: (Int,Int)
-nonFullWindowPos = (400,100)
+nonFullWindowPos = (0,0)
 
 ----------------------------------------------------------------------
 
 main :: IO ()
 main = do
-    args@Args{dump,fileOpt} <- parseCommandLine <$> getArgs
+    args@Args{exec,dump,fileOpt} <- parseCommandLine <$> getArgs
     progBytes <-
         case fileOpt of
             Right file -> readBytes file
             Left (name,bytes) -> do
                 writeBytes (name<>".ch8") bytes
                 writeFile (name<>".asm") $ EM.showDisassemble bytes
+                --putStrLn $ EM.showDisassemble bytes
                 return bytes
     if dump
         then putStrLn $ EM.showDisassemble progBytes
-        else
-        do
+        else pure ()
+    if exec then do
             rands <- EM.randBytes
             runChip8 args rands progBytes
+      else pure ()
 
 type Internal = (String,[Byte])
 
-data Args = Args { full :: Bool, dump :: Bool, fileOpt :: Either Internal FilePath }
+data Args = Args { exec :: Bool, full :: Bool, dump :: Bool, fileOpt :: Either Internal FilePath }
 
-life :: Internal
+pi,life :: Internal
 life = ("LIFE", Life.bytes)
+pi = ("pi", Pi.bytes)
 
-parseCommandLine :: [String] -> Args -- very basic support!
+parseCommandLine :: [String] -> Args -- very basic support! -- TODO: sort this out this mess
 parseCommandLine = \case
-    [] -> Args { full = False, dump = False, fileOpt = Left life }
-    ["--full"] ->  Args { full = True, dump = False, fileOpt = Left life }
-    ["--dump"] ->  Args { full = False, dump = True, fileOpt = Left life }
-    [file] ->  Args { full = False, dump = False, fileOpt = Right file }
-    [file,"--full"] ->  Args { full = True, dump = False, fileOpt = Right file }
-    [file,"--dump"] ->  Args { full = False, dump = True, fileOpt = Right file }
+    ["--pi"] -> Args { exec = True, full = False, dump = False, fileOpt = Left pi }
+    ["--pi","--assemble"] -> Args { exec = False, full = False, dump = False, fileOpt = Left pi }
+    [] -> Args { exec = True, full = False, dump = False, fileOpt = Left life }
+    ["--full"] ->  Args { exec = True, full = True, dump = False, fileOpt = Left life }
+    ["--dump"] ->  Args { exec = False, full = False, dump = True, fileOpt = Left life }
+    [file] ->  Args { exec = True, full = False, dump = False, fileOpt = Right file }
+    [file,"--full"] ->  Args { exec = True, full = True, dump = False, fileOpt = Right file }
+    [file,"--dump"] ->  Args { exec = False, full = False, dump = True, fileOpt = Right file }
     xs -> error $ show xs
 
 writeBytes :: FilePath -> [Byte] -> IO ()

@@ -9,6 +9,8 @@ module Assemble (
 
     Reg(..), Addr, Byte, --reexport
 
+    emit,
+
     halt,
     break,
     crash,
@@ -47,6 +49,7 @@ module Assemble (
 
     setI,
     increaseI,
+    storeDigitSpriteI,
 
     Asm(..),
 
@@ -250,6 +253,9 @@ setI addr = emit $ OpStoreI addr
 increaseI :: Reg -> Asm ()
 increaseI r = emit $ OpIncreaseI r
 
+storeDigitSpriteI :: Reg -> Asm ()
+storeDigitSpriteI r = emit $ OpStoreDigitSpriteI r
+
 jumpOver :: Asm a -> Asm a
 jumpOver asm = mdo
     jump q
@@ -274,8 +280,8 @@ data Asm a where
     WithReg :: (Reg -> Asm a) -> Asm a
 
 instance Functor Asm where fmap = liftM
-instance Applicative Asm where pure = return; (<*>) = ap
-instance Monad Asm where return = Ret; (>>=) = Bind
+instance Applicative Asm where pure = Ret; (<*>) = ap
+instance Monad Asm where (>>=) = Bind
 instance MonadFix Asm where mfix = Mfix
 
 ----------------------------------------------------------------------

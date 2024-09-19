@@ -20,8 +20,8 @@ xfrag = Xall
 --xfrag = Xquarter
 --xfrag = Xeighth
 
---yfrag = Yall
-yfrag = Yhalf
+yfrag = Yall
+--yfrag = Yhalf
 --yfrag = Yquarter
 
 data Xfrag = Xall | Xhalf | Xquarter | Xeighth
