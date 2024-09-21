@@ -7,7 +7,7 @@
 
 module Emulator (
 
-    Byte, byteOfNibs, byteToInt,
+    Byte(..), byteOfNibs, byteToInt,
     randBytes,
     showDisassemble,
 
@@ -24,8 +24,8 @@ module Emulator (
     Reg(..),
     Regs,
     regValue,
-    Nib, nibKey,
-    Addr, baseProgram, nextInstr, addAddr,
+    Nib(..), nibKey,
+    Addr(..), baseProgram, nextInstr, addAddr, addrOfInt
 
     ) where
 
@@ -686,7 +686,7 @@ data Addr = Addr !Nib !Nib !Nib -- 12 bits, 3 nibble
     deriving (Eq,Ord)
 
 instance Num Addr where
-    (+) = undefined
+    (+) a1 a2 = addrOfInt (addrToInt a1 + addrToInt a2)
     (*) = undefined
     abs = undefined
     signum = undefined

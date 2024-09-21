@@ -55,6 +55,9 @@ module Assemble (
 
     assemble,
 
+    waitKey, incReg, readTemp, storeTemp, readI,storeI,
+    Wide,withWide,setWa,addWa,setWr,shiftLw,setIw,readW,incWide,
+
     ) where
 
 import Prelude hiding (break)
@@ -65,9 +68,9 @@ import Emulator(
     Instruction(..),
     Op(..),
     Reg(..),
-    Addr,
-    Byte, byteOfNibs,
-    Nib,
+    Addr(..), addrOfInt,
+    Byte(..), byteOfNibs,
+    Nib(..),
     baseProgram,
     addAddr,
     encode,
@@ -320,3 +323,110 @@ assembleAsm asm free q1 q2 = do
             let (x,bs1,bs2) = assembleAsm m free q2 q3
                 q3 = q2 `addAddr` length bs1
             (x,[],bs1++bs2)
+
+
+
+
+padEven :: Num a => [a] -> [a]
+padEven xs = xs ++ (if length xs `mod` 2 == 0 then [] else [0])
+
+_insertBytesEven :: [Byte] -> Asm Addr
+_insertBytesEven xs = insertBytes (padEven xs)
+
+_insertStringZeroTerm :: String -> Asm Addr
+_insertStringZeroTerm s =
+  insertBytesLater (padEven (map (fromIntegral . fromEnum) s ++ [0]))
+
+
+incReg :: Reg -> Byte -> Asm ()
+incReg reg n = emit $ OpAddLit reg n
+
+-- haskell sim does not wait until released. but bbc sim gets it right
+waitKey :: Asm ()
+waitKey = emit $ OpWaitKeyPress rTemp
+
+rTemp :: Reg
+rTemp = Reg 0
+
+readTemp :: Asm ()
+readTemp = emit $ OpRestoreRegs rTemp
+
+storeTemp :: Asm ()
+storeTemp = do
+  emit $ OpSaveRegs rTemp
+
+readI :: Reg -> Asm ()
+readI r = do
+  readTemp
+  copyReg rTemp r
+
+storeI :: Reg -> Asm ()
+storeI r = do
+  copyReg r rTemp
+  storeTemp
+
+data Wide = Wide Reg Reg
+
+withWide :: (Wide -> Asm a) -> Asm a
+withWide f =
+    WithReg $ \r1 -> do
+      WithReg $ \r2 -> do
+        f (Wide r1 r2)
+
+setWa :: Wide -> Addr -> Asm () -- set a wide register from a literal address
+--setWa (Wide rhi rlo) (Addr n1 n2 n3) = do -- <<loop>>. why?
+setWa w a = do
+  let (Wide rhi rlo) = w
+  let (Addr n1 n2 n3) = a
+  let hi = Byte N0 n1
+  let lo = Byte n2 n3
+  setReg rhi hi
+  setReg rlo lo
+
+addWa :: Wide -> Addr -> Asm ()
+addWa w a = do
+  let (Wide rhi rlo) = w
+  let (Addr n1 n2 n3) = a
+  setReg rTemp (Byte n2 n3)
+  inPlaceAdd rlo rTemp
+  emit $ OpSkipEqLit (Reg NF) 0
+  incrementReg rhi
+  setReg rTemp (Byte N0 n1)
+  inPlaceAdd rhi rTemp
+
+setWr :: Wide -> Reg -> Asm ()
+setWr w r = do
+  let (Wide rhi rlo) = w
+  setReg rhi 0
+  copyReg r rlo
+
+shiftLw :: Wide -> Asm ()
+shiftLw w = do
+  let (Wide rhi rlo) = w
+  emit $ OpShiftL rhi rhi
+  setReg rTemp 1
+  emit $ OpShiftL rlo rlo
+  emit $ OpSkipEqLit (Reg NF) 0
+  inPlaceOr rhi rTemp
+
+setIw :: Wide -> Asm ()
+setIw wm = mdo
+  let (Wide rhi rlo) = wm
+  setReg rTemp 0xA0
+  inPlaceOr rTemp rhi
+  setI smc; storeTemp
+  setI (smc+1) ; storeI rlo
+  smc <- Here ; setI (addrOfInt 0) -- This is the template instruction we modify
+  pure ()
+
+readW :: Wide -> Reg -> Asm ()
+readW w r = do
+  setIw w
+  readI r
+
+incWide :: Wide -> Asm ()
+incWide w = do
+  let (Wide rhi rlo) = w
+  incrementReg rlo
+  emit $ OpSkipNotEqLit rlo 0
+  incrementReg rhi

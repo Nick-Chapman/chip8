@@ -24,6 +24,7 @@ import qualified Emulator as EM
 
 import qualified Life (bytes)
 import qualified Pi (bytes)
+import qualified Scroll (bytes)
 
 --maxHistory :: Int
 --maxHistory = 2 --100
@@ -38,7 +39,7 @@ delayTickHertz :: Int
 delayTickHertz = 60 -- this is fixed in the chip8 spec
 
 initialIPS :: Int -- instructions/second
-initialIPS = 500 -- this can be varied dynamically.
+initialIPS = 1000 --500 -- this can be varied dynamically.
 
 ----------------------------------------------------------------------
 -- parameter of the Gloss simulation
@@ -50,7 +51,7 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 8
+theScale = 15
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (0,0)
@@ -73,19 +74,22 @@ main = do
         else pure ()
     if exec then do
             rands <- EM.randBytes
-            runChip8 args rands progBytes
+            runChip8 args rands (progBytes ++ map (fromIntegral . fromEnum) "What")
       else pure ()
 
 type Internal = (String,[Byte])
 
 data Args = Args { exec :: Bool, full :: Bool, dump :: Bool, fileOpt :: Either Internal FilePath }
 
-pi,life :: Internal
+scroll,pi,life :: Internal
 life = ("LIFE", Life.bytes)
 pi = ("pi", Pi.bytes)
+scroll = ("scroll", Scroll.bytes)
 
 parseCommandLine :: [String] -> Args -- very basic support! -- TODO: sort this out this mess
 parseCommandLine = \case
+    ["--scroll"] -> Args { exec = True, full = False, dump = False, fileOpt = Left scroll }
+    ["--scroll","--assemble"] -> Args { exec = False, full = False, dump = False, fileOpt = Left scroll }
     ["--pi"] -> Args { exec = True, full = False, dump = False, fileOpt = Left pi }
     ["--pi","--assemble"] -> Args { exec = False, full = False, dump = False, fileOpt = Left pi }
     [] -> Args { exec = True, full = False, dump = False, fileOpt = Left life }

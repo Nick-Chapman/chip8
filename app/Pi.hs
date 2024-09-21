@@ -9,7 +9,6 @@
 module Pi (bytes) where
 
 import Prelude hiding (break)
-import Emulator (Op(OpAddLit,OpRestoreRegs))
 import Assemble
 
 bytes :: [Byte]
@@ -129,17 +128,3 @@ displayPI rd rx ry rn = do
   --scrollup 40
 
   crash
-
-
-
-readI :: Reg -> Asm ()
-readI r = do
-  emit $ OpRestoreRegs (Reg 0)
-  copyReg (Reg 0) r
-
-incReg :: Reg -> Byte -> Asm ()
-incReg reg n = emit $ OpAddLit reg n
-
-_insertBytesEven :: [Byte] -> Asm Addr
-_insertBytesEven xs =
-  insertBytes (xs ++ (if length xs `mod` 2 == 0 then [] else [0]))
