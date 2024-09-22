@@ -21,6 +21,7 @@ module Assemble (
     decrementReg,
 
     ifRegIs,
+    ifRegIsNot,
     ifRegNotZero,
     loopFor,
     loopForR,
@@ -48,8 +49,10 @@ module Assemble (
 
     assemble,
 
-    waitKey, incReg, readTemp, storeTemp, readI,storeI,
+    waitKey, incReg, rTemp, readTemp, storeTemp, readI,storeI,
     Wide,withWide,setWa,addWa,setWr,shiftLw,setIw,readW,incWide,
+    insertString,
+    insertStringZeroTerm
 
     ) where
 
@@ -124,6 +127,11 @@ decrementReg reg = emit $ OpAddLit reg 0xFF
 ifRegIs :: Byte -> Reg -> Asm () -> Asm ()
 ifRegIs n r act = do
     emit $ OpSkipEqLit r n
+    jumpOver act
+
+ifRegIsNot :: Byte -> Reg -> Asm () -> Asm ()
+ifRegIsNot n r act = do
+    emit $ OpSkipNotEqLit r n
     jumpOver act
 
 ifRegNotZero :: Reg -> Asm () -> Asm ()
@@ -323,13 +331,11 @@ assembleAsm asm free q1 q2 = do
 padEven :: Num a => [a] -> [a]
 padEven xs = xs ++ (if length xs `mod` 2 == 0 then [] else [0])
 
-_insertBytesEven :: [Byte] -> Asm Addr
-_insertBytesEven xs = insertBytes (padEven xs)
+insertString :: String -> Asm Addr
+insertString s = insertBytes (padEven (map (fromIntegral . fromEnum) s))
 
-_insertStringZeroTerm :: String -> Asm Addr
-_insertStringZeroTerm s =
-  insertBytesLater (padEven (map (fromIntegral . fromEnum) s ++ [0]))
-
+insertStringZeroTerm :: String -> Asm Addr
+insertStringZeroTerm s = insertString (s ++ "\0")
 
 incReg :: Reg -> Byte -> Asm ()
 incReg reg n = emit $ OpAddLit reg n

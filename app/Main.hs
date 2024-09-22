@@ -20,6 +20,7 @@ import qualified Pi (bytes)
 import qualified Scroll (bytes)
 import qualified Three (bytes)
 import qualified Evens (bytes)
+import qualified Bf (bytes)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -49,7 +50,7 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 15
+theScale = 9
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (0,0)
@@ -88,7 +89,12 @@ internals =
   , ("scroll-what", Scroll.bytes ++ map (fromIntegral . fromEnum) "What?")
   , ("three", Three.bytes)
   , ("evens", Evens.bytes)
+  , ("bf-reverse", Bf.bytes reverse)
+  , ("bf-fibs", Bf.bytes fibs)
   ]
+  where
+    reverse = "[-]>,[.>,]++++++++++.<[.<]"
+    fibs = ">++++++++++>+>+[[+++++[>++++++++<-]>.<++++++[>--------<-]+<<<]>.>>[[-]<[>+<-]>>[<<+>+>-]<[>+<-[>+<-[>+<-[>+<-[>+<-[>+<- [>+<-[>+<-[>+<-[>[-]>+>+<<<-[>+<-]]]]]]]]]]]+>>>]<<<] "
 
 parseCommandLine :: [String] -> Args
 parseCommandLine = loop args0

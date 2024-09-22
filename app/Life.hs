@@ -29,7 +29,7 @@ bytes = assemble asm
 
 asm :: Asm ()
 asm = do
-    insertString "[Conway's Life, Gosper Gun. By Nick Chapman]" -- even message size please!
+    _ <- insertString "[Conway's Life, Gosper Gun. By Nick Chapman]"
     p2tab <- insertBytesLater [128,64,32,16,8,4,2,1]
     let a1 = 0xE00 -- how to auto pick these to be after all code?
     let a2 = 0xF00
@@ -43,9 +43,6 @@ asm = do
         --break
         cls
     crash
-
-insertString :: String -> Asm ()
-insertString s = do _ <- insertBytes $ map (fromIntegral . fromEnum) s; return ()
 
 setupInitialState :: Addr -> Asm ()
 setupInitialState addr = do

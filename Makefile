@@ -1,3 +1,3 @@
 
 top:
-	stack run evens
+	stack run bf-fibs

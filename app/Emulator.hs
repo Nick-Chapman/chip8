@@ -1,6 +1,6 @@
 module Emulator (
 
-    Byte(..), byteOfNibs, byteToInt,
+    Byte(..), byteOfNibs, byteToInt, byteOfInt,
     randBytes,
     showDisassemble,
 
@@ -18,7 +18,7 @@ module Emulator (
     Regs,
     regValue,
     Nib(..), nibKey,
-    Addr(..), baseProgram, nextInstr, addAddr, addrOfInt
+    Addr(..), baseProgram, nextInstr, addAddr, addrOfInt, addrToInt
 
     ) where
 
