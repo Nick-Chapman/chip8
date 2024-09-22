@@ -18,6 +18,7 @@ import qualified Emulator as EM
 import qualified Life (bytes)
 import qualified Pi (bytes)
 import qualified Scroll (bytes)
+import qualified Three (bytes)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -70,7 +71,7 @@ main = do
         else pure ()
     if exec then do
             rands <- EM.randBytes
-            runChip8 args rands (progBytes ++ map (fromIntegral . fromEnum) "What?")
+            runChip8 args rands progBytes
       else pure ()
 
 type Internal = (String,[Byte])
@@ -82,7 +83,10 @@ internals =
   Map.fromList
   [ ("life", Life.bytes)
   , ("pi", Pi.bytes)
-  , ("scroll", Scroll.bytes) ]
+  , ("scroll", Scroll.bytes)
+  , ("scroll-what", Scroll.bytes ++ map (fromIntegral . fromEnum) "What?")
+  , ("three", Three.bytes)
+  ]
 
 parseCommandLine :: [String] -> Args
 parseCommandLine = loop args0
