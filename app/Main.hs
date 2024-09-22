@@ -19,6 +19,7 @@ import qualified Life (bytes)
 import qualified Pi (bytes)
 import qualified Scroll (bytes)
 import qualified Three (bytes)
+import qualified Evens (bytes)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -86,6 +87,7 @@ internals =
   , ("scroll", Scroll.bytes)
   , ("scroll-what", Scroll.bytes ++ map (fromIntegral . fromEnum) "What?")
   , ("three", Three.bytes)
+  , ("evens", Evens.bytes)
   ]
 
 parseCommandLine :: [String] -> Args

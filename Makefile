@@ -1,3 +1,3 @@
 
 top:
-	stack run three
+	stack run evens
