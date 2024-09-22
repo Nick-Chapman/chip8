@@ -1,11 +1,3 @@
--- TODO: move these to package.yaml
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE RecursiveDo #-}
-
 module Pi (bytes) where
 
 import Prelude hiding (break)

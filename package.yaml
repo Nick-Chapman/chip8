@@ -8,27 +8,59 @@ github:              Nick-Chapman/chip8.git
 
 extra-source-files:
 - README.md
-- ChangeLog.md
 
 dependencies:
+- ansi-terminal
+- array
+- async
 - base >= 4.7 && < 5
 - bytestring
+- clock
+- containers
 - containers
 - extra
 - gloss
+- haskeline
 - mtl
 - random
 - split
+- text
+- time
+- transformers
 - word8
 
+default-extensions:
+- BangPatterns
+- BinaryLiterals
+- DataKinds
+- DeriveFunctor
+- DuplicateRecordFields
+- EmptyCase
+- FlexibleContexts
+- GADTs
+- GeneralizedNewtypeDeriving
+- InstanceSigs
+- LambdaCase
+- MultiWayIf
+- NamedFieldPuns
+- NondecreasingIndentation
+- NumericUnderscores
+- QualifiedDo
+- RankNTypes
+- RecordWildCards #Emulator
+- RecursiveDo
+- ScopedTypeVariables
+- StandaloneDeriving
+- TypeApplications
+- TypeFamilies
+- UndecidableInstances
+
 ghc-options:
+- -Werror
 - -Wall
 - -Wno-name-shadowing
-#- -threaded
-#- -rtsopts
-#- -with-rtsopts=-N
 
 executables:
-  chip8-exe:
+  chip8.exe:
     main:                Main.hs
     source-dirs:         app

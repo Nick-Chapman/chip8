@@ -1,4 +1,3 @@
-{-# LANGUAGE BinaryLiterals #-}
 module FontData(fontData) where
 
 import Emulator (Byte)

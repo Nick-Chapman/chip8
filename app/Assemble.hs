@@ -1,10 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE RecursiveDo #-}
-
 module Assemble (
 
     Reg(..), Addr, Byte, --reexport
@@ -68,7 +61,7 @@ import Emulator(
     Instruction(..),
     Op(..),
     Reg(..),
-    Addr(..), addrOfInt,
+    Addr(..), --addrOfInt,
     Byte(..), byteOfNibs,
     Nib(..),
     baseProgram,
@@ -416,7 +409,7 @@ setIw wm = mdo
   inPlaceOr rTemp rhi
   setI smc; storeTemp
   setI (smc+1) ; storeI rlo
-  smc <- Here ; setI (addrOfInt 0) -- This is the template instruction we modify
+  smc <- Here ; Emit [0x55,0x55] --setI (addrOfInt 0) -- This is the template instruction we modify
   pure ()
 
 readW :: Wide -> Reg -> Asm ()

@@ -1,11 +1,3 @@
--- TODO: move these to package.yaml
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE RecursiveDo #-}
-
 -- Goal for this example is to scroll a text message strored in mem.
 -- And to develop SMC techniques needed to manipulate I.
 module Scroll (bytes) where
