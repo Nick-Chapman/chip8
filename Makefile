@@ -1,11 +1,11 @@
 
-top: scroll
+all: life pi scroll
 
 life:
-	stack run
+	stack run -- life --assemble
 
 pi:
-	stack run -- --pi
+	stack run -- pi --assemble
 
 scroll:
-	stack run -- --scroll
+	stack run -- scroll  --assemble

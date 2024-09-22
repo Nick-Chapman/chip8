@@ -716,7 +716,7 @@ addrToInt (Addr a b c) = (256 * nibToInt a) + (16 * nibToInt b) + nibToInt c
 
 
 data Byte = Byte !Nib !Nib -- 8 bit, 2 nibbles
-    deriving (Eq)
+    deriving (Eq,Ord)
 
 instance Num Byte where
     (+) b1 b2 = byteOfInt (byteToInt b1 + byteToInt b2)

@@ -19,6 +19,9 @@ import qualified Life (bytes)
 import qualified Pi (bytes)
 import qualified Scroll (bytes)
 
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+
 --maxHistory :: Int
 --maxHistory = 2 --100
 
@@ -58,8 +61,8 @@ main = do
         case fileOpt of
             Right file -> readBytes file
             Left (name,bytes) -> do
-                writeBytes (name<>".ch8") bytes
-                writeFile (name<>".asm") $ EM.showDisassemble bytes
+                writeBytes ("gen/"<>name<>".ch8") bytes
+                writeFile ("gen/"<>name<>".asm") $ EM.showDisassemble bytes
                 --putStrLn $ EM.showDisassemble bytes
                 return bytes
     if dump
@@ -67,31 +70,38 @@ main = do
         else pure ()
     if exec then do
             rands <- EM.randBytes
-            runChip8 args rands (progBytes ++ map (fromIntegral . fromEnum) "What")
+            runChip8 args rands (progBytes ++ map (fromIntegral . fromEnum) "What?")
       else pure ()
 
 type Internal = (String,[Byte])
 
 data Args = Args { exec :: Bool, full :: Bool, dump :: Bool, fileOpt :: Either Internal FilePath }
 
-scroll,pi,life :: Internal
-life = ("LIFE", Life.bytes)
-pi = ("pi", Pi.bytes)
-scroll = ("scroll", Scroll.bytes)
+internals :: Map String [Byte]
+internals =
+  Map.fromList
+  [ ("life", Life.bytes)
+  , ("pi", Pi.bytes)
+  , ("scroll", Scroll.bytes) ]
 
-parseCommandLine :: [String] -> Args -- very basic support! -- TODO: sort this out this mess
-parseCommandLine = \case
-    ["--scroll"] -> Args { exec = True, full = False, dump = False, fileOpt = Left scroll }
-    ["--scroll","--assemble"] -> Args { exec = False, full = False, dump = False, fileOpt = Left scroll }
-    ["--pi"] -> Args { exec = True, full = False, dump = False, fileOpt = Left pi }
-    ["--pi","--assemble"] -> Args { exec = False, full = False, dump = False, fileOpt = Left pi }
-    [] -> Args { exec = True, full = False, dump = False, fileOpt = Left life }
-    ["--full"] ->  Args { exec = True, full = True, dump = False, fileOpt = Left life }
-    ["--dump"] ->  Args { exec = False, full = False, dump = True, fileOpt = Left life }
-    [file] ->  Args { exec = True, full = False, dump = False, fileOpt = Right file }
-    [file,"--full"] ->  Args { exec = True, full = True, dump = False, fileOpt = Right file }
-    [file,"--dump"] ->  Args { exec = False, full = False, dump = True, fileOpt = Right file }
-    xs -> error $ show xs
+parseCommandLine :: [String] -> Args
+parseCommandLine = loop args0
+  where
+    def = Right "games/BRIX"
+    args0 = Args { exec = True, dump = False, full = False, fileOpt = def }
+    loop args = \case
+      [] -> args
+      "--assemble":xs -> loop (args { exec = False, dump = False }) xs
+      "--dump":xs -> loop (args { dump = True }) xs
+      "--full":xs -> loop (args { full = True }) xs
+      xs@('-':_):_ -> error (show xs)
+      name:xs ->
+        loop (args { fileOpt = thing }) xs
+        where thing =
+                case Map.lookup name internals of
+                  Just bytes -> Left (name,bytes)
+                  Nothing -> Right name
+
 
 writeBytes :: FilePath -> [Byte] -> IO ()
 writeBytes path xs = do
