@@ -14,17 +14,15 @@ bytes bfCode= assemble $ mdo
         WithReg $ \r4 -> do
           WithReg $ \r5 -> do
             executeBF prog progSize mem r1 r2 r3 r4 r5
-  prog <- insertString bfCode
-  mem <- Here
+  prog <- insertBytesLater (bytesOfString bfCode)
+  mem <- Later Here
   pure ()
 
-panic :: Byte -> Asm ()
-panic b = Emit [0,b]
+--panic :: Byte -> Asm ()
+--panic b = Emit [0,b]
 
 executeBF :: Addr -> Byte -> Addr -> Reg -> Reg -> Reg -> Reg -> Reg -> Asm ()
 executeBF prog progSize mem pc mp x y nest = mdo
-
-  box <- insertBytes [0,0,0x40,0,0]
 
   setReg nest 0
   setReg x 1
@@ -36,7 +34,14 @@ executeBF prog progSize mem pc mp x y nest = mdo
   let incrementTemp = incReg rTemp 1
   let decrementTemp = incReg rTemp 255
 
-  let isOp c code = ifRegIs (fromIntegral $ Char.ord c) rTemp code
+  let
+    isOp c code =
+      ifRegIs (fromIntegral $ Char.ord c) rTemp code
+
+    isNotOp :: Char -> Op -> Asm ()
+    isNotOp c maybeSkipped = do
+      emit (OpSkipEqLit rTemp (fromIntegral $ Char.ord c))
+      emit maybeSkipped
 
   jump start
 
@@ -44,50 +49,51 @@ executeBF prog progSize mem pc mp x y nest = mdo
   nextOp
   start <- Here
 
+  readOp <- insertSubroutineLater $ do
+    setI prog
+    increaseI pc
+    readTemp
+
+  readCell <- insertSubroutineLater $ do
+    setI mem
+    increaseI mp
+    readTemp
+
+  storeCell <- insertSubroutineLater $ do
+    setI mem
+    increaseI mp
+    storeTemp
+
   let
-
-    readOp = do
-      setI prog
-      increaseI pc
-      readTemp
-
-    readCell = do
-      setI mem
-      increaseI mp
-      readTemp
-
-    storeCell = do
-      setI mem
-      increaseI mp
-      storeTemp
+    maskReg r1 v = WithReg $ \r2 -> do setReg r2 v ; inPlaceAnd r1 r2
 
     dot = mdo
       readCell
-      let
-        newline = do
-          setI box
-          jump doDraw
 
-      ifRegIs 10 rTemp $ newline
+      ifRegIs 10 rTemp $ do
+        setI box
+        jump doDraw
+
+      maskReg rTemp 0xF
       storeDigitSpriteI rTemp
       doDraw <- Here
       draw 5 (x,y)
       incReg x 5
 
-      ifRegIs 61 x $ do
-        setReg x 1
-        incReg y 6
-        ifRegIs 31 y $ do
-          setReg y 1
-          --waitKey
-          cls
+      emit (OpSkipEqLit x 61) ; emit (OpJump next)
+      setReg x 1
+      incReg y 6
+      emit (OpSkipEqLit y 31) ; emit (OpJump next)
+      setReg y 1
+      --waitKey
+      cls
       jump next
 
     comma = do
       waitKey
       storeCell
-      -- next line just compensates for but in haskell chip8 emulator
-      loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
+      --compensates for bug in haskell chip8 emulator...
+      --loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
       jump next
 
     plus = do
@@ -112,27 +118,29 @@ executeBF prog progSize mem pc mp x y nest = mdo
 
     lsquare = do
       readCell
-      ifRegIs 0 rTemp $ do
-        loop <- Here
-        nextOp
-        ifRegIs progSize pc $ panic 0xA
-        readOp
-        isOp '[' $ do incReg nest 1; jump loop
-        isOp ']' $ do ifRegIs 0 nest (jump next); incReg nest 255; jump loop
-        jump loop
-      jump next
+      emit (OpSkipEqLit rTemp 0) ; emit (OpJump next)
+      scan <- Here
+      nextOp
+      --ifRegIs progSize pc $ panic 0xA -- save 6 bytes - test/skip/panic
+      readOp
+      isOp '[' $ do incReg nest 1; jump scan
+      isNotOp ']' (OpJump scan)
+      emit (OpSkipNotEqLit nest 0) ; emit (OpJump next)
+      incReg nest 255
+      jump scan
 
     rsquare = do
       readCell
-      ifRegIsNot 0 rTemp $ do
-        loop <- Here
-        prevOp
-        ifRegIs 255 pc $ panic 0xB
-        readOp
-        isOp ']' $ do incReg nest 1; jump loop
-        isOp '[' $ do ifRegIs 0 nest (jump next); incReg nest 255; jump loop
-        jump loop
-      jump next
+      emit (OpSkipNotEqLit rTemp 0) ; emit (OpJump next)
+      scan <- Here
+      prevOp
+      --ifRegIs 255 pc $ panic 0xB -- save another 6 bytes
+      readOp
+      isOp ']' $ do incReg nest 1; jump scan
+      isNotOp '[' (OpJump scan)
+      emit (OpSkipNotEqLit nest 0) ; emit (OpJump next)
+      incReg nest 255
+      jump scan
 
   ifRegIs progSize pc $ halt
   readOp
@@ -143,5 +151,8 @@ executeBF prog progSize mem pc mp x y nest = mdo
   isOp '<' $ langle
   isOp '>' $ rangle
   isOp '[' $ lsquare
-  isOp ']' $ rsquare
-  jump next
+  isNotOp ']' (OpJump next)
+  rsquare
+
+  box <- Here; Emit [0,0,0x40,0,0,0]
+  pure ()

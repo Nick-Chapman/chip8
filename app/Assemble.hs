@@ -51,6 +51,8 @@ module Assemble (
 
     waitKey, incReg, rTemp, readTemp, storeTemp, readI,storeI,
     Wide,withWide,setWa,addWa,setWr,shiftLw,setIw,readW,incWide,
+
+    bytesOfString,
     insertString,
     insertStringZeroTerm
 
@@ -331,8 +333,11 @@ assembleAsm asm free q1 q2 = do
 padEven :: Num a => [a] -> [a]
 padEven xs = xs ++ (if length xs `mod` 2 == 0 then [] else [0])
 
+bytesOfString :: String -> [Byte]
+bytesOfString s = map (fromIntegral . fromEnum) s
+
 insertString :: String -> Asm Addr
-insertString s = insertBytes (padEven (map (fromIntegral . fromEnum) s))
+insertString s = insertBytes (padEven (bytesOfString s))
 
 insertStringZeroTerm :: String -> Asm Addr
 insertStringZeroTerm s = insertString (s ++ "\0")
