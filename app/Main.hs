@@ -66,19 +66,19 @@ main = do
             Left (name,bytes) -> do
                 writeBytes ("gen/"<>name<>".ch8") bytes
                 writeFile ("gen/"<>name<>".asm") $ EM.showDisassemble bytes
-                --putStrLn $ EM.showDisassemble bytes
                 return bytes
-    if dump
-        then putStrLn $ EM.showDisassemble progBytes
-        else pure ()
-    if exec then do
-            rands <- EM.randBytes
-            runChip8 args rands progBytes
-      else pure ()
+    if dump then putStrLn $ EM.showDisassemble progBytes else pure ()
+    if exec then do rands <- EM.randBytes; runChip8 args rands progBytes else pure ()
 
 type Internal = (String,[Byte])
 
-data Args = Args { exec :: Bool, full :: Bool, dump :: Bool, fileOpt :: Either Internal FilePath }
+data Args = Args
+  { exec :: Bool -- execute the simulator
+  , full :: Bool -- .. in full screen
+  , dump :: Bool -- dump the chip ASM to stdout
+    -- (ASM and .ch8) is always wrtten to gen/ for Internal games (when assembled from Haskell)
+  , fileOpt :: Either Internal FilePath
+  } deriving Show
 
 internals :: Map String [Byte]
 internals =
@@ -104,7 +104,7 @@ parseCommandLine = loop args0
     loop args = \case
       [] -> args
       "--assemble":xs -> loop (args { exec = False, dump = False }) xs
-      "--dump":xs -> loop (args { dump = True }) xs
+      "--dump":xs -> loop (args { dump = True, exec = False }) xs
       "--full":xs -> loop (args { full = True }) xs
       xs@('-':_):_ -> error (show xs)
       name:xs ->
