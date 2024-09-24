@@ -89,7 +89,7 @@ internals =
   [ ("life", return Life.bytes)
   , ("pi", return Pi.bytes)
   , ("scroll", return Scroll.bytes)
-  , ("scroll-what", return (Scroll.bytes ++ map (fromIntegral . fromEnum) "What?"))
+  , ("scroll-what", return (Scroll.bytes ++ map (fromIntegral . fromEnum) "Message for you."))
   , ("three", return Three.bytes)
   , ("evens", return Evens.bytes)
   , mkBfInternal "reverse"
