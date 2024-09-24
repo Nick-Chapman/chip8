@@ -20,7 +20,8 @@ import qualified Pi (bytes)
 import qualified Scroll (bytes)
 import qualified Three (bytes)
 import qualified Evens (bytes)
-import qualified Bf (bytes)
+--import qualified Bf (bytes)
+import qualified Bfw (bytes)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -63,14 +64,15 @@ main = do
     progBytes <-
         case fileOpt of
             Right file -> readBytes file
-            Left (name,bytes) -> do
+            Left (name,io) -> do
+                bytes <- io
                 writeBytes ("gen/"<>name<>".ch8") bytes
                 writeFile ("gen/"<>name<>".asm") $ EM.showDisassemble bytes
                 return bytes
     if dump then putStrLn $ EM.showDisassemble progBytes else pure ()
     if exec then do rands <- EM.randBytes; runChip8 args rands progBytes else pure ()
 
-type Internal = (String,[Byte])
+type Internal = (String,IO [Byte])
 
 data Args = Args
   { exec :: Bool -- execute the simulator
@@ -78,23 +80,34 @@ data Args = Args
   , dump :: Bool -- dump the chip ASM to stdout
     -- (ASM and .ch8) is always wrtten to gen/ for Internal games (when assembled from Haskell)
   , fileOpt :: Either Internal FilePath
-  } deriving Show
+  }
 
-internals :: Map String [Byte]
+
+internals :: Map String (IO [Byte])
 internals =
   Map.fromList
-  [ ("life", Life.bytes)
-  , ("pi", Pi.bytes)
-  , ("scroll", Scroll.bytes)
-  , ("scroll-what", Scroll.bytes ++ map (fromIntegral . fromEnum) "What?")
-  , ("three", Three.bytes)
-  , ("evens", Evens.bytes)
-  , ("bf-reverse", Bf.bytes reverse)
-  , ("bf-fibs", Bf.bytes fibs)
+  [ ("life", return Life.bytes)
+  , ("pi", return Pi.bytes)
+  , ("scroll", return Scroll.bytes)
+  , ("scroll-what", return (Scroll.bytes ++ map (fromIntegral . fromEnum) "What?"))
+  , ("three", return Three.bytes)
+  , ("evens", return Evens.bytes)
+  , mkBfInternal "reverse"
+  , mkBfInternal "fibs"
+  , mkBfInternal "collatz"
+  , mkBfInternal "factor"
   ]
-  where
-    reverse = "[-]>,[.>,]++++++++++.<[.<]"
-    fibs = ">++++++++++>+>+[[+++++[>++++++++<-]>.<++++++[>--------<-]+<<<]>.>>[[-]<[>+<-]>>[<<+>+>-]<[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>[-]>+>+<<<-[>+<-]]]]]]]]]]]+>>>]<<<]"
+
+
+mkBfInternal :: String -> (String, IO [Byte])
+mkBfInternal name =
+  ("bf-" ++ name,
+    do
+      bfProg <- readFile ("bf/" ++ name ++ ".b")
+      return (Bfw.bytes (filter keepBFchars bfProg))
+  )
+  where keepBFchars c = c `elem` "+-<>.,[]"
+
 
 parseCommandLine :: [String] -> Args
 parseCommandLine = loop args0

@@ -1,3 +1,3 @@
 
 top:
-	stack run bf-fibs
+	stack run bf-collatz

@@ -50,7 +50,7 @@ module Assemble (
     assemble,
 
     waitKey, incReg, rTemp, readTemp, storeTemp, readI,storeI,
-    Wide,withWide,setWa,addWa,setWr,shiftLw,setIw,readW,incWide,
+    Wide,withWide,setWa,addWa,setWr,shiftLw,setIw,readW,incWide,decWide,
 
     bytesOfString,
     insertString,
@@ -434,3 +434,11 @@ incWide w = do
   incrementReg rlo
   emit $ OpSkipNotEqLit rlo 0
   incrementReg rhi
+
+decWide :: Wide -> Asm ()
+decWide w = do
+  let (Wide rhi rlo) = w
+  emit $ OpSkipNotEqLit rlo 0
+  decrementReg rhi
+  decrementReg rlo
+
