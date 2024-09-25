@@ -145,13 +145,13 @@ interpreter objLoadAddr = mdo
       incWide pc
       incWide pc
 
-    bumpSP = do
+    {-bumpSP = do
       incWide sp
       incWide sp
 
     unbumpSP = do
       decWide sp
-      decWide sp
+      decWide sp-}
 
     setPC op = do
       let Wide oph opl = op
@@ -162,34 +162,43 @@ interpreter objLoadAddr = mdo
       copyReg opl pcl
       addWide pc slide
 
-    incI = do
+    {-incI = do
       setReg rTemp 1
-      increaseI rTemp
+      increaseI rTemp-}
 
     pushPCtoStack = do
       let Wide pch pcl = pc
       setIw sp
       storeI pch
-      incI
+      incWide sp
+      --incI
+      setIw sp
       storeI pcl
-      bumpSP
+      incWide sp
+      --bumpSP
       pure ()
 
     pullPCfromStack = do
       let Wide pch pcl = pc
-      unbumpSP
+      --unbumpSP
+      decWide sp
+      setIw sp
+      readI pcl
+      --incI
+      decWide sp
       setIw sp
       readI pch
-      incI
-      readI pcl
       pure ()
 
     readPC = do
       let Wide oph opl = op
       setIw pc
       readI oph
-      incI
+      incWide pc
+      --incI
+      setIw pc
       readI opl
+      decWide pc
 
   let
     saveAllRegs = emit $ OpSaveRegs (Reg 15)
