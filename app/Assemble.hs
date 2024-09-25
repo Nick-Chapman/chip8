@@ -35,6 +35,7 @@ module Assemble (
     inPlaceAnd,
     inPlaceOr,
     inPlaceAdd,
+    inPlaceSub,
     inPlaceShiftL,
     inPlaceShiftR,
 
@@ -50,7 +51,7 @@ module Assemble (
     assemble,
 
     waitKey, incReg, rTemp, readTemp, storeTemp, readI,storeI,
-    Wide,withWide,setWa,addWa,setWr,shiftLw,setIw,readW,incWide,decWide,
+    Wide(..),withWide,setWa,addWide,subWide,addWa,setWr,shiftLw,setIw,readW,incWide,decWide,
 
     bytesOfString,
     insertString,
@@ -114,6 +115,7 @@ copy x k = do
         copyReg x y
         k y
 
+-- TODO: better to take args in opposite order
 copyReg :: Reg -> Reg -> Asm ()
 copyReg source target = emit $ OpStore target source
 
@@ -126,6 +128,7 @@ incrementReg reg = emit $ OpAddLit reg 1
 decrementReg :: Reg -> Asm ()
 decrementReg reg = emit $ OpAddLit reg 0xFF
 
+-- TODO: better to take Reg before Byte
 ifRegIs :: Byte -> Reg -> Asm () -> Asm ()
 ifRegIs n r act = do
     emit $ OpSkipEqLit r n
@@ -220,6 +223,9 @@ inPlaceOr x y = emit $ OpOr x y
 
 inPlaceAdd :: Reg -> Reg -> Asm ()
 inPlaceAdd x y = emit $ OpAdd x y
+
+inPlaceSub :: Reg -> Reg -> Asm ()
+inPlaceSub x y = emit $ OpSub x y
 
 inPlaceShiftL :: Int -> Reg -> Asm ()
 inPlaceShiftL n r = if n < 0 then error "inPlaceShiftL" else
@@ -387,6 +393,24 @@ setWa w a = do
   setReg rhi hi
   setReg rlo lo
 
+addWide :: Wide -> Wide -> Asm () -- in place
+addWide w1 w2 = do
+  let (Wide hi1 lo1) = w1
+  let (Wide hi2 lo2) = w2
+  inPlaceAdd lo1 lo2
+  emit $ OpSkipEqLit (Reg NF) 0
+  incrementReg hi1
+  inPlaceAdd hi1 hi2
+
+subWide :: Wide -> Wide -> Asm () -- in place
+subWide w1 w2 = do
+  let (Wide hi1 lo1) = w1
+  let (Wide hi2 lo2) = w2
+  inPlaceSub lo1 lo2
+  emit $ OpSkipNotEqLit (Reg NF) 0
+  decrementReg hi1
+  inPlaceSub hi1 hi2
+
 addWa :: Wide -> Addr -> Asm ()
 addWa w a = do
   let (Wide rhi rlo) = w
@@ -420,7 +444,7 @@ setIw wm = mdo
   inPlaceOr rTemp rhi
   setI smc; storeTemp
   setI (smc+1) ; storeI rlo
-  smc <- Here ; Emit [0x55,0x55] --setI (addrOfInt 0) -- This is the template instruction we modify
+  smc <- Here ; Emit [0x55,0x55]
   pure ()
 
 readW :: Wide -> Reg -> Asm ()

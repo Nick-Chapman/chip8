@@ -22,6 +22,7 @@ import qualified Three (bytes)
 import qualified Evens (bytes)
 --import qualified Bf (bytes)
 import qualified Bfw (bytes)
+import qualified Self (bytes)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -39,7 +40,7 @@ delayTickHertz :: Int
 delayTickHertz = 60 -- this is fixed in the chip8 spec
 
 initialIPS :: Int -- instructions/second
-initialIPS = 1000 --500 -- this can be varied dynamically.
+initialIPS = 16000 --500 -- this can be varied dynamically.
 
 ----------------------------------------------------------------------
 -- parameter of the Gloss simulation
@@ -51,7 +52,7 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 9
+theScale = 12
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (0,0)
@@ -96,6 +97,14 @@ internals =
   , mkBfInternal "fibs"
   , mkBfInternal "collatz"
   , mkBfInternal "factor"
+  , ("self", do
+        --xs <- readBytes "gen/evens.ch8"
+        --xs <- readBytes "games/MAZE"
+        --xs <- readBytes "games/PONG2"
+        --xs <- readBytes "games/BRIX"
+        let xs = []
+        return (Self.bytes ++ xs)
+    )
   ]
 
 
