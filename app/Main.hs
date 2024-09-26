@@ -99,10 +99,14 @@ registered =
   , ("pi", Pi.bytes)
   , ("scroll", Scroll.bytes)
   , ("scroll-what", Scroll.bytes ++ map (fromIntegral . fromEnum) "Message for you.")
+  , ("scroll-message", Scroll.bytes ++ map (fromIntegral . fromEnum) message)
   , ("mini-self", Self.bytes Self.NoControl)
   , ("self", Self.bytes Self.WithPause)
   , ("bf", Bfw.bytes [])
   ]
+
+  where message = "CHIP-8 is an interpreted programming language, developed by Joseph Weisbecker on his 1802 microprocessor. It was initially used on the COSMAC VIP and Telmac 1800, which were 8-bit microcomputers made in the mid-1970s. CHIP-8 was designed to be easy to program for, as well as using less memory than other programming languages like BASIC. Interpreters have been made for many devices, such as home computers, microcomputers, graphing calculators, mobile phones, and video game consoles."
+
 
 ----------------------------------------------------------------------
 
