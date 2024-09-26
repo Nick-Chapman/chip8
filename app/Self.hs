@@ -1,236 +1,49 @@
 
-module Self (bytes) where -- A Chip8 interpreter coded in Chip8
+-- A Chip8 interpreter coded in Chip8
+
+module Self (Control(..),bytes) where
 
 import Prelude hiding (break)
 import Assemble
 import Emulator
 
-debugState :: Bool
-debugState = True
+data Control = NoControl | WithPause | SingleStep
 
-{-
-_wait0 :: Asm () -- press a key to advance instruction
-_wait0 = do
-  waitKey
+data R = R { slide,sp,pc,op :: Wide , mask,x,y :: Reg }
 
-_wait1 :: Asm () -- press a key and release to advance instruction
-_wait1 = do
-  waitKey
-  --compensates for bug in haskell chip8 emulator...
-  loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
+bytes :: Control -> [Byte]
+bytes control = assemble $ mdo
 
-_wait2 :: Asm () -- run freely when A is pressed
-_wait2 = do
-  setReg rTemp 0xA
-  loop <- Here ; emit (OpSkipKey rTemp) ; jump loop
+  let R {slide,sp,pc,op,mask} = allocateRegs
 
-_wait3 :: Asm () -- run freely unless A is pressed
-_wait3 = do
-  setReg rTemp 0xA
-  loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
-
-_checkControl :: Wide -> Wide -> Asm ()
-_checkControl pc op = do
-  if debugState then showState pc op else pure ()
-  _wait0
-  if debugState then showState pc op else pure ()
--}
-
-checkControl :: Wide -> Wide -> Asm ()
-checkControl pc op = mdo
-  setReg rTemp 0xA
-
-  -- check if the control key A is pressed...
-  emit (OpSkipKey rTemp)
-  jump done
-
-  if debugState then showState pc op else pure ()
-  -- wait until released
-  setReg rTemp 0xA
-  loop <- Here
-
-  emit (OpSkipNotKey rTemp)
-  jump loop
-  if debugState then showState pc op else pure ()
-
-  done <- Here
-  pure ()
-
-
---panic :: Byte -> Asm ()
---panic b = Emit [0,b]
-
-bytes :: [Byte]
-bytes = assemble $ mdo
-
-  -- trick dissembler to show object program
-  --emit $ OpSkipNotEqLit rTemp 0
-  -- even though we unconditionally jump to the intepreter
-  --jump interpreterStart
-  -- and never reach the jump to the object program
-  --jump objectProgramAddr
-
-  --interpreterStart <- Here
-  interpreter objectProgramAddr
-  --panic 0xA
-
-  objectProgramAddr <- Here
-  --Emit objectBytes
-  --panic 0xB
-  -- object program will be concatenated here
-  pure ()
-
-
-showState :: Wide -> Wide -> Asm ()
-showState pc op = do
-  let slide = Wide (Reg 4) (Reg 5)
-  let mask = Reg 12
-  let x = Reg 13
-  let y = Reg 14
-  setReg x 0
-  setReg y 27
-  let
-    showNib r = do
-      storeDigitSpriteI r
-      draw 5 (x,y)
-      incReg x 5
-
-    showByte r = do
-      copyReg r rTemp
-      setReg mask 0xF0
-      inPlaceAnd rTemp mask
-      inPlaceShiftR 4 rTemp
-      showNib rTemp
-      copyReg r rTemp
-      setReg mask 0x0F
-      inPlaceAnd rTemp mask
-      showNib rTemp
-
-  let Wide pch pcl = pc
-  let Wide oph opl = op
-
-  -- slide PC to be 0x200 relative (just for display)
-  subWide pc slide
-  showByte pch
-  showByte pcl
-  addWide pc slide
-
-  incReg x 3
-  showByte oph
-  showByte opl
-
-
-interpreter :: Addr -> Asm ()
-interpreter objLoadAddr = mdo
-  let
-    slide = Wide (Reg 4) (Reg 5)
-    sp = Wide (Reg 6) (Reg 7)
-    pc = Wide (Reg 8) (Reg 9)
-    op = Wide (Reg 10) (Reg 11)
-    mask = Reg 12
-
-  -- object program was compiled to be run from 0x200
-  -- but is installed here at a different place
+  -- The object program expects to be loaded at 0x200 , but is at a different location here
   setWa slide (addrOfInt (addrToInt objLoadAddr - 0x200))
-
-  let
-    storeWide w addr = do
-      let Wide hi lo = w
-      setI addr
-      storeI hi
-      setI (addr+1)
-      storeI lo
-
-    bumpPC = do
-      incWide pc
-      incWide pc
-
-    {-bumpSP = do
-      incWide sp
-      incWide sp
-
-    unbumpSP = do
-      decWide sp
-      decWide sp-}
-
-    setPC op = do
-      let Wide oph opl = op
-      let Wide pch pcl = pc
-      setReg mask 0x0F
-      inPlaceAnd oph mask
-      copyReg oph pch
-      copyReg opl pcl
-      addWide pc slide
-
-    {-incI = do
-      setReg rTemp 1
-      increaseI rTemp-}
-
-    pushPCtoStack = do
-      let Wide pch pcl = pc
-      setIw sp
-      storeI pch
-      incWide sp
-      --incI
-      setIw sp
-      storeI pcl
-      incWide sp
-      --bumpSP
-      pure ()
-
-    pullPCfromStack = do
-      let Wide pch pcl = pc
-      --unbumpSP
-      decWide sp
-      setIw sp
-      readI pcl
-      --incI
-      decWide sp
-      setIw sp
-      readI pch
-      pure ()
-
-    readPC = do
-      let Wide oph opl = op
-      setIw pc
-      readI oph
-      incWide pc
-      --incI
-      setIw pc
-      readI opl
-      decWide pc
-
-  let
-    saveAllRegs = emit $ OpSaveRegs (Reg 15)
-    restoreAllRegs = emit $ OpRestoreRegs (Reg 15)
-
-    saveObjectRegs = do
-      setI objBank
-      saveAllRegs
-
-    restoreObjectRegs = do
-      setI objBank
-      restoreAllRegs
-
-    saveMetaRegs = do
-      setI metaBank
-      saveAllRegs
-
-    restoreMetaRegs = do
-      setI metaBank
-      restoreAllRegs
-
-    switchMetaContext = do
-      saveObjectRegs
-      restoreMetaRegs
-
-    switchObjectContext = do
-      saveMetaRegs
-      restoreObjectRegs
-
   setWa pc objLoadAddr
   setWa sp stackSpace
+
   next <- Here
+
+  readPC
+  checkControl control
+  bumpPC
+  opFX29
+  op00EE
+  op1NNN
+  op2NNN
+  opANNN
+  -- TODO: FX1E (Add to Index)
+  storeWide op templateOp
+  switchObjectContext
+  templateSetupIndex <- Here; setI 0
+  -- TODO: init with skip-instruction for better dissaasembly
+  templateOp <- Here; Emit [0x55,0x55]
+  jump noSkip
+  switchMetaContext
+  bumpPC
+  jump next
+  noSkip <- Here
+  switchMetaContext
+  jump next
 
   let
     op00EE = do -- Return
@@ -263,7 +76,7 @@ interpreter objLoadAddr = mdo
       inPlaceAnd rTemp oph
       ifRegIs 0xA0 rTemp $ do
         addWide op slide
-        storeWide op setupI
+        storeWide op templateSetupIndex
         jump next
 
     opFX29 = do  -- Set Font Character
@@ -272,46 +85,166 @@ interpreter objLoadAddr = mdo
       inPlaceAnd rTemp oph
       ifRegIs 0xF0 rTemp $ do
         ifRegIs 0x29 opl $ do
-          --switchObjectContext -- not tried yet
-          storeWide op setupI
+          -- TODO: handle case where X gets changed before the sprite is drawn
+          storeWide op templateSetupIndex
           jump next
 
-  readPC
-  checkControl pc op
-  bumpPC
+  let
+    bumpPC = do
+      incWide pc
+      incWide pc
 
-  -- object program may use any regiser
-  -- current I am good if they stick to low num regs: 1,2,3
-  -- but maze uses 0 -- the temp needed for save/restore
-  -- SO. need to preserve the object prog's value for r0
-  -- between instructions
+    setPC op = do
+      let Wide oph opl = op
+      let Wide pch pcl = pc
+      setReg mask 0x0F
+      inPlaceAnd oph mask
+      copyReg oph pch
+      copyReg opl pcl
+      addWide pc slide
 
-  opFX29
-  op00EE
-  op1NNN
-  op2NNN
-  opANNN
-  storeWide op templateOp
+    pushPCtoStack = do
+      let Wide pch pcl = pc
+      setIw sp
+      storeI pch
+      incWide sp
+      setIw sp
+      storeI pcl
+      incWide sp
+      pure ()
 
-  switchObjectContext
+    pullPCfromStack = do
+      let Wide pch pcl = pc
+      decWide sp
+      setIw sp
+      readI pcl
+      decWide sp
+      setIw sp
+      readI pch
+      pure ()
 
-  -- Here we write an instruction for setting I
-  -- need rethink to also support FX1E (Add To Index)
-  setupI <- Here; setI 0 -- gets overwritten
+    readPC = do
+      let Wide oph opl = op
+      setIw pc
+      readI oph
+      incWide pc
+      setIw pc
+      readI opl
+      decWide pc
 
-  templateOp <- Here; Emit [0x55,0x55] -- and this
+    saveAllRegs = emit $ OpSaveRegs (Reg 15)
+    restoreAllRegs = emit $ OpRestoreRegs (Reg 15)
 
-  jump noSkip
-  switchMetaContext
-  bumpPC
-  jump next
-  noSkip <- Here
-  switchMetaContext
-  jump next
+    switchMetaContext = do
+      setI objBank
+      saveAllRegs
+      setI metaBank
+      restoreAllRegs
 
-  -- space to save obj/meta reg banks
+    switchObjectContext = do
+      setI metaBank
+      saveAllRegs
+      setI objBank
+      restoreAllRegs
+
+  -- Space to save obj/meta reg banks
   objBank <- Here ; Emit (replicate 16 0)
   metaBank <- Here ; Emit (replicate 16 0)
-  stackSpace <- Here ; Emit (replicate 16 0) -- how big nesc?
+
+  -- TODO: how much space is needed for the stack?
+  stackSpace <- Here ; Emit (replicate 16 0)
+
+  objLoadAddr <- Here
   pure ()
-  --Emit [0x77,0x77]
+
+
+checkControl :: Control -> Asm ()
+checkControl = \case
+
+  NoControl -> mdo
+    pure ()
+
+  WithPause -> mdo
+    setReg rTemp 0xA -- TODO: generalize which is the control key
+    -- check if the control key A is pressed...
+    emit (OpSkipKey rTemp)
+    jump done
+    showState
+    -- wait until released
+    setReg rTemp 0xA
+    loop <- Here
+    emit (OpSkipNotKey rTemp)
+    jump loop
+    showState
+    done <- Here
+    pure ()
+
+  SingleStep -> mdo
+    showState
+    -- press a key and release to advance instruction
+    waitKey
+    --compensates for bug in haskell chip8 emulator...
+    --loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
+    showState
+
+
+-- TODO: first code to push into subroutine
+showState :: Asm ()
+showState = do
+
+  let R {slide,pc,op,mask,x,y} = allocateRegs
+
+  setReg x 0
+  setReg y 27
+  let
+    showNib r = do
+      storeDigitSpriteI r
+      draw 5 (x,y)
+      incReg x 5
+
+    showByte r = do
+      copyReg r rTemp
+      setReg mask 0xF0
+      inPlaceAnd rTemp mask
+      inPlaceShiftR 4 rTemp
+      showNib rTemp
+      copyReg r rTemp
+      setReg mask 0x0F
+      inPlaceAnd rTemp mask
+      showNib rTemp
+
+    showWide w = do
+      let Wide hi lo = w
+      showByte hi
+      showByte lo
+
+  -- slide PC back to be 0x200 relative (just for display)
+  subWide pc slide
+  showWide pc
+  addWide pc slide
+
+  -- TODO: show op code in right-hand-corner?
+  incReg x 3
+  showWide op
+
+
+-- TODO: use registers with smallest numbers to reduce save/restore when switching context
+allocateRegs :: R
+allocateRegs = R
+  { slide = Wide (Reg 4) (Reg 5)
+  , sp = Wide (Reg 6) (Reg 7)
+  , pc = Wide (Reg 8) (Reg 9)
+  , op = Wide (Reg 10) (Reg 11)
+  , mask = Reg 12
+  , x = Reg 13
+  , y = Reg 14
+  }
+
+
+storeWide :: Wide -> Addr -> Asm ()
+storeWide w addr = do
+  let Wide hi lo = w
+  setI addr
+  storeI hi
+  setI (addr+1)
+  storeI lo

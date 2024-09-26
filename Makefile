@@ -15,7 +15,7 @@ gen-all: gen $(gen-ch8s)
 	@ echo -n
 
 gen/%.ch8: app/*.hs
-	stack run -- --assemble $*
+	stack run -- --assemble $* || rm $@
 
 gen: ; @mkdir -p $@
 

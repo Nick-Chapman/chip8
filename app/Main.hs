@@ -22,7 +22,7 @@ import qualified Three (bytes)
 import qualified Evens (bytes)
 --import qualified Bf (bytes)
 import qualified Bfw (bytes)
-import qualified Self (bytes)
+import qualified Self (bytes,Control(..))
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -32,6 +32,9 @@ import qualified Data.Map.Strict as Map
 
 --debug :: Bool
 --debug = True
+
+theScale :: Int
+theScale = 12
 
 ----------------------------------------------------------------------
 -- parameters of the Chip Machine
@@ -50,9 +53,6 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 
 ----------------------------------------------------------------------
 -- display parameters
-
-theScale :: Int
-theScale = 12
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (0,0)
@@ -98,12 +98,7 @@ internals =
   , mkBfInternal "collatz"
   , mkBfInternal "factor"
   , ("self", do
-        --xs <- readBytes "gen/evens.ch8"
-        --xs <- readBytes "games/MAZE"
-        --xs <- readBytes "games/PONG2"
-        --xs <- readBytes "games/BRIX"
-        let xs = []
-        return (Self.bytes ++ xs)
+        return (Self.bytes Self.WithPause)
     )
   ]
 
