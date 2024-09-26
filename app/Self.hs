@@ -27,11 +27,11 @@ bytes control = assemble $ mdo
   checkControl control
   bumpPC
   opFX29
+  opFX1E
   op00EE
   op1NNN
   op2NNN
   opANNN
-  -- TODO: FX1E (Add to Index)
   storeWide op templateOp
   switchObjectContext
   templateSetupIndex <- Here; setI 0
@@ -86,6 +86,38 @@ bytes control = assemble $ mdo
         ifRegIs 0x29 opl $ do
           -- TODO: handle case where X gets changed before the sprite is drawn
           storeWide op templateSetupIndex
+          jump next
+
+    opFX1E = do -- Add to Index
+      let Wide oph opl = op
+      setReg rTemp 0xF0
+      inPlaceAnd rTemp oph
+      ifRegIs 0xF0 rTemp $ do
+        ifRegIs 0x1E opl $ do
+          setReg mask 0x0F
+          inPlaceAnd oph mask
+          setI objBank
+          increaseI oph
+          readTemp
+          copyReg rTemp mask -- using mask as 2nd temp
+
+          -- We handle FX1E by incrementing the NNN in the ANNN instruction at templateSetupIndex.
+          -- This assumes that Index was set by an ANNN instruction.
+
+          -- But if Index was set by FX29, then incrementing will produce an illegal instruction.
+          -- TODO: Make an example for this case. Detect it. Do something better than crash!
+
+          -- Note any chip program which performs FX29 followed by FX1E is dancing on very thin ice,
+          -- as it assumes how and where the hex-font is laid out in memory.
+
+          setI (templateSetupIndex+1)
+          readTemp
+          inPlaceAdd rTemp mask
+          -- TODO: should deal with carry into lo-nibble of hi-byte. (bug in Pi example?)
+
+          setI (templateSetupIndex+1)
+          storeTemp
+
           jump next
 
   let
