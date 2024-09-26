@@ -25,11 +25,11 @@ ass-%: roms/%.ch8
 
 .PRECIOUS: roms/%.ch8
 
-roms/%.ch8: app/*.hs
-	stack run ass $* > $@ || rm $@
+roms/%.ch8: app/*.hs Makefile
+	stack run ass $* > $@
 
 roms/bf-%.ch8: bf/%.b app/*.hs
-	stack run ass bf $* > $@ || rm $@
+	stack run ass bf $* > $@
 
 # disassemble (.ch8 file)
 

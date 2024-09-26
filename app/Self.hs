@@ -35,8 +35,7 @@ bytes control = assemble $ mdo
   storeWide op templateOp
   switchObjectContext
   templateSetupIndex <- Here; setI 0
-  -- TODO: init with skip-instruction for better dissaasembly
-  templateOp <- Here; Emit [0x55,0x55]
+  templateOp <- Here; emit (OpSkipEq (Reg 5) (Reg 5))
   jump noSkip
   switchMetaContext
   bumpPC
@@ -135,6 +134,7 @@ bytes control = assemble $ mdo
     saveAllRegs = emit $ OpSaveRegs (Reg 15)
     restoreAllRegs = emit $ OpRestoreRegs (Reg 15)
 
+    -- TODO: reduce registers saved/restored when switching context
     switchMetaContext = do
       setI objBank
       saveAllRegs
@@ -170,11 +170,12 @@ checkControl = \case
     emit (OpSkipKey rTemp)
     jump done
     showState
-    -- wait until released
     setReg rTemp 0xA
-    loop <- Here
-    emit (OpSkipNotKey rTemp)
-    jump loop
+    -- wait until released
+    do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
+    -- and pressed and released again
+    do loop <- Here ; emit (OpSkipKey rTemp) ; jump loop
+    do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
     showState
     done <- Here
     pure ()
@@ -223,21 +224,19 @@ showState = do
   showWide pc
   addWide pc slide
 
-  -- TODO: show op code in right-hand-corner?
-  incReg x 3
+  incReg x 25
   showWide op
 
 
--- TODO: use registers with smallest numbers to reduce save/restore when switching context
 allocateRegs :: R
 allocateRegs = R
-  { slide = Wide (Reg 4) (Reg 5)
-  , sp = Wide (Reg 6) (Reg 7)
-  , pc = Wide (Reg 8) (Reg 9)
-  , op = Wide (Reg 10) (Reg 11)
-  , mask = Reg 12
-  , x = Reg 13
-  , y = Reg 14
+  { slide = Wide (Reg 1) (Reg 2)
+  , sp = Wide (Reg 3) (Reg 4)
+  , pc = Wide (Reg 5) (Reg 6)
+  , op = Wide (Reg 7) (Reg 8)
+  , mask = Reg 9
+  , x = Reg 10
+  , y = Reg 11
   }
 
 

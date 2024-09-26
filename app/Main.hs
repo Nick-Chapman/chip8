@@ -62,8 +62,12 @@ data Mode
 
 parseCommandLine :: [String] -> IO Mode
 parseCommandLine = \case
-  ["ass",name] -> pure $ Ass { bytes = maybe err id $ Map.lookup name registered }
-    where err = error (show ("unknown internal name",name))
+  ["ass",name] ->
+    case Map.lookup name registered of
+      Just bytes -> pure $ Ass { bytes }
+      Nothing -> do
+        bytes <- readBytes ("external/" ++ name ++ ".ch8")
+        pure $ Ass { bytes }
 
   ["ass","bf",name] -> do
     bfProg <- readFile ("bf/" ++ name ++ ".b")
