@@ -1,0 +1,1616 @@
+0x200 :     : 130C :      : JMP 0x30C (L18)
+0x202 : L02 : 6000 :      : SET v0 <- 00
+0x204 : L03 : E0A1 :      : SKP !PRESS v0
+0x206 :     : 1204 :      : JMP 0x204 (L03)
+0x208 :     : 7001 :      : ADD v0 01
+0x20A :     : 4010 :      : SKP v0 != 10
+0x20C :     : 00EE :      : RET
+0x20E :     : 1204 :      : JMP 0x204 (L03)
+0x210 : L04 : 6500 :      : SET v5 <- 00
+0x212 :     : A222 :      : SET I <- 0x222 (L06)
+0x214 :     : F155 :      : SAVE v1
+0x216 :     : A282 :      : SET I <- 0x282 (L14)
+0x218 :     : F155 :      : SAVE v1
+0x21A :     : 1222 :      : JMP 0x222 (L06)
+0x21C : L05 : 4301 :      : SKP v3 != 01
+0x21E :     : D012 :      : DRAW v0 v1 2
+0x220 :     : 2202 :      : CALL 0x202 (L02)
+0x222 : L06 : 0000 :      : ???(0000)
+0x224 :     : F51E :      : ADD I v5
+0x226 :     : F51E :      : ADD I v5
+0x228 :     : F51E :      : ADD I v5
+0x22A :     : F51E :      : ADD I v5
+0x22C :     : F165 :      : RESTORE v1
+0x22E :     : 6300 :      : SET v3 <- 00
+0x230 :     : F315 :      : SET D <- v3
+0x232 : L07 : F407 :      : SET v4 <- D
+0x234 :     : 3400 :      : SKP v4 = 00
+0x236 :     : 1244 :      : JMP 0x244 (L08)
+0x238 :     : A853 :      : SET I <- 0x853 (L85)
+0x23A :     : D012 :      : DRAW v0 v1 2
+0x23C :     : 640A :      : SET v4 <- 0A
+0x23E :     : F415 :      : SET D <- v4
+0x240 :     : 6401 :      : SET v4 <- 01
+0x242 :     : 8343 :      : XOR v3 v4
+0x244 : L08 : 640E :      : SET v4 <- 0E
+0x246 :     : E49E :      : SKP PRESS v4
+0x248 :     : 1252 :      : JMP 0x252 (L09)
+0x24A :     : 4500 :      : SKP v5 != 00
+0x24C :     : 1252 :      : JMP 0x252 (L09)
+0x24E :     : 75FF :      : ADD v5 FF
+0x250 :     : 121C :      : JMP 0x21C (L05)
+0x252 : L09 : 640F :      : SET v4 <- 0F
+0x254 :     : E49E :      : SKP PRESS v4
+0x256 :     : 1260 :      : JMP 0x260 (L10)
+0x258 :     : 9520 :      : SKP v5 != v2
+0x25A :     : 1260 :      : JMP 0x260 (L10)
+0x25C :     : 7501 :      : ADD v5 01
+0x25E :     : 121C :      : JMP 0x21C (L05)
+0x260 : L10 : 8650 :      : SET v6 <- v5
+0x262 :     : 640A :      : SET v4 <- 0A
+0x264 :     : E4A1 :      : SKP !PRESS v4
+0x266 :     : 1280 :      : JMP 0x280 (L13)
+0x268 :     : 6400 :      : SET v4 <- 00
+0x26A :     : 7201 :      : ADD v2 01
+0x26C : L11 : 7401 :      : ADD v4 01
+0x26E :     : E49E :      : SKP PRESS v4
+0x270 :     : 1278 :      : JMP 0x278 (L12)
+0x272 :     : 8640 :      : SET v6 <- v4
+0x274 :     : 76FF :      : ADD v6 FF
+0x276 :     : 1280 :      : JMP 0x280 (L13)
+0x278 : L12 : 5420 :      : SKP v4 = v2
+0x27A :     : 126C :      : JMP 0x26C (L11)
+0x27C :     : 72FF :      : ADD v2 FF
+0x27E :     : 1232 :      : JMP 0x232 (L07)
+0x280 : L13 : 2202 :      : CALL 0x202 (L02)
+0x282 : L14 : 0000 :      : ???(0000)
+0x284 :     : F61E :      : ADD I v6
+0x286 :     : F61E :      : ADD I v6
+0x288 :     : F61E :      : ADD I v6
+0x28A :     : F61E :      : ADD I v6
+0x28C :     : 6402 :      : SET v4 <- 02
+0x28E :     : F41E :      : ADD I v4
+0x290 :     : F165 :      : RESTORE v1
+0x292 :     : 6410 :      : SET v4 <- 10
+0x294 :     : 8041 :      : OR v0 v4
+0x296 :     : A29A :      : SET I <- 0x29A (L15)
+0x298 :     : F155 :      : SAVE v1
+0x29A : L15 : 0000 :      : ???(0000)
+0x29C : L16 : FC65 :      : RESTORE vC
+0x29E :     : 2302 :      : CALL 0x302 (L17)
+0x2A0 :     : 4100 :      : SKP v1 != 00
+0x2A2 :     : 00EE :      : RET
+0x2A4 :     : 8010 :      : SET v0 <- v1
+0x2A6 :     : 2302 :      : CALL 0x302 (L17)
+0x2A8 :     : 4200 :      : SKP v2 != 00
+0x2AA :     : 00EE :      : RET
+0x2AC :     : 8020 :      : SET v0 <- v2
+0x2AE :     : 2302 :      : CALL 0x302 (L17)
+0x2B0 :     : 4300 :      : SKP v3 != 00
+0x2B2 :     : 00EE :      : RET
+0x2B4 :     : 8030 :      : SET v0 <- v3
+0x2B6 :     : 2302 :      : CALL 0x302 (L17)
+0x2B8 :     : 4400 :      : SKP v4 != 00
+0x2BA :     : 00EE :      : RET
+0x2BC :     : 8040 :      : SET v0 <- v4
+0x2BE :     : 2302 :      : CALL 0x302 (L17)
+0x2C0 :     : 4500 :      : SKP v5 != 00
+0x2C2 :     : 00EE :      : RET
+0x2C4 :     : 8050 :      : SET v0 <- v5
+0x2C6 :     : 2302 :      : CALL 0x302 (L17)
+0x2C8 :     : 4600 :      : SKP v6 != 00
+0x2CA :     : 00EE :      : RET
+0x2CC :     : 8060 :      : SET v0 <- v6
+0x2CE :     : 2302 :      : CALL 0x302 (L17)
+0x2D0 :     : 4700 :      : SKP v7 != 00
+0x2D2 :     : 00EE :      : RET
+0x2D4 :     : 8070 :      : SET v0 <- v7
+0x2D6 :     : 2302 :      : CALL 0x302 (L17)
+0x2D8 :     : 4800 :      : SKP v8 != 00
+0x2DA :     : 00EE :      : RET
+0x2DC :     : 8080 :      : SET v0 <- v8
+0x2DE :     : 2302 :      : CALL 0x302 (L17)
+0x2E0 :     : 4900 :      : SKP v9 != 00
+0x2E2 :     : 00EE :      : RET
+0x2E4 :     : 8090 :      : SET v0 <- v9
+0x2E6 :     : 2302 :      : CALL 0x302 (L17)
+0x2E8 :     : 4A00 :      : SKP vA != 00
+0x2EA :     : 00EE :      : RET
+0x2EC :     : 80A0 :      : SET v0 <- vA
+0x2EE :     : 2302 :      : CALL 0x302 (L17)
+0x2F0 :     : 4B00 :      : SKP vB != 00
+0x2F2 :     : 00EE :      : RET
+0x2F4 :     : 80B0 :      : SET v0 <- vB
+0x2F6 :     : 2302 :      : CALL 0x302 (L17)
+0x2F8 :     : 4C00 :      : SKP vC != 00
+0x2FA :     : 00EE :      : RET
+0x2FC :     : 80C0 :      : SET v0 <- vC
+0x2FE :     : 2302 :      : CALL 0x302 (L17)
+0x300 :     : 00EE :      : RET
+0x302 : L17 : A857 :      : SET I <- 0x857 (L87)
+0x304 :     : F01E :      : ADD I v0
+0x306 :     : DDE4 :      : DRAW vD vE 4
+0x308 :     : 7D04 :      : ADD vD 04
+0x30A :     : 00EE :      : RET
+0x30C : L18 : 00E0 :      : CLS
+0x30E :     : A1FF :      : SET I <- 0x1FF (L01)
+0x310 :     : F065 :      : RESTORE v0
+0x312 :     : 4001 :      : SKP v0 != 01
+0x314 :     : 1380 :      : JMP 0x380 (L20)
+0x316 :     : 4002 :      : SKP v0 != 02
+0x318 :     : 1388 :      : JMP 0x388 (L21)
+0x31A :     : 4004 :      : SKP v0 != 04
+0x31C :     : 1390 :      : JMP 0x390 (L22)
+0x31E :     : 4003 :      : SKP v0 != 03
+0x320 :     : 1398 :      : JMP 0x398 (L23)
+0x322 :     : 6D06 :      : SET vD <- 06
+0x324 :     : 6E02 :      : SET vE <- 02
+0x326 :     : A903 :      : SET I <- 0x903 (L89)
+0x328 :     : 229C :      : CALL 0x29C (L16)
+0x32A :     : 6D0A :      : SET vD <- 0A
+0x32C :     : 6E0A :      : SET vE <- 0A
+0x32E :     : A911 :      : SET I <- 0x911 (L90)
+0x330 :     : 229C :      : CALL 0x29C (L16)
+0x332 :     : 6D0A :      : SET vD <- 0A
+0x334 :     : 6E0F :      : SET vE <- 0F
+0x336 :     : A91A :      : SET I <- 0x91A (L91)
+0x338 :     : 229C :      : CALL 0x29C (L16)
+0x33A :     : 6D0A :      : SET vD <- 0A
+0x33C :     : 6E14 :      : SET vE <- 14
+0x33E :     : A927 :      : SET I <- 0x927 (L92)
+0x340 :     : 229C :      : CALL 0x29C (L16)
+0x342 :     : 2370 :      : CALL 0x370 (L19)
+0x344 :     : 60A8 :      : SET v0 <- A8
+0x346 :     : 61F7 :      : SET v1 <- F7
+0x348 :     : 6202 :      : SET v2 <- 02
+0x34A :     : 1210 :      : JMP 0x210 (L04)
+0x34C :     : 00E0 :      :
+0x34E :     : 6D0A :      :
+0x350 :     : 6E02 :      :
+0x352 :     : A939 :      :
+0x354 :     : 229C :      :
+0x356 :     : 6D12 :      :
+0x358 :     : 6E0C :      :
+0x35A :     : A945 :      :
+0x35C :     : 229C :      :
+0x35E :     : 6D12 :      :
+0x360 :     : 6E11 :      :
+0x362 :     : A94E :      :
+0x364 :     : 229C :      :
+0x366 :     : 2370 : "#p" :
+0x368 :     : 60A9 :      :
+0x36A :     : 6131 : "a1" :
+0x36C :     : 6201 :      :
+0x36E :     : 1210 :      :
+0x370 : L19 : 6A32 :      : SET vA <- 32
+0x372 :     : 6B1B :      : SET vB <- 1B
+0x374 :     : A9CB :      : SET I <- 0x9CB (L113)
+0x376 :     : DAB4 :      : DRAW vA vB 4
+0x378 :     : 6A3A :      : SET vA <- 3A
+0x37A :     : A9CF :      : SET I <- 0x9CF (L114)
+0x37C :     : DAB4 :      : DRAW vA vB 4
+0x37E :     : 00EE :      : RET
+0x380 : L20 : A842 :      : SET I <- 0x842 (L81)
+0x382 :     : 6001 :      : SET v0 <- 01
+0x384 :     : F055 :      : SAVE v0
+0x386 :     : 139E :      : JMP 0x39E (L24)
+0x388 : L21 : A842 :      : SET I <- 0x842 (L81)
+0x38A :     : 6002 :      : SET v0 <- 02
+0x38C :     : F055 :      : SAVE v0
+0x38E :     : 139E :      : JMP 0x39E (L24)
+0x390 : L22 : A842 :      : SET I <- 0x842 (L81)
+0x392 :     : 6004 :      : SET v0 <- 04
+0x394 :     : F055 :      : SAVE v0
+0x396 :     : 139E :      : JMP 0x39E (L24)
+0x398 : L23 : A842 :      : SET I <- 0x842 (L81)
+0x39A :     : 6003 :      : SET v0 <- 03
+0x39C :     : F055 :      : SAVE v0
+0x39E : L24 : 2202 :      : CALL 0x202 (L02)
+0x3A0 :     : 00E0 :      : CLS
+0x3A2 :     : A842 :      : SET I <- 0x842 (L81)
+0x3A4 :     : F065 :      : RESTORE v0
+0x3A6 :     : 3001 :      : SKP v0 = 01
+0x3A8 :     : 13C8 :      : JMP 0x3C8 (L25)
+0x3AA :     : 276C :      : CALL 0x76C (L62)
+0x3AC :     : 6001 :      : SET v0 <- 01
+0x3AE :     : 3300 :      : SKP v3 = 00
+0x3B0 :     : 6000 :      : SET v0 <- 00
+0x3B2 :     : 6F06 :      : SET vF <- 06
+0x3B4 :     : 8F25 :      : SUB vF v2
+0x3B6 :     : 4F00 :      : SKP vF != 00
+0x3B8 :     : 6000 :      : SET v0 <- 00
+0x3BA :     : 6F06 :      : SET vF <- 06
+0x3BC :     : 8F27 :      : MINUS vF v2
+0x3BE :     : 4F00 :      : SKP vF != 00
+0x3C0 :     : 6006 :      : SET v0 <- 06
+0x3C2 :     : A843 :      : SET I <- 0x843 (L82)
+0x3C4 :     : F055 :      : SAVE v0
+0x3C6 :     : 142E :      : JMP 0x42E (L29)
+0x3C8 : L25 : 279A :      : CALL 0x79A (L66)
+0x3CA :     : 6001 :      : SET v0 <- 01
+0x3CC :     : 3300 :      : SKP v3 = 00
+0x3CE :     : 6000 :      : SET v0 <- 00
+0x3D0 :     : 6F03 :      : SET vF <- 03
+0x3D2 :     : 8F25 :      : SUB vF v2
+0x3D4 :     : 4F00 :      : SKP vF != 00
+0x3D6 :     : 6000 :      : SET v0 <- 00
+0x3D8 :     : 6F03 :      : SET vF <- 03
+0x3DA :     : 8F27 :      : MINUS vF v2
+0x3DC :     : 4F00 :      : SKP vF != 00
+0x3DE :     : 6006 :      : SET v0 <- 06
+0x3E0 :     : A843 :      : SET I <- 0x843 (L82)
+0x3E2 :     : F055 :      : SAVE v0
+0x3E4 :     : 00FF :      : ???(00FF)
+0x3E6 :     : 00E0 :      : CLS
+0x3E8 :     : 27E6 :      : CALL 0x7E6 (L73)
+0x3EA :     : 6101 :      : SET v1 <- 01
+0x3EC :     : 3300 :      : SKP v3 = 00
+0x3EE :     : 6100 :      : SET v1 <- 00
+0x3F0 :     : 6F03 :      : SET vF <- 03
+0x3F2 :     : 8F25 :      : SUB vF v2
+0x3F4 :     : 4F00 :      : SKP vF != 00
+0x3F6 :     : 6100 :      : SET v1 <- 00
+0x3F8 :     : 6F03 :      : SET vF <- 03
+0x3FA :     : 8F27 :      : MINUS vF v2
+0x3FC :     : 4F00 :      : SKP vF != 00
+0x3FE :     : 6106 :      : SET v1 <- 06
+0x400 :     : A843 :      : SET I <- 0x843 (L82)
+0x402 :     : F065 :      : RESTORE v0
+0x404 :     : 4006 :      : SKP v0 != 06
+0x406 :     : 1428 :      : JMP 0x428 (L28)
+0x408 :     : 3106 :      : SKP v1 = 06
+0x40A :     : 1410 :      : JMP 0x410 (L26)
+0x40C :     : 6006 :      : SET v0 <- 06
+0x40E :     : 1428 :      : JMP 0x428 (L28)
+0x410 : L26 : 3000 :      : SKP v0 = 00
+0x412 :     : 141C :      : JMP 0x41C (L27)
+0x414 :     : 4100 :      : SKP v1 != 00
+0x416 :     : 6003 :      : SET v0 <- 03
+0x418 :     : 4101 :      : SKP v1 != 01
+0x41A :     : 6005 :      : SET v0 <- 05
+0x41C : L27 : 3001 :      : SKP v0 = 01
+0x41E :     : 1428 :      : JMP 0x428 (L28)
+0x420 :     : 4100 :      : SKP v1 != 00
+0x422 :     : 6004 :      : SET v0 <- 04
+0x424 :     : 4101 :      : SKP v1 != 01
+0x426 :     : 6002 :      : SET v0 <- 02
+0x428 : L28 : A843 :      : SET I <- 0x843 (L82)
+0x42A :     : F055 :      : SAVE v0
+0x42C :     : 00FE :      : ???(00FE)
+0x42E : L29 : 00E0 :      : CLS
+0x430 :     : A9BA :      : SET I <- 0x9BA (L109)
+0x432 :     : 601C :      : SET v0 <- 1C
+0x434 :     : 611D :      : SET v1 <- 1D
+0x436 :     : D016 :      : DRAW v0 v1 6
+0x438 :     : 6016 :      : SET v0 <- 16
+0x43A :     : 6102 :      : SET v1 <- 02
+0x43C :     : D012 :      : DRAW v0 v1 2
+0x43E :     : 85F0 :      : SET v5 <- vF
+0x440 :     : 6022 :      : SET v0 <- 22
+0x442 :     : D012 :      : DRAW v0 v1 2
+0x444 :     : 86F0 :      : SET v6 <- vF
+0x446 :     : 00E0 :      : CLS
+0x448 :     : A9BA :      : SET I <- 0x9BA (L109)
+0x44A :     : 603D :      : SET v0 <- 3D
+0x44C :     : 6105 :      : SET v1 <- 05
+0x44E :     : D016 :      : DRAW v0 v1 6
+0x450 :     : 6003 :      : SET v0 <- 03
+0x452 :     : 6104 :      : SET v1 <- 04
+0x454 :     : D012 :      : DRAW v0 v1 2
+0x456 :     : 87F0 :      : SET v7 <- vF
+0x458 :     : 610A :      : SET v1 <- 0A
+0x45A :     : D012 :      : DRAW v0 v1 2
+0x45C :     : 88F0 :      : SET v8 <- vF
+0x45E :     : 00E0 :      : CLS
+0x460 :     : 606E :      : SET v0 <- 6E
+0x462 :     : 6132 :      : SET v1 <- 32
+0x464 :     : D016 :      : DRAW v0 v1 6
+0x466 :     : 6028 :      : SET v0 <- 28
+0x468 :     : 6111 :      : SET v1 <- 11
+0x46A :     : D012 :      : DRAW v0 v1 2
+0x46C :     : 89F0 :      : SET v9 <- vF
+0x46E :     : 6034 :      : SET v0 <- 34
+0x470 :     : D012 :      : DRAW v0 v1 2
+0x472 :     : 89F4 :      : ADD v9 vF
+0x474 :     : 6117 :      : SET v1 <- 17
+0x476 :     : D012 :      : DRAW v0 v1 2
+0x478 :     : 89F4 :      : ADD v9 vF
+0x47A :     : 6028 :      : SET v0 <- 28
+0x47C :     : D012 :      : DRAW v0 v1 2
+0x47E :     : 89F4 :      : ADD v9 vF
+0x480 :     : 6000 :      : SET v0 <- 00
+0x482 :     : 4500 :      : SKP v5 != 00
+0x484 :     : 6001 :      : SET v0 <- 01
+0x486 :     : 5560 :      : SKP v5 = v6
+0x488 :     : 6006 :      : SET v0 <- 06
+0x48A :     : 5570 :      : SKP v5 = v7
+0x48C :     : 6006 :      : SET v0 <- 06
+0x48E :     : 5580 :      : SKP v5 = v8
+0x490 :     : 6006 :      : SET v0 <- 06
+0x492 :     : 3904 :      : SKP v9 = 04
+0x494 :     : 6007 :      : SET v0 <- 07
+0x496 :     : A844 :      : SET I <- 0x844 (L83)
+0x498 :     : F055 :      : SAVE v0
+0x49A :     : A842 :      : SET I <- 0x842 (L81)
+0x49C :     : F065 :      : RESTORE v0
+0x49E :     : 4001 :      : SKP v0 != 01
+0x4A0 :     : 1556 :      : JMP 0x556 (L36)
+0x4A2 :     : 00FF :      : ???(00FF)
+0x4A4 :     : 00E0 :      : CLS
+0x4A6 :     : A9BA :      : SET I <- 0x9BA (L109)
+0x4A8 :     : 603C :      : SET v0 <- 3C
+0x4AA :     : 613D :      : SET v1 <- 3D
+0x4AC :     : D016 :      : DRAW v0 v1 6
+0x4AE :     : 6036 :      : SET v0 <- 36
+0x4B0 :     : 6102 :      : SET v1 <- 02
+0x4B2 :     : D012 :      : DRAW v0 v1 2
+0x4B4 :     : 85F0 :      : SET v5 <- vF
+0x4B6 :     : 6042 :      : SET v0 <- 42
+0x4B8 :     : D012 :      : DRAW v0 v1 2
+0x4BA :     : 86F0 :      : SET v6 <- vF
+0x4BC :     : 00E0 :      : CLS
+0x4BE :     : A9BA :      : SET I <- 0x9BA (L109)
+0x4C0 :     : 607D :      : SET v0 <- 7D
+0x4C2 :     : 6105 :      : SET v1 <- 05
+0x4C4 :     : D016 :      : DRAW v0 v1 6
+0x4C6 :     : 6003 :      : SET v0 <- 03
+0x4C8 :     : 6104 :      : SET v1 <- 04
+0x4CA :     : D012 :      : DRAW v0 v1 2
+0x4CC :     : 87F0 :      : SET v7 <- vF
+0x4CE :     : 610A :      : SET v1 <- 0A
+0x4D0 :     : D012 :      : DRAW v0 v1 2
+0x4D2 :     : 88F0 :      : SET v8 <- vF
+0x4D4 :     : 00E0 :      : CLS
+0x4D6 :     : 60AE :      : SET v0 <- AE
+0x4D8 :     : 6152 :      : SET v1 <- 52
+0x4DA :     : D016 :      : DRAW v0 v1 6
+0x4DC :     : 6028 :      : SET v0 <- 28
+0x4DE :     : 6111 :      : SET v1 <- 11
+0x4E0 :     : D012 :      : DRAW v0 v1 2
+0x4E2 :     : 89F0 :      : SET v9 <- vF
+0x4E4 :     : 6034 :      : SET v0 <- 34
+0x4E6 :     : D012 :      : DRAW v0 v1 2
+0x4E8 :     : 89F4 :      : ADD v9 vF
+0x4EA :     : 6117 :      : SET v1 <- 17
+0x4EC :     : D012 :      : DRAW v0 v1 2
+0x4EE :     : 89F4 :      : ADD v9 vF
+0x4F0 :     : 6028 :      : SET v0 <- 28
+0x4F2 :     : D012 :      : DRAW v0 v1 2
+0x4F4 :     : 89F4 :      : ADD v9 vF
+0x4F6 :     : 6100 :      : SET v1 <- 00
+0x4F8 :     : 4500 :      : SKP v5 != 00
+0x4FA :     : 6101 :      : SET v1 <- 01
+0x4FC :     : 5560 :      : SKP v5 = v6
+0x4FE :     : 6106 :      : SET v1 <- 06
+0x500 :     : 5570 :      : SKP v5 = v7
+0x502 :     : 6106 :      : SET v1 <- 06
+0x504 :     : 5580 :      : SKP v5 = v8
+0x506 :     : 6106 :      : SET v1 <- 06
+0x508 :     : 3904 :      : SKP v9 = 04
+0x50A :     : 6107 :      : SET v1 <- 07
+0x50C :     : A844 :      : SET I <- 0x844 (L83)
+0x50E :     : F065 :      : RESTORE v0
+0x510 :     : 3006 :      : SKP v0 = 06
+0x512 :     : 151C :      : JMP 0x51C (L30)
+0x514 :     : 4106 :      : SKP v1 != 06
+0x516 :     : 1550 :      : JMP 0x550 (L35)
+0x518 :     : 6008 :      : SET v0 <- 08
+0x51A :     : 1550 :      : JMP 0x550 (L35)
+0x51C : L30 : 3007 :      : SKP v0 = 07
+0x51E :     : 1528 :      : JMP 0x528 (L31)
+0x520 :     : 4107 :      : SKP v1 != 07
+0x522 :     : 1550 :      : JMP 0x550 (L35)
+0x524 :     : 6008 :      : SET v0 <- 08
+0x526 :     : 1550 :      : JMP 0x550 (L35)
+0x528 : L31 : 3106 :      : SKP v1 = 06
+0x52A :     : 1530 :      : JMP 0x530 (L32)
+0x52C :     : 6008 :      : SET v0 <- 08
+0x52E :     : 1550 :      : JMP 0x550 (L35)
+0x530 : L32 : 3107 :      : SKP v1 = 07
+0x532 :     : 1538 :      : JMP 0x538 (L33)
+0x534 :     : 6008 :      : SET v0 <- 08
+0x536 :     : 1550 :      : JMP 0x550 (L35)
+0x538 : L33 : 3001 :      : SKP v0 = 01
+0x53A :     : 1544 :      : JMP 0x544 (L34)
+0x53C :     : 4101 :      : SKP v1 != 01
+0x53E :     : 6002 :      : SET v0 <- 02
+0x540 :     : 4100 :      : SKP v1 != 00
+0x542 :     : 6004 :      : SET v0 <- 04
+0x544 : L34 : 3000 :      : SKP v0 = 00
+0x546 :     : 1550 :      : JMP 0x550 (L35)
+0x548 :     : 4101 :      : SKP v1 != 01
+0x54A :     : 6005 :      : SET v0 <- 05
+0x54C :     : 4100 :      : SKP v1 != 00
+0x54E :     : 6003 :      : SET v0 <- 03
+0x550 : L35 : A844 :      : SET I <- 0x844 (L83)
+0x552 :     : F055 :      : SAVE v0
+0x554 :     : 00FE :      : ???(00FE)
+0x556 : L36 : 00E0 :      : CLS
+0x558 :     : 6D01 :      : SET vD <- 01
+0x55A :     : 6E01 :      : SET vE <- 01
+0x55C :     : A957 :      : SET I <- 0x957 (L93)
+0x55E :     : 229C :      : CALL 0x29C (L16)
+0x560 :     : 6500 :      : SET v5 <- 00
+0x562 :     : 6F0F :      : SET vF <- 0F
+0x564 :     : 8002 :      : AND v0 v0
+0x566 :     : 4F00 :      : SKP vF != 00
+0x568 :     : 6501 :      : SET v5 <- 01
+0x56A :     : 6600 :      : SET v6 <- 00
+0x56C :     : 6F0F :      : SET vF <- 0F
+0x56E :     : 8001 :      : OR v0 v0
+0x570 :     : 4F00 :      : SKP vF != 00
+0x572 :     : 6601 :      : SET v6 <- 01
+0x574 :     : 6700 :      : SET v7 <- 00
+0x576 :     : 6F0F :      : SET vF <- 0F
+0x578 :     : 8003 :      : XOR v0 v0
+0x57A :     : 4F00 :      : SKP vF != 00
+0x57C :     : 6701 :      : SET v7 <- 01
+0x57E :     : A842 :      : SET I <- 0x842 (L81)
+0x580 :     : F065 :      : RESTORE v0
+0x582 :     : A858 :      : SET I <- 0x858 (L88)
+0x584 :     : 3001 :      : SKP v0 = 01
+0x586 :     : 158E :      : JMP 0x58E (L37)
+0x588 :     : 4501 :      : SKP v5 != 01
+0x58A :     : A855 :      : SET I <- 0x855 (L86)
+0x58C :     : 1592 :      : JMP 0x592 (L38)
+0x58E : L37 : 4500 :      : SKP v5 != 00
+0x590 :     : A855 :      : SET I <- 0x855 (L86)
+0x592 : L38 : 6A3B :      : SET vA <- 3B
+0x594 :     : 6B02 :      : SET vB <- 02
+0x596 :     : DAB3 :      : DRAW vA vB 3
+0x598 :     : A98E :      : SET I <- 0x98E (L100)
+0x59A :     : 4501 :      : SKP v5 != 01
+0x59C :     : A98B :      : SET I <- 0x98B (L99)
+0x59E :     : 5560 :      : SKP v5 = v6
+0x5A0 :     : A9AB :      : SET I <- 0x9AB (L106)
+0x5A2 :     : 5570 :      : SKP v5 = v7
+0x5A4 :     : A9B0 :      : SET I <- 0x9B0 (L107)
+0x5A6 :     : 6D2A :      : SET vD <- 2A
+0x5A8 :     : 6E01 :      : SET vE <- 01
+0x5AA :     : 229C :      : CALL 0x29C (L16)
+0x5AC :     : 6D01 :      : SET vD <- 01
+0x5AE :     : 6E06 :      : SET vE <- 06
+0x5B0 :     : A960 :      : SET I <- 0x960 (L94)
+0x5B2 :     : 229C :      : CALL 0x29C (L16)
+0x5B4 :     : 6001 :      : SET v0 <- 01
+0x5B6 :     : 6102 :      : SET v1 <- 02
+0x5B8 :     : 6203 :      : SET v2 <- 03
+0x5BA :     : 6304 :      : SET v3 <- 04
+0x5BC :     : 6405 :      : SET v4 <- 05
+0x5BE :     : A845 :      : SET I <- 0x845 (L84)
+0x5C0 :     : F455 :      : SAVE v4
+0x5C2 :     : 600B :      : SET v0 <- 0B
+0x5C4 :     : 610C :      : SET v1 <- 0C
+0x5C6 :     : 620D :      : SET v2 <- 0D
+0x5C8 :     : A845 :      : SET I <- 0x845 (L84)
+0x5CA :     : F255 :      : SAVE v2
+0x5CC :     : F065 :      : RESTORE v0
+0x5CE :     : 8500 :      : SET v5 <- v0
+0x5D0 :     : F065 :      : RESTORE v0
+0x5D2 :     : 8600 :      : SET v6 <- v0
+0x5D4 :     : A842 :      : SET I <- 0x842 (L81)
+0x5D6 :     : F065 :      : RESTORE v0
+0x5D8 :     : A858 :      : SET I <- 0x858 (L88)
+0x5DA :     : 6100 :      : SET v1 <- 00
+0x5DC :     : 4001 :      : SKP v0 != 01
+0x5DE :     : 15EC :      : JMP 0x5EC (L39)
+0x5E0 :     : 4002 :      : SKP v0 != 02
+0x5E2 :     : 15FC :      : JMP 0x5FC (L42)
+0x5E4 :     : 4004 :      : SKP v0 != 04
+0x5E6 :     : 15FC :      : JMP 0x5FC (L42)
+0x5E8 :     : 4003 :      : SKP v0 != 03
+0x5EA :     : 15EC :      : JMP 0x5EC (L39)
+0x5EC : L39 : 3504 :      : SKP v5 = 04
+0x5EE :     : 15FA :      : JMP 0x5FA (L41)
+0x5F0 :     : 3605 :      : SKP v6 = 05
+0x5F2 :     : 15F8 :      : JMP 0x5F8 (L40)
+0x5F4 :     : A855 :      : SET I <- 0x855 (L86)
+0x5F6 :     : 15FA :      : JMP 0x5FA (L41)
+0x5F8 : L40 : 6101 :      : SET v1 <- 01
+0x5FA : L41 : 160A :      : JMP 0x60A (L44)
+0x5FC : L42 : 350B :      : SKP v5 = 0B
+0x5FE :     : 160A :      : JMP 0x60A (L44)
+0x600 :     : 360B :      : SKP v6 = 0B
+0x602 :     : 1608 :      : JMP 0x608 (L43)
+0x604 :     : A855 :      : SET I <- 0x855 (L86)
+0x606 :     : 160A :      : JMP 0x60A (L44)
+0x608 : L43 : 6101 :      : SET v1 <- 01
+0x60A : L44 : 6A3B :      : SET vA <- 3B
+0x60C :     : 6B07 :      : SET vB <- 07
+0x60E :     : DAB3 :      : DRAW vA vB 3
+0x610 :     : A98B :      : SET I <- 0x98B (L99)
+0x612 :     : 450B :      : SKP v5 != 0B
+0x614 :     : A98E :      : SET I <- 0x98E (L100)
+0x616 :     : 4101 :      : SKP v1 != 01
+0x618 :     : A9AB :      : SET I <- 0x9AB (L106)
+0x61A :     : 6D2A :      : SET vD <- 2A
+0x61C :     : 6E06 :      : SET vE <- 06
+0x61E :     : 229C :      : CALL 0x29C (L16)
+0x620 :     : 6D01 :      : SET vD <- 01
+0x622 :     : 6E0B :      : SET vE <- 0B
+0x624 :     : A967 :      : SET I <- 0x967 (L95)
+0x626 :     : 229C :      : CALL 0x29C (L16)
+0x628 :     : A842 :      : SET I <- 0x842 (L81)
+0x62A :     : F165 :      : RESTORE v1
+0x62C :     : A858 :      : SET I <- 0x858 (L88)
+0x62E :     : 3001 :      : SKP v0 = 01
+0x630 :     : 1636 :      : JMP 0x636 (L45)
+0x632 :     : 4101 :      : SKP v1 != 01
+0x634 :     : A855 :      : SET I <- 0x855 (L86)
+0x636 : L45 : 3002 :      : SKP v0 = 02
+0x638 :     : 163E :      : JMP 0x63E (L46)
+0x63A :     : 4103 :      : SKP v1 != 03
+0x63C :     : A855 :      : SET I <- 0x855 (L86)
+0x63E : L46 : 3004 :      : SKP v0 = 04
+0x640 :     : 1646 :      : JMP 0x646 (L47)
+0x642 :     : 4104 :      : SKP v1 != 04
+0x644 :     : A855 :      : SET I <- 0x855 (L86)
+0x646 : L47 : 3003 :      : SKP v0 = 03
+0x648 :     : 164E :      : JMP 0x64E (L48)
+0x64A :     : 4103 :      : SKP v1 != 03
+0x64C :     : A855 :      : SET I <- 0x855 (L86)
+0x64E : L48 : 6A3B :      : SET vA <- 3B
+0x650 :     : 6B0C :      : SET vB <- 0C
+0x652 :     : DAB3 :      : DRAW vA vB 3
+0x654 :     : A98E :      : SET I <- 0x98E (L100)
+0x656 :     : 4101 :      : SKP v1 != 01
+0x658 :     : A98B :      : SET I <- 0x98B (L99)
+0x65A :     : 4106 :      : SKP v1 != 06
+0x65C :     : A992 :      : SET I <- 0x992 (L101)
+0x65E :     : 4104 :      : SKP v1 != 04
+0x660 :     : A997 :      : SET I <- 0x997 (L102)
+0x662 :     : 4105 :      : SKP v1 != 05
+0x664 :     : A99C :      : SET I <- 0x99C (L103)
+0x666 :     : 4102 :      : SKP v1 != 02
+0x668 :     : A9A1 :      : SET I <- 0x9A1 (L104)
+0x66A :     : 4103 :      : SKP v1 != 03
+0x66C :     : A9A6 :      : SET I <- 0x9A6 (L105)
+0x66E :     : 6D2A :      : SET vD <- 2A
+0x670 :     : 6E0B :      : SET vE <- 0B
+0x672 :     : 229C :      : CALL 0x29C (L16)
+0x674 :     : 6D01 :      : SET vD <- 01
+0x676 :     : 6E10 :      : SET vE <- 10
+0x678 :     : A971 :      : SET I <- 0x971 (L96)
+0x67A :     : 229C :      : CALL 0x29C (L16)
+0x67C :     : A842 :      : SET I <- 0x842 (L81)
+0x67E :     : F265 :      : RESTORE v2
+0x680 :     : A858 :      : SET I <- 0x858 (L88)
+0x682 :     : 3001 :      : SKP v0 = 01
+0x684 :     : 168A :      : JMP 0x68A (L49)
+0x686 :     : 4201 :      : SKP v2 != 01
+0x688 :     : A855 :      : SET I <- 0x855 (L86)
+0x68A : L49 : 3002 :      : SKP v0 = 02
+0x68C :     : 1692 :      : JMP 0x692 (L50)
+0x68E :     : 4202 :      : SKP v2 != 02
+0x690 :     : A855 :      : SET I <- 0x855 (L86)
+0x692 : L50 : 3004 :      : SKP v0 = 04
+0x694 :     : 169A :      : JMP 0x69A (L51)
+0x696 :     : 4202 :      : SKP v2 != 02
+0x698 :     : A855 :      : SET I <- 0x855 (L86)
+0x69A : L51 : 3003 :      : SKP v0 = 03
+0x69C :     : 16A2 :      : JMP 0x6A2 (L52)
+0x69E :     : 4203 :      : SKP v2 != 03
+0x6A0 :     : A855 :      : SET I <- 0x855 (L86)
+0x6A2 : L52 : 6A3B :      : SET vA <- 3B
+0x6A4 :     : 6B11 :      : SET vB <- 11
+0x6A6 :     : DAB3 :      : DRAW vA vB 3
+0x6A8 :     : A98E :      : SET I <- 0x98E (L100)
+0x6AA :     : 4201 :      : SKP v2 != 01
+0x6AC :     : A98B :      : SET I <- 0x98B (L99)
+0x6AE :     : 4204 :      : SKP v2 != 04
+0x6B0 :     : A997 :      : SET I <- 0x997 (L102)
+0x6B2 :     : 4205 :      : SKP v2 != 05
+0x6B4 :     : A99C :      : SET I <- 0x99C (L103)
+0x6B6 :     : 4202 :      : SKP v2 != 02
+0x6B8 :     : A9A1 :      : SET I <- 0x9A1 (L104)
+0x6BA :     : 4203 :      : SKP v2 != 03
+0x6BC :     : A9A6 :      : SET I <- 0x9A6 (L105)
+0x6BE :     : 4206 :      : SKP v2 != 06
+0x6C0 :     : A9AB :      : SET I <- 0x9AB (L106)
+0x6C2 :     : 4207 :      : SKP v2 != 07
+0x6C4 :     : A9B0 :      : SET I <- 0x9B0 (L107)
+0x6C6 :     : 4208 :      : SKP v2 != 08
+0x6C8 :     : A9B5 :      : SET I <- 0x9B5 (L108)
+0x6CA :     : 6D2A :      : SET vD <- 2A
+0x6CC :     : 6E10 :      : SET vE <- 10
+0x6CE :     : 229C :      : CALL 0x29C (L16)
+0x6D0 :     : 6D01 :      : SET vD <- 01
+0x6D2 :     : 6E15 :      : SET vE <- 15
+0x6D4 :     : A97A :      : SET I <- 0x97A (L97)
+0x6D6 :     : 229C :      : CALL 0x29C (L16)
+0x6D8 :     : 6500 :      : SET v5 <- 00
+0x6DA :     : 6608 :      : SET v6 <- 08
+0x6DC :     : 6700 :      : SET v7 <- 00
+0x6DE :     : 6820 :      : SET v8 <- 20
+0x6E0 :     : 856E :      : SHL v5 v6
+0x6E2 :     : 8786 :      : SHR v7 v8
+0x6E4 :     : A842 :      : SET I <- 0x842 (L81)
+0x6E6 :     : F065 :      : RESTORE v0
+0x6E8 :     : A858 :      : SET I <- 0x858 (L88)
+0x6EA :     : 3001 :      : SKP v0 = 01
+0x6EC :     : 16F2 :      : JMP 0x6F2 (L53)
+0x6EE :     : 3500 :      : SKP v5 = 00
+0x6F0 :     : A855 :      : SET I <- 0x855 (L86)
+0x6F2 : L53 : 3002 :      : SKP v0 = 02
+0x6F4 :     : 16FA :      : JMP 0x6FA (L54)
+0x6F6 :     : 4500 :      : SKP v5 != 00
+0x6F8 :     : A855 :      : SET I <- 0x855 (L86)
+0x6FA : L54 : 3004 :      : SKP v0 = 04
+0x6FC :     : 1702 :      : JMP 0x702 (L55)
+0x6FE :     : 4500 :      : SKP v5 != 00
+0x700 :     : A855 :      : SET I <- 0x855 (L86)
+0x702 : L55 : 3003 :      : SKP v0 = 03
+0x704 :     : 170A :      : JMP 0x70A (L56)
+0x706 :     : 3500 :      : SKP v5 = 00
+0x708 :     : A855 :      : SET I <- 0x855 (L86)
+0x70A : L56 : 6A3B :      : SET vA <- 3B
+0x70C :     : 6B16 :      : SET vB <- 16
+0x70E :     : DAB3 :      : DRAW vA vB 3
+0x710 :     : A98E :      : SET I <- 0x98E (L100)
+0x712 :     : 4500 :      : SKP v5 != 00
+0x714 :     : A98B :      : SET I <- 0x98B (L99)
+0x716 :     : 5570 :      : SKP v5 = v7
+0x718 :     : A9AB :      : SET I <- 0x9AB (L106)
+0x71A :     : 6D2A :      : SET vD <- 2A
+0x71C :     : 6E15 :      : SET vE <- 15
+0x71E :     : 229C :      : CALL 0x29C (L16)
+0x720 :     : 6D01 :      : SET vD <- 01
+0x722 :     : 6E1A :      : SET vE <- 1A
+0x724 :     : A983 :      : SET I <- 0x983 (L98)
+0x726 :     : 229C :      : CALL 0x29C (L16)
+0x728 :     : 6098 :      : SET v0 <- 98
+0x72A :     : 6E9C :      : SET vE <- 9C
+0x72C :     : BE00 :      : JMP v0 0xE00 (L117)
+0x72E : L57 : A842 :      : SET I <- 0x842 (L81)
+0x730 :     : F065 :      : RESTORE v0
+0x732 :     : A858 :      : SET I <- 0x858 (L88)
+0x734 :     : 3001 :      : SKP v0 = 01
+0x736 :     : 173C :      : JMP 0x73C (L58)
+0x738 :     : 4500 :      : SKP v5 != 00
+0x73A :     : A855 :      : SET I <- 0x855 (L86)
+0x73C : L58 : 3002 :      : SKP v0 = 02
+0x73E :     : 1744 :      : JMP 0x744 (L59)
+0x740 :     : 3500 :      : SKP v5 = 00
+0x742 :     : A855 :      : SET I <- 0x855 (L86)
+0x744 : L59 : 3004 :      : SKP v0 = 04
+0x746 :     : 174C :      : JMP 0x74C (L60)
+0x748 :     : 3500 :      : SKP v5 = 00
+0x74A :     : A855 :      : SET I <- 0x855 (L86)
+0x74C : L60 : 3003 :      : SKP v0 = 03
+0x74E :     : 1754 :      : JMP 0x754 (L61)
+0x750 :     : 4500 :      : SKP v5 != 00
+0x752 :     : A855 :      : SET I <- 0x855 (L86)
+0x754 : L61 : 6A3B :      : SET vA <- 3B
+0x756 :     : 6B1B :      : SET vB <- 1B
+0x758 :     : DAB3 :      : DRAW vA vB 3
+0x75A :     : A98E :      : SET I <- 0x98E (L100)
+0x75C :     : 4501 :      : SKP v5 != 01
+0x75E :     : A98B :      : SET I <- 0x98B (L99)
+0x760 :     : 6D2A :      : SET vD <- 2A
+0x762 :     : 6E1A :      : SET vE <- 1A
+0x764 :     : 229C :      : CALL 0x29C (L16)
+0x766 :     : F00A :      : WAIT v0
+0x768 :     : 2202 :      : CALL 0x202 (L02)
+0x76A :     : 130C :      : JMP 0x30C (L18)
+0x76C : L62 : 27CA :      : CALL 0x7CA (L70)
+0x76E :     : A9C0 :      : SET I <- 0x9C0 (L110)
+0x770 :     : F665 :      : RESTORE v6
+0x772 :     : A9C7 :      : SET I <- 0x9C7 (L111)
+0x774 :     : F515 :      : SET D <- v5
+0x776 : L63 : 651E :      : SET v5 <- 1E
+0x778 : L64 : D011 :      : DRAW v0 v1 1
+0x77A :     : 3F00 :      : SKP vF = 00
+0x77C :     : 1788 :      : JMP 0x788 (L65)
+0x77E :     : 6036 :      : SET v0 <- 36
+0x780 :     : F607 :      : SET v6 <- D
+0x782 :     : 8666 :      : SHR v6 v6
+0x784 :     : 8666 :      : SHR v6 v6
+0x786 :     : 8065 :      : SUB v0 v6
+0x788 : L65 : 75FF :      : ADD v5 FF
+0x78A :     : 3500 :      : SKP v5 = 00
+0x78C :     : 1778 :      : JMP 0x778 (L64)
+0x78E :     : 8244 :      : ADD v2 v4
+0x790 :     : 83F4 :      : ADD v3 vF
+0x792 :     : FE07 :      : SET vE <- D
+0x794 :     : 3E00 :      : SKP vE = 00
+0x796 :     : 1776 :      : JMP 0x776 (L63)
+0x798 :     : 00EE :      : RET
+0x79A : L66 : 27CA :      : CALL 0x7CA (L70)
+0x79C :     : A9C0 :      : SET I <- 0x9C0 (L110)
+0x79E :     : F665 :      : RESTORE v6
+0x7A0 :     : 8556 :      : SHR v5 v5
+0x7A2 :     : A9C7 :      : SET I <- 0x9C7 (L111)
+0x7A4 :     : F515 :      : SET D <- v5
+0x7A6 : L67 : 651E :      : SET v5 <- 1E
+0x7A8 : L68 : D011 :      : DRAW v0 v1 1
+0x7AA :     : 3F00 :      : SKP vF = 00
+0x7AC :     : 17B8 :      : JMP 0x7B8 (L69)
+0x7AE :     : 6020 :      : SET v0 <- 20
+0x7B0 :     : F607 :      : SET v6 <- D
+0x7B2 :     : 8666 :      : SHR v6 v6
+0x7B4 :     : 8666 :      : SHR v6 v6
+0x7B6 :     : 8065 :      : SUB v0 v6
+0x7B8 : L69 : 75FF :      : ADD v5 FF
+0x7BA :     : 3500 :      : SKP v5 = 00
+0x7BC :     : 17A8 :      : JMP 0x7A8 (L68)
+0x7BE :     : 8244 :      : ADD v2 v4
+0x7C0 :     : 83F4 :      : ADD v3 vF
+0x7C2 :     : FE07 :      : SET vE <- D
+0x7C4 :     : 3E00 :      : SKP vE = 00
+0x7C6 :     : 17A6 :      : JMP 0x7A6 (L67)
+0x7C8 :     : 00EE :      : RET
+0x7CA : L70 : 6008 :      : SET v0 <- 08
+0x7CC :     : 6100 :      : SET v1 <- 00
+0x7CE :     : 620F :      : SET v2 <- 0F
+0x7D0 :     : A9D3 :      : SET I <- 0x9D3 (L115)
+0x7D2 : L71 : D01F :      : DRAW v0 v1 F
+0x7D4 :     : F21E :      : ADD I v2
+0x7D6 :     : 7008 :      : ADD v0 08
+0x7D8 :     : 3038 :      : SKP v0 = 38
+0x7DA :     : 17E0 :      : JMP 0x7E0 (L72)
+0x7DC :     : 6008 :      : SET v0 <- 08
+0x7DE :     : 710F :      : ADD v1 0F
+0x7E0 : L72 : 311E :      : SKP v1 = 1E
+0x7E2 :     : 17D2 :      : JMP 0x7D2 (L71)
+0x7E4 :     : 00EE :      : RET
+0x7E6 : L73 : 6010 :      : SET v0 <- 10
+0x7E8 :     : 6100 :      : SET v1 <- 00
+0x7EA :     : 6220 :      : SET v2 <- 20
+0x7EC :     : AA87 :      : SET I <- 0xA87 (L116)
+0x7EE : L74 : D010 :      : DRAW v0 v1 0
+0x7F0 :     : F21E :      : ADD I v2
+0x7F2 :     : 7010 :      : ADD v0 10
+0x7F4 :     : 3070 :      : SKP v0 = 70
+0x7F6 :     : 17FC :      : JMP 0x7FC (L75)
+0x7F8 :     : 6010 :      : SET v0 <- 10
+0x7FA :     : 7110 :      : ADD v1 10
+0x7FC : L75 : 3140 :      : SKP v1 = 40
+0x7FE :     : 17EE :      : JMP 0x7EE (L74)
+0x800 :     : A9C0 :      : SET I <- 0x9C0 (L110)
+0x802 :     : F665 :      : RESTORE v6
+0x804 :     : 8004 :      : ADD v0 v0
+0x806 :     : 8114 :      : ADD v1 v1
+0x808 :     : 8556 :      : SHR v5 v5
+0x80A :     : A9C9 :      : SET I <- 0x9C9 (L112)
+0x80C : L76 : D012 :      : DRAW v0 v1 2
+0x80E :     : 7008 :      : ADD v0 08
+0x810 :     : 303C :      : SKP v0 = 3C
+0x812 :     : 180C :      : JMP 0x80C (L76)
+0x814 :     : A9C7 :      : SET I <- 0x9C7 (L111)
+0x816 : L77 : D012 :      : DRAW v0 v1 2
+0x818 :     : 7001 :      : ADD v0 01
+0x81A :     : 3040 :      : SKP v0 = 40
+0x81C :     : 1816 :      : JMP 0x816 (L77)
+0x81E :     : F515 :      : SET D <- v5
+0x820 : L78 : 650F :      : SET v5 <- 0F
+0x822 : L79 : D012 :      : DRAW v0 v1 2
+0x824 :     : 3F00 :      : SKP vF = 00
+0x826 :     : 1830 :      : JMP 0x830 (L80)
+0x828 :     : 606C :      : SET v0 <- 6C
+0x82A :     : F607 :      : SET v6 <- D
+0x82C :     : 8666 :      : SHR v6 v6
+0x82E :     : 8065 :      : SUB v0 v6
+0x830 : L80 : 75FF :      : ADD v5 FF
+0x832 :     : 3500 :      : SKP v5 = 00
+0x834 :     : 1822 :      : JMP 0x822 (L79)
+0x836 :     : 8244 :      : ADD v2 v4
+0x838 :     : 83F4 :      : ADD v3 vF
+0x83A :     : FE07 :      : SET vE <- D
+0x83C :     : 3E00 :      : SKP vE = 00
+0x83E :     : 1820 :      : JMP 0x820 (L78)
+0x840 :     : 00EE :      : RET
+0x842 : L81 : 0000 :      :
+0x844 : L83 : 0000 :      :
+0x846 :     : 0000 :      :
+0x848 :     : 0000 :      :
+0x84A :     : 0000 :      :
+0x84C :     : 0000 :      :
+0x84E :     : 0000 :      :
+0x850 :     : 0000 :      :
+0x852 :     : 00C0 :      :
+0x854 :     : C0A0 :      :
+0x856 :     : C080 :      :
+0x858 : L88 : A040 :      :
+0x85A :     : A0E0 :      :
+0x85C :     : A0A0 :      :
+0x85E :     : E0C0 :      :
+0x860 :     : 4040 : "@@" :
+0x862 :     : E0E0 :      :
+0x864 :     : 20C0 :      :
+0x866 :     : E0E0 :      :
+0x868 :     : 6020 : "` " :
+0x86A :     : E0A0 :      :
+0x86C :     : E020 :      :
+0x86E :     : 20E0 :      :
+0x870 :     : C020 :      :
+0x872 :     : C0E0 :      :
+0x874 :     : 80E0 :      :
+0x876 :     : E0E0 :      :
+0x878 :     : 2020 : "  " :
+0x87A :     : 20E0 :      :
+0x87C :     : E0A0 :      :
+0x87E :     : E0E0 :      :
+0x880 :     : E020 :      :
+0x882 :     : E040 :      :
+0x884 :     : A0E0 :      :
+0x886 :     : A0C0 :      :
+0x888 :     : E0A0 :      :
+0x88A :     : E0E0 :      :
+0x88C :     : 8080 :      :
+0x88E :     : E0C0 :      :
+0x890 :     : A0A0 :      :
+0x892 :     : C0E0 :      :
+0x894 :     : C080 :      :
+0x896 :     : E0E0 :      :
+0x898 :     : 80C0 :      :
+0x89A :     : 8060 :      :
+0x89C :     : 80A0 :      :
+0x89E :     : 60A0 :      :
+0x8A0 :     : E0A0 :      :
+0x8A2 :     : A0E0 :      :
+0x8A4 :     : 4040 : "@@" :
+0x8A6 :     : E060 :      :
+0x8A8 :     : 2020 : "  " :
+0x8AA :     : C0A0 :      :
+0x8AC :     : C0A0 :      :
+0x8AE :     : A080 :      :
+0x8B0 :     : 8080 :      :
+0x8B2 :     : E0E0 :      :
+0x8B4 :     : E0A0 :      :
+0x8B6 :     : A0C0 :      :
+0x8B8 :     : A0A0 :      :
+0x8BA :     : A0E0 :      :
+0x8BC :     : A0A0 :      :
+0x8BE :     : E0C0 :      :
+0x8C0 :     : A0C0 :      :
+0x8C2 :     : 8040 :      :
+0x8C4 :     : A0E0 :      :
+0x8C6 :     : 60C0 :      :
+0x8C8 :     : A0C0 :      :
+0x8CA :     : A060 :      :
+0x8CC :     : C020 :      :
+0x8CE :     : C0E0 :      :
+0x8D0 :     : 4040 : "@@" :
+0x8D2 :     : 40A0 :      :
+0x8D4 :     : A0A0 :      :
+0x8D6 :     : 60A0 :      :
+0x8D8 :     : A0A0 :      :
+0x8DA :     : 40A0 :      :
+0x8DC :     : A0E0 :      :
+0x8DE :     : E0A0 :      :
+0x8E0 :     : 40A0 :      :
+0x8E2 :     : A0A0 :      :
+0x8E4 :     : A040 :      :
+0x8E6 :     : 40E0 :      :
+0x8E8 :     : 6080 :      :
+0x8EA :     : E000 :      :
+0x8EC :     : 0000 :      :
+0x8EE :     : 0000 :      :
+0x8F0 :     : E000 :      :
+0x8F2 :     : 0000 :      :
+0x8F4 :     : 0000 :      :
+0x8F6 :     : 4006 :      :
+0x8F8 :     : 0B03 :      :
+0x8FA :     : 8006 :      :
+0x8FC :     : 1003 :      :
+0x8FE :     : 4C06 :      :
+0x900 :     : 1503 :      :
+0x902 :     : 9868 :      :
+0x904 :     : 4C34 : "L4" :
+0x906 :     : 5494 :      :
+0x908 :     : 6858 : "hX" :
+0x90A :     : 2C78 : ",x" :
+0x90C :     : 4064 : "@d" :
+0x90E :     : 705C :      :
+0x910 :     : 0008 :      :
+0x912 :     : 9434 :      :
+0x914 :     : 484C : "HL" :
+0x916 :     : 6898 :      :
+0x918 :     : 2400 :      :
+0x91A : L91 : 0C94 :      :
+0x91C :     : 747C : "t|" :
+0x91E :     : 683C : "h<" :
+0x920 :     : 7098 :      :
+0x922 :     : 3448 : "4H" :
+0x924 :     : 4C68 : "Lh" :
+0x926 :     : 0010 :      :
+0x928 :     : 9488 :      :
+0x92A :     : 6498 :      :
+0x92C :     : 3448 : "4H" :
+0x92E :     : 4C68 : "Lh" :
+0x930 :     : 000E :      :
+0x932 :     : 0D03 :      :
+0x934 :     : 880E :      :
+0x936 :     : 1203 :      :
+0x938 :     : 9068 :      :
+0x93A :     : 4C34 : "L4" :
+0x93C :     : 5494 :      :
+0x93E :     : 782C : "x," :
+0x940 :     : 7044 : "pD" :
+0x942 :     : 3C78 : "<x" :
+0x944 :     : 0008 :      :
+0x946 :     : 945C :      :
+0x948 :     : 6438 : "d8" :
+0x94A :     : 3C70 : "<p" :
+0x94C :     : 6000 :      :
+0x94E :     : 0C94 :      :
+0x950 :     : 583C : "X<" :
+0x952 :     : 442C : "D," :
+0x954 :     : 348C :      :
+0x956 :     : 0080 :      :
+0x958 :     : 4094 :      :
+0x95A :     : 703C : "p<" :
+0x95C :     : 743C : "t<" :
+0x95E :     : 7800 :      :
+0x960 : L94 : 5C3C :      :
+0x962 :     : 5C64 :      :
+0x964 :     : 708C :      :
+0x966 :     : 0038 :      :
+0x968 :     : 4C74 : "Lt" :
+0x96A :     : 689C :      :
+0x96C :     : 842C :      :
+0x96E :     : 4C78 : "Lx" :
+0x970 :     : 0034 :      :
+0x972 :     : 584C : "XL" :
+0x974 :     : 6868 : "hh" :
+0x976 :     : 4C60 : "L`" :
+0x978 :     : 4400 :      :
+0x97A : L97 : 7448 : "tH" :
+0x97C :     : 4C40 : "L@" :
+0x97E :     : 784C : "xL" :
+0x980 :     : 6044 : "`D" :
+0x982 :     : 0050 :      :
+0x984 :     : 7C5C :      :
+0x986 :     : 684C : "hL" :
+0x988 :     : 6044 : "`D" :
+0x98A :     : 0064 :      :
+0x98C :     : 6000 :      :
+0x98E : L100 : 6440 : "d@" :
+0x990 :     : 4000 :      :
+0x992 : L101 : 7458 : "tX" :
+0x994 :     : 6484 :      :
+0x996 :     : 0058 :      :
+0x998 :     : 703C : "p<" :
+0x99A :     : 7400 :      :
+0x99C : L103 : 4870 : "Hp" :
+0x99E :     : 3C74 : "<t" :
+0x9A0 :     : 0030 :      :
+0x9A2 :     : 6478 : "dx" :
+0x9A4 :     : 4800 :      :
+0x9A6 : L105 : 6064 : "`d" :
+0x9A8 :     : 603C : "`<" :
+0x9AA :     : 003C :      :
+0x9AC :     : 7070 : "pp" :
+0x9AE :     : 0800 :      :
+0x9B0 : L107 : 3C70 : "<p" :
+0x9B2 :     : 700C :      :
+0x9B4 :     : 003C :      :
+0x9B6 :     : 7070 : "pp" :
+0x9B8 :     : 1000 :      :
+0x9BA : L109 : FEFE :      :
+0x9BC :     : FEFE :      :
+0x9BE :     : FEFE :      :
+0x9C0 : L110 : 0A1F :      :
+0x9C2 :     : 0000 :      :
+0x9C4 :     : 01B4 :      :
+0x9C6 :     : 0080 :      :
+0x9C8 :     : 80FF :      :
+0x9CA :     : FF0A :      :
+0x9CC :     : AEA2 :      :
+0x9CE :     : 4238 : "B8" :
+0x9D0 :     : 0830 :      :
+0x9D2 :     : B80F :      :
+0x9D4 :     : 0202 :      :
+0x9D6 :     : 0202 :      :
+0x9D8 :     : 0200 :      :
+0x9DA :     : 001F :      :
+0x9DC :     : 3F71 : "?q" :
+0x9DE :     : E0E5 :      :
+0x9E0 :     : E0E8 :      :
+0x9E2 :     : A00D :      :
+0x9E4 :     : 2A28 : "*(" :
+0x9E6 :     : 2828 : "((" :
+0x9E8 :     : 0000 :      :
+0x9EA :     : 18B8 :      :
+0x9EC :     : B838 :      :
+0x9EE :     : 383F : "8?" :
+0x9F0 :     : BF00 :      :
+0x9F2 :     : 19A5 :      :
+0x9F4 :     : BDA1 :      :
+0x9F6 :     : 9D00 :      :
+0x9F8 :     : 000C :      :
+0x9FA :     : 1D1D :      :
+0x9FC :     : 010D :      :
+0x9FE :     : 1D9D :      :
+0xA00 :     : 01C7 :      :
+0xA02 :     : 2929 : "))" :
+0xA04 :     : 2927 : ")'" :
+0xA06 :     : 0000 :      :
+0xA08 :     : F8FC :      :
+0xA0A :     : CEC6 :      :
+0xA0C :     : C6C6 :      :
+0xA0E :     : C600 :      :
+0xA10 :     : 494A : "IJ" :
+0xA12 :     : 4948 : "IH" :
+0xA14 :     : 3B00 :      :
+0xA16 :     : 0000 :      :
+0xA18 :     : 0103 :      :
+0xA1A :     : 0303 :      :
+0xA1C :     : 01F0 :      :
+0xA1E :     : 3090 :      :
+0xA20 :     : 0000 :      :
+0xA22 :     : 8000 :      :
+0xA24 :     : 0000 :      :
+0xA26 :     : FEC7 :      :
+0xA28 :     : 8383 :      :
+0xA2A :     : 83C6 :      :
+0xA2C :     : FCE7 :      :
+0xA2E :     : E0E0 :      :
+0xA30 :     : E0E0 :      :
+0xA32 :     : 713F : "q?" :
+0xA34 :     : 1F00 :      :
+0xA36 :     : 0007 :      :
+0xA38 :     : 0202 :      :
+0xA3A :     : 0202 :      :
+0xA3C :     : 3938 : "98" :
+0xA3E :     : 3838 : "88" :
+0xA40 :     : 38B8 :      :
+0xA42 :     : B838 :      :
+0xA44 :     : 0000 :      :
+0xA46 :     : 314A : "1J" :
+0xA48 :     : 7940 : "y@" :
+0xA4A :     : 3BDD :      :
+0xA4C :     : DDDD :      :
+0xA4E :     : DDDD :      :
+0xA50 :     : DDDD :      :
+0xA52 :     : DD00 :      :
+0xA54 :     : 00A0 :      :
+0xA56 :     : 3820 : "8 " :
+0xA58 :     : A018 :      :
+0xA5A :     : CEFC :      :
+0xA5C :     : F8C0 :      :
+0xA5E :     : D4DC :      :
+0xA60 :     : C4C5 :      :
+0xA62 :     : 0000 :      :
+0xA64 :     : 3044 : "0D" :
+0xA66 :     : 2414 :      :
+0xA68 :     : 63F1 :      :
+0xA6A :     : 0307 :      :
+0xA6C :     : 0777 :      :
+0xA6E :     : 1763 :      :
+0xA70 :     : 7100 :      :
+0xA72 :     : 0028 :      :
+0xA74 :     : 8EA8 :      :
+0xA76 :     : A8A6 :      :
+0xA78 :     : CE87 :      :
+0xA7A :     : 0303 :      :
+0xA7C :     : 0387 :      :
+0xA7E :     : FEFC :      :
+0xA80 :     : 0000 :      :
+0xA82 :     : 6090 :      :
+0xA84 :     : F080 :      :
+0xA86 :     : 7000 :      :
+0xA88 :     : FF00 :      :
+0xA8A :     : FF00 :      :
+0xA8C :     : 0C00 :      :
+0xA8E :     : 0C00 :      :
+0xA90 :     : 0C00 :      :
+0xA92 :     : 0C00 :      :
+0xA94 :     : 0C00 :      :
+0xA96 :     : 0C00 :      :
+0xA98 :     : 0C00 :      :
+0xA9A :     : 0C00 :      :
+0xA9C :     : 0C00 :      :
+0xA9E :     : 0C00 :      :
+0xAA0 :     : 0000 :      :
+0xAA2 :     : 0000 :      :
+0xAA4 :     : 0000 :      :
+0xAA6 :     : 00CC :      :
+0xAA8 :     : 00CC :      :
+0xAAA :     : 0000 :      :
+0xAAC :     : F300 :      :
+0xAAE :     : F30C :      :
+0xAB0 :     : CC0C :      :
+0xAB2 :     : CC0C :      :
+0xAB4 :     : C00C :      :
+0xAB6 :     : C00C :      :
+0xAB8 :     : C00C :      :
+0xABA :     : C00C :      :
+0xABC :     : C00C :      :
+0xABE :     : C000 :      :
+0xAC0 :     : 0000 :      :
+0xAC2 :     : 0000 :      :
+0xAC4 :     : 0000 :      :
+0xAC6 :     : 0000 :      :
+0xAC8 :     : 0000 :      :
+0xACA :     : 0003 :      :
+0xACC :     : C303 :      :
+0xACE :     : C3CC :      :
+0xAD0 :     : 33CC :      :
+0xAD2 :     : 33CF :      :
+0xAD4 :     : F3CF :      :
+0xAD6 :     : F3CC :      :
+0xAD8 :     : 03CC :      :
+0xADA :     : 03C3 :      :
+0xADC :     : F3C3 :      :
+0xADE :     : F300 :      :
+0xAE0 :     : 0000 :      :
+0xAE2 :     : 0000 :      :
+0xAE4 :     : 0000 :      :
+0xAE6 :     : 0000 :      :
+0xAE8 :     : 0300 :      :
+0xAEA :     : 03F0 :      :
+0xAEC :     : 3FF0 :      :
+0xAEE :     : 3F0C :      :
+0xAF0 :     : C30C :      :
+0xAF2 :     : C30C :      :
+0xAF4 :     : C30C :      :
+0xAF6 :     : C30C :      :
+0xAF8 :     : C30C :      :
+0xAFA :     : C30C :      :
+0xAFC :     : 3F0C :      :
+0xAFE :     : 3F00 :      :
+0xB00 :     : 0000 :      :
+0xB02 :     : 0000 :      :
+0xB04 :     : 0000 :      :
+0xB06 :     : 0000 :      :
+0xB08 :     : 0000 :      :
+0xB0A :     : 0030 :      :
+0xB0C :     : C330 :      :
+0xB0E :     : C330 :      :
+0xB10 :     : CC30 :      :
+0xB12 :     : CC30 :      :
+0xB14 :     : C330 :      :
+0xB16 :     : C330 :      :
+0xB18 :     : C030 :      :
+0xB1A :     : C00F :      :
+0xB1C :     : CF0F :      :
+0xB1E :     : CF00 :      :
+0xB20 :     : 0000 :      :
+0xB22 :     : 0000 :      :
+0xB24 :     : 0000 :      :
+0xB26 :     : 000F :      :
+0xB28 :     : 000F :      :
+0xB2A :     : 00C3 :      :
+0xB2C :     : 00C3 :      :
+0xB2E :     : 0000 :      :
+0xB30 :     : 0000 :      :
+0xB32 :     : 0000 :      :
+0xB34 :     : 0000 :      :
+0xB36 :     : 00C0 :      :
+0xB38 :     : 00C0 :      :
+0xB3A :     : 0000 :      :
+0xB3C :     : 0000 :      :
+0xB3E :     : 0000 :      :
+0xB40 :     : 0000 :      :
+0xB42 :     : 0000 :      :
+0xB44 :     : 0000 :      :
+0xB46 :     : 0003 :      :
+0xB48 :     : FF03 :      :
+0xB4A :     : FF0F :      :
+0xB4C :     : FF0F :      :
+0xB4E :     : FF3F :      :
+0xB50 :     : 033F :      :
+0xB52 :     : 03FC :      :
+0xB54 :     : 00FC :      :
+0xB56 :     : 00FC :      :
+0xB58 :     : 33FC :      :
+0xB5A :     : 33FC :      :
+0xB5C :     : 00FC :      :
+0xB5E :     : 00FC :      :
+0xB60 :     : C0FC :      :
+0xB62 :     : C0FC :      :
+0xB64 :     : 3FFC :      :
+0xB66 :     : 3F03 :      :
+0xB68 :     : C003 :      :
+0xB6A :     : C0CF :      :
+0xB6C :     : C0CF :      :
+0xB6E :     : C0CF :      :
+0xB70 :     : C0CF :      :
+0xB72 :     : C00F :      :
+0xB74 :     : C00F :      :
+0xB76 :     : C00F :      :
+0xB78 :     : C00F :      :
+0xB7A :     : C00F :      :
+0xB7C :     : FF0F :      :
+0xB7E :     : FFCF :      :
+0xB80 :     : FFCF :      :
+0xB82 :     : FF0F :      :
+0xB84 :     : C30F :      :
+0xB86 :     : C300 :      :
+0xB88 :     : F000 :      :
+0xB8A :     : F003 :      :
+0xB8C :     : F303 :      :
+0xB8E :     : F303 :      :
+0xB90 :     : F303 :      :
+0xB92 :     : F300 :      :
+0xB94 :     : 0300 :      :
+0xB96 :     : 0300 :      :
+0xB98 :     : F300 :      :
+0xB9A :     : F303 :      :
+0xB9C :     : F303 :      :
+0xB9E :     : F3C3 :      :
+0xBA0 :     : F3C3 :      :
+0xBA2 :     : F3F3 :      :
+0xBA4 :     : F3F3 :      :
+0xBA6 :     : F3FF :      :
+0xBA8 :     : C0FF :      :
+0xBAA :     : C0FF :      :
+0xBAC :     : F0FF :      :
+0xBAE :     : F0F0 :      :
+0xBB0 :     : FCF0 :      :
+0xBB2 :     : FCF0 :      :
+0xBB4 :     : 3CF0 :      :
+0xBB6 :     : 3CF0 :      :
+0xBB8 :     : 3CF0 :      :
+0xBBA :     : 3CF0 :      :
+0xBBC :     : 3CF0 :      :
+0xBBE :     : 3CF0 :      :
+0xBC0 :     : 3CF0 :      :
+0xBC2 :     : 3CF0 :      :
+0xBC4 :     : FCF0 :      :
+0xBC6 :     : FC00 :      :
+0xBC8 :     : 0000 :      :
+0xBCA :     : 0000 :      :
+0xBCC :     : 0300 :      :
+0xBCE :     : 0300 :      :
+0xBD0 :     : 0F00 :      :
+0xBD2 :     : 0F00 :      :
+0xBD4 :     : 0F00 :      :
+0xBD6 :     : 0F00 :      :
+0xBD8 :     : 0F00 :      :
+0xBDA :     : 0F00 :      :
+0xBDC :     : 0300 :      :
+0xBDE :     : 03FF :      :
+0xBE0 :     : 00FF :      :
+0xBE2 :     : 00FF :      :
+0xBE4 :     : 03FF :      :
+0xBE6 :     : 03FF :      :
+0xBE8 :     : FCFF :      :
+0xBEA :     : FCF0 :      :
+0xBEC :     : 3FF0 :      :
+0xBEE :     : 3FC0 :      :
+0xBF0 :     : 0FC0 :      :
+0xBF2 :     : 0FC0 :      :
+0xBF4 :     : 0FC0 :      :
+0xBF6 :     : 0FC0 :      :
+0xBF8 :     : 0FC0 :      :
+0xBFA :     : 0FF0 :      :
+0xBFC :     : 3CF0 :      :
+0xBFE :     : 3CFF :      :
+0xC00 :     : F0FF :      :
+0xC02 :     : F0F0 :      :
+0xC04 :     : FCF0 :      :
+0xC06 :     : FCFC :      :
+0xC08 :     : 00FC :      :
+0xC0A :     : 00FC :      :
+0xC0C :     : 00FC :      :
+0xC0E :     : 00FC :      :
+0xC10 :     : 00FC :      :
+0xC12 :     : 00FC :      :
+0xC14 :     : 00FC :      :
+0xC16 :     : 003F :      :
+0xC18 :     : 033F :      :
+0xC1A :     : 030F :      :
+0xC1C :     : FF0F :      :
+0xC1E :     : FF03 :      :
+0xC20 :     : FF03 :      :
+0xC22 :     : FF00 :      :
+0xC24 :     : 0000 :      :
+0xC26 :     : 000F :      :
+0xC28 :     : C00F :      :
+0xC2A :     : C00F :      :
+0xC2C :     : C00F :      :
+0xC2E :     : C00F :      :
+0xC30 :     : C00F :      :
+0xC32 :     : C00F :      :
+0xC34 :     : C00F :      :
+0xC36 :     : C0CF :      :
+0xC38 :     : C0CF :      :
+0xC3A :     : C0CF :      :
+0xC3C :     : C0CF :      :
+0xC3E :     : C00F :      :
+0xC40 :     : C00F :      :
+0xC42 :     : C000 :      :
+0xC44 :     : 0000 :      :
+0xC46 :     : 00F3 :      :
+0xC48 :     : F3F3 :      :
+0xC4A :     : F3F3 :      :
+0xC4C :     : F3F3 :      :
+0xC4E :     : F3F3 :      :
+0xC50 :     : F3F3 :      :
+0xC52 :     : F3F3 :      :
+0xC54 :     : F3F3 :      :
+0xC56 :     : F3F3 :      :
+0xC58 :     : F3F3 :      :
+0xC5A :     : F3F3 :      :
+0xC5C :     : F3F3 :      :
+0xC5E :     : F3F3 :      :
+0xC60 :     : F3F3 :      :
+0xC62 :     : F300 :      :
+0xC64 :     : 0000 :      :
+0xC66 :     : 00FF :      :
+0xC68 :     : F0FF :      :
+0xC6A :     : F0FF :      :
+0xC6C :     : C0FF :      :
+0xC6E :     : C0F0 :      :
+0xC70 :     : 00F0 :      :
+0xC72 :     : 00F3 :      :
+0xC74 :     : 30F3 :      :
+0xC76 :     : 30F3 :      :
+0xC78 :     : F0F3 :      :
+0xC7A :     : F0F0 :      :
+0xC7C :     : 30F0 :      :
+0xC7E :     : 30F0 :      :
+0xC80 :     : 33F0 :      :
+0xC82 :     : 3300 :      :
+0xC84 :     : 0000 :      :
+0xC86 :     : 0000 :      :
+0xC88 :     : 0F00 :      :
+0xC8A :     : 0F00 :      :
+0xC8C :     : 3F00 :      :
+0xC8E :     : 3F00 :      :
+0xC90 :     : 3F00 :      :
+0xC92 :     : 3F3F : "??" :
+0xC94 :     : 3F3F : "??" :
+0xC96 :     : 3F03 :      :
+0xC98 :     : 3F03 :      :
+0xC9A :     : 3F3C : "?<" :
+0xC9C :     : 0F3C :      :
+0xC9E :     : 0F3F :      :
+0xCA0 :     : 033F :      :
+0xCA2 :     : 0300 :      :
+0xCA4 :     : 0000 :      :
+0xCA6 :     : 00C0 :      :
+0xCA8 :     : 3FC0 :      :
+0xCAA :     : 3F00 :      :
+0xCAC :     : 0F00 :      :
+0xCAE :     : 0F00 :      :
+0xCB0 :     : 0F00 :      :
+0xCB2 :     : 0F00 :      :
+0xCB4 :     : 0F00 :      :
+0xCB6 :     : 0FC0 :      :
+0xCB8 :     : 3FC0 :      :
+0xCBA :     : 3FFF :      :
+0xCBC :     : FCFF :      :
+0xCBE :     : FCFF :      :
+0xCC0 :     : F0FF :      :
+0xCC2 :     : F000 :      :
+0xCC4 :     : 0000 :      :
+0xCC6 :     : 0000 :      :
+0xCC8 :     : 0000 :      :
+0xCCA :     : 0000 :      :
+0xCCC :     : 3F00 :      :
+0xCCE :     : 3F00 :      :
+0xCD0 :     : 0C00 :      :
+0xCD2 :     : 0C00 :      :
+0xCD4 :     : 0C00 :      :
+0xCD6 :     : 0C00 :      :
+0xCD8 :     : 0C00 :      :
+0xCDA :     : 0C00 :      :
+0xCDC :     : 0C00 :      :
+0xCDE :     : 0C00 :      :
+0xCE0 :     : 0000 :      :
+0xCE2 :     : 0000 :      :
+0xCE4 :     : 0000 :      :
+0xCE6 :     : 0000 :      :
+0xCE8 :     : 0000 :      :
+0xCEA :     : 000F :      :
+0xCEC :     : 030F :      :
+0xCEE :     : 0330 :      :
+0xCF0 :     : CC30 :      :
+0xCF2 :     : CC3F :      :
+0xCF4 :     : C33F :      :
+0xCF6 :     : C330 :      :
+0xCF8 :     : 0030 :      :
+0xCFA :     : 000F :      :
+0xCFC :     : CF0F :      :
+0xCFE :     : CF00 :      :
+0xD00 :     : 0000 :      :
+0xD02 :     : 0000 :      :
+0xD04 :     : 0000 :      :
+0xD06 :     : 0000 :      :
+0xD08 :     : 0000 :      :
+0xD0A :     : 00CC :      :
+0xD0C :     : 00CC :      :
+0xD0E :     : 000F :      :
+0xD10 :     : C00F :      :
+0xD12 :     : C00C :      :
+0xD14 :     : 000C :      :
+0xD16 :     : 00CC :      :
+0xD18 :     : 00CC :      :
+0xD1A :     : 0003 :      :
+0xD1C :     : C003 :      :
+0xD1E :     : C000 :      :
+0xD20 :     : 0000 :      :
+0xD22 :     : 0000 :      :
+0xD24 :     : 0000 :      :
+0xD26 :     : 0000 :      :
+0xD28 :     : 0000 :      :
+0xD2A :     : 000F :      :
+0xD2C :     : 000F :      :
+0xD2E :     : 0030 :      :
+0xD30 :     : 3030 : "00" :
+0xD32 :     : 300C :      :
+0xD34 :     : 300C :      :
+0xD36 :     : 3003 :      :
+0xD38 :     : 3003 :      :
+0xD3A :     : 303C : "0<" :
+0xD3C :     : 0F3C :      :
+0xD3E :     : 0F00 :      :
+0xD40 :     : 0000 :      :
+0xD42 :     : 0000 :      :
+0xD44 :     : 0000 :      :
+0xD46 :     : 0000 :      :
+0xD48 :     : 0000 :      :
+0xD4A :     : 000C :      :
+0xD4C :     : C00C :      :
+0xD4E :     : C0C0 :      :
+0xD50 :     : FCC0 :      :
+0xD52 :     : FCCC :      :
+0xD54 :     : C0CC :      :
+0xD56 :     : C0CC :      :
+0xD58 :     : C0CC :      :
+0xD5A :     : C0CC :      :
+0xD5C :     : 3CCC :      :
+0xD5E :     : 3C00 :      :
+0xD60 :     : 0000 :      :
+0xD62 :     : 0000 :      :
+0xD64 :     : 0000 :      :
+0xD66 :     : 0000 :      :
+0xD68 :     : 0000 :      :
+0xD6A :     : 003C :      :
+0xD6C :     : 003C :      :
+0xD6E :     : 00C3 :      :
+0xD70 :     : 00C3 :      :
+0xD72 :     : 00FF :      :
+0xD74 :     : 00FF :      :
+0xD76 :     : 00C0 :      :
+0xD78 :     : 00C0 :      :
+0xD7A :     : 003F :      :
+0xD7C :     : 003F :      :
+0xD7E :     : 0000 :      :
+0xD80 :     : 0000 :      :
+0xD82 :     : 0000 :      :
+0xD84 :     : 0000 :      :
+0xD86 :     : 0000 :      :
+0xD88 :     : 0000 :      :
+0xD8A :     : 0000 :      :
+0xD8C :     : 0000 :      :
+0xD8E :     : 0000 :      :
+0xD90 :     : 0000 :      :
+0xD92 :     : 0000 :      :
+0xD94 :     : 0000 :      :
+0xD96 :     : 0000 :      :
+0xD98 :     : 0000 :      :
+0xD9A :     : 0000 :      :
+0xD9C :     : 0000 :      :
+0xD9E :     : 0000 :      :
+0xDA0 :     : 0000 :      :
+0xDA2 :     : 0000 :      :
+0xDA4 :     : 0000 :      :
+0xDA6 :     : 0000 :      :
+0xDA8 :     : 0000 :      :
+0xDAA :     : 0000 :      :
+0xDAC :     : 0000 :      :
+0xDAE :     : 0000 :      :
+0xDB0 :     : 0000 :      :
+0xDB2 :     : 0000 :      :
+0xDB4 :     : 0000 :      :
+0xDB6 :     : 0000 :      :
+0xDB8 :     : 0000 :      :
+0xDBA :     : 0000 :      :
+0xDBC :     : 0000 :      :
+0xDBE :     : 0000 :      :
+0xDC0 :     : 0000 :      :
+0xDC2 :     : 0000 :      :
+0xDC4 :     : 0000 :      :
+0xDC6 :     : 0000 :      :
+0xDC8 :     : 0000 :      :
+0xDCA :     : 0000 :      :
+0xDCC :     : 0000 :      :
+0xDCE :     : 0000 :      :
+0xDD0 :     : 0000 :      :
+0xDD2 :     : 0000 :      :
+0xDD4 :     : 0000 :      :
+0xDD6 :     : 0000 :      :
+0xDD8 :     : 0000 :      :
+0xDDA :     : 0000 :      :
+0xDDC :     : 0000 :      :
+0xDDE :     : 0000 :      :
+0xDE0 :     : 0000 :      :
+0xDE2 :     : 0000 :      :
+0xDE4 :     : 0000 :      :
+0xDE6 :     : 0000 :      :
+0xDE8 :     : 0000 :      :
+0xDEA :     : 0000 :      :
+0xDEC :     : 0000 :      :
+0xDEE :     : 0000 :      :
+0xDF0 :     : 0000 :      :
+0xDF2 :     : 0000 :      :
+0xDF4 :     : 0000 :      :
+0xDF6 :     : 0000 :      :
+0xDF8 :     : 0000 :      :
+0xDFA :     : 0000 :      :
+0xDFC :     : 0000 :      :
+0xDFE :     : 0000 :      :
+0xE00 : L117 : 0000 :      : ???(0000)
+0xE02 :     : 0000 :      : ???(0000)
+0xE04 :     : 0000 :      : ???(0000)
+0xE06 :     : 0000 :      : ???(0000)
+0xE08 :     : 0000 :      : ???(0000)
+0xE0A :     : 0000 :      : ???(0000)
+0xE0C :     : 0000 :      : ???(0000)
+0xE0E :     : 0000 :      : ???(0000)
+0xE10 :     : 0000 :      : ???(0000)
+0xE12 :     : 0000 :      : ???(0000)
+0xE14 :     : 0000 :      : ???(0000)
+0xE16 :     : 0000 :      : ???(0000)
+0xE18 :     : 0000 :      : ???(0000)
+0xE1A :     : 0000 :      : ???(0000)
+0xE1C :     : 0000 :      : ???(0000)
+0xE1E :     : 0000 :      : ???(0000)
+0xE20 :     : 0000 :      : ???(0000)
+0xE22 :     : 0000 :      : ???(0000)
+0xE24 :     : 0000 :      : ???(0000)
+0xE26 :     : 0000 :      : ???(0000)
+0xE28 :     : 0000 :      : ???(0000)
+0xE2A :     : 0000 :      : ???(0000)
+0xE2C :     : 0000 :      : ???(0000)
+0xE2E :     : 0000 :      : ???(0000)
+0xE30 :     : 0000 :      : ???(0000)
+0xE32 :     : 0000 :      : ???(0000)
+0xE34 :     : 0000 :      : ???(0000)
+0xE36 :     : 0000 :      : ???(0000)
+0xE38 :     : 0000 :      : ???(0000)
+0xE3A :     : 0000 :      : ???(0000)
+0xE3C :     : 0000 :      : ???(0000)
+0xE3E :     : 0000 :      : ???(0000)
+0xE40 :     : 0000 :      : ???(0000)
+0xE42 :     : 0000 :      : ???(0000)
+0xE44 :     : 0000 :      : ???(0000)
+0xE46 :     : 0000 :      : ???(0000)
+0xE48 :     : 0000 :      : ???(0000)
+0xE4A :     : 0000 :      : ???(0000)
+0xE4C :     : 0000 :      : ???(0000)
+0xE4E :     : 0000 :      : ???(0000)
+0xE50 :     : 0000 :      : ???(0000)
+0xE52 :     : 0000 :      : ???(0000)
+0xE54 :     : 0000 :      : ???(0000)
+0xE56 :     : 0000 :      : ???(0000)
+0xE58 :     : 0000 :      : ???(0000)
+0xE5A :     : 0000 :      : ???(0000)
+0xE5C :     : 0000 :      : ???(0000)
+0xE5E :     : 0000 :      : ???(0000)
+0xE60 :     : 0000 :      : ???(0000)
+0xE62 :     : 0000 :      : ???(0000)
+0xE64 :     : 0000 :      : ???(0000)
+0xE66 :     : 0000 :      : ???(0000)
+0xE68 :     : 0000 :      : ???(0000)
+0xE6A :     : 0000 :      : ???(0000)
+0xE6C :     : 0000 :      : ???(0000)
+0xE6E :     : 0000 :      : ???(0000)
+0xE70 :     : 0000 :      : ???(0000)
+0xE72 :     : 0000 :      : ???(0000)
+0xE74 :     : 0000 :      : ???(0000)
+0xE76 :     : 0000 :      : ???(0000)
+0xE78 :     : 0000 :      : ???(0000)
+0xE7A :     : 0000 :      : ???(0000)
+0xE7C :     : 0000 :      : ???(0000)
+0xE7E :     : 0000 :      : ???(0000)
+0xE80 :     : 0000 :      : ???(0000)
+0xE82 :     : 0000 :      : ???(0000)
+0xE84 :     : 0000 :      : ???(0000)
+0xE86 :     : 0000 :      : ???(0000)
+0xE88 :     : 0000 :      : ???(0000)
+0xE8A :     : 0000 :      : ???(0000)
+0xE8C :     : 0000 :      : ???(0000)
+0xE8E :     : 0000 :      : ???(0000)
+0xE90 :     : 0000 :      : ???(0000)
+0xE92 :     : 0000 :      : ???(0000)
+0xE94 :     : 0000 :      : ???(0000)
+0xE96 :     : 0000 :      : ???(0000)
+0xE98 :     : 6500 :      : SET v5 <- 00
+0xE9A :     : 172E :      : JMP 0x72E (L57)
+0xE9C :     : 6501 :      :
+0xE9E :     : 172E :      :

@@ -3,7 +3,8 @@ all: ch8s diss
 
 default = self-brix
 
-external = ibm maze pong2 brix invaders tetris
+external = ibm maze pong2 brix invaders tetris 3-corax+ 4-flags 5-quirks 6-keypad
+
 internal = life three evens pi scroll scroll-what bf self mini-self
 bfs = bf-reverse bf-fibs bf-collatz
 metas = self-ibm self-maze self-pong2 self-brix self-pi

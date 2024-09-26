@@ -1,0 +1,380 @@
+0x200 :     : 120A :      : JMP 0x20A (L02)
+0x202 : L01 : 6001 :      : SET v0 <- 01
+0x204 :     : 00EE :      : RET
+0x206 :     : 6002 :      :
+0x208 :     : 12A6 :      :
+0x20A : L02 : 00E0 :      : CLS
+0x20C :     : 6832 :      : SET v8 <- 32
+0x20E :     : 6B1A :      : SET vB <- 1A
+0x210 :     : A4F1 :      : SET I <- 0x4F1 (L24)
+0x212 :     : D8B4 :      : DRAW v8 vB 4
+0x214 :     : 683A :      : SET v8 <- 3A
+0x216 :     : A4F5 :      : SET I <- 0x4F5 (L25)
+0x218 :     : D8B4 :      : DRAW v8 vB 4
+0x21A :     : 6802 :      : SET v8 <- 02
+0x21C :     : 6906 :      : SET v9 <- 06
+0x21E :     : 6A0B :      : SET vA <- 0B
+0x220 :     : 6B01 :      : SET vB <- 01
+0x222 :     : 652A :      : SET v5 <- 2A
+0x224 :     : 662B :      : SET v6 <- 2B
+0x226 :     : A4B5 :      : SET I <- 0x4B5 (L13)
+0x228 :     : D8B4 :      : DRAW v8 vB 4
+0x22A :     : A4ED :      : SET I <- 0x4ED (L23)
+0x22C :     : D9B4 :      : DRAW v9 vB 4
+0x22E :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x230 :     : 362B :      : SKP v6 = 2B
+0x232 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x234 :     : DAB4 :      : DRAW vA vB 4
+0x236 :     : 6B06 :      : SET vB <- 06
+0x238 :     : A4B9 :      : SET I <- 0x4B9 (L14)
+0x23A :     : D8B4 :      : DRAW v8 vB 4
+0x23C :     : A4ED :      : SET I <- 0x4ED (L23)
+0x23E :     : D9B4 :      : DRAW v9 vB 4
+0x240 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x242 :     : 452A :      : SKP v5 != 2A
+0x244 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x246 :     : DAB4 :      : DRAW vA vB 4
+0x248 :     : 6B0B :      : SET vB <- 0B
+0x24A :     : A4BD :      : SET I <- 0x4BD (L15)
+0x24C :     : D8B4 :      : DRAW v8 vB 4
+0x24E :     : A4ED :      : SET I <- 0x4ED (L23)
+0x250 :     : D9B4 :      : DRAW v9 vB 4
+0x252 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x254 :     : 5560 :      : SKP v5 = v6
+0x256 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x258 :     : DAB4 :      : DRAW vA vB 4
+0x25A :     : 6B10 :      : SET vB <- 10
+0x25C :     : A4C5 :      : SET I <- 0x4C5 (L17)
+0x25E :     : D8B4 :      : DRAW v8 vB 4
+0x260 :     : A4ED :      : SET I <- 0x4ED (L23)
+0x262 :     : D9B4 :      : DRAW v9 vB 4
+0x264 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x266 :     : 76FF :      : ADD v6 FF
+0x268 :     : 462A :      : SKP v6 != 2A
+0x26A :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x26C :     : DAB4 :      : DRAW vA vB 4
+0x26E :     : 7B05 :      : ADD vB 05
+0x270 :     : A4CD :      : SET I <- 0x4CD (L19)
+0x272 :     : D8B4 :      : DRAW v8 vB 4
+0x274 :     : A4ED :      : SET I <- 0x4ED (L23)
+0x276 :     : D9B4 :      : DRAW v9 vB 4
+0x278 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x27A :     : 9560 :      : SKP v5 != v6
+0x27C :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x27E :     : DAB4 :      : DRAW vA vB 4
+0x280 :     : 7B05 :      : ADD vB 05
+0x282 :     : A4AD :      : SET I <- 0x4AD (L11)
+0x284 :     : D8B4 :      : DRAW v8 vB 4
+0x286 :     : A4ED :      : SET I <- 0x4ED (L23)
+0x288 :     : D9B4 :      : DRAW v9 vB 4
+0x28A :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x28C :     : 1290 :      : JMP 0x290 (L03)
+0x28E :     : A4A1 :      :
+0x290 : L03 : DAB4 :      : DRAW vA vB 4
+0x292 :     : 6812 :      : SET v8 <- 12
+0x294 :     : 6916 :      : SET v9 <- 16
+0x296 :     : 6A1B :      : SET vA <- 1B
+0x298 :     : 6B01 :      : SET vB <- 01
+0x29A :     : A4B1 :      : SET I <- 0x4B1 (L12)
+0x29C :     : D8B4 :      : DRAW v8 vB 4
+0x29E :     : A4ED :      : SET I <- 0x4ED (L23)
+0x2A0 :     : D9B4 :      : DRAW v9 vB 4
+0x2A2 :     : 6000 :      : SET v0 <- 00
+0x2A4 :     : 2202 :      : CALL 0x202 (L01)
+0x2A6 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x2A8 :     : 4000 :      : SKP v0 != 00
+0x2AA :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x2AC :     : DAB4 :      : DRAW vA vB 4
+0x2AE :     : 7B05 :      : ADD vB 05
+0x2B0 :     : A4A9 :      : SET I <- 0x4A9 (L10)
+0x2B2 :     : D8B4 :      : DRAW v8 vB 4
+0x2B4 :     : A4E1 :      : SET I <- 0x4E1 (L20)
+0x2B6 :     : D9B4 :      : DRAW v9 vB 4
+0x2B8 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x2BA :     : 4002 :      : SKP v0 != 02
+0x2BC :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x2BE :     : 3000 :      : SKP v0 = 00
+0x2C0 :     : DAB4 :      : DRAW vA vB 4
+0x2C2 :     : 7B05 :      : ADD vB 05
+0x2C4 :     : A4C9 :      : SET I <- 0x4C9 (L18)
+0x2C6 :     : D8B4 :      : DRAW v8 vB 4
+0x2C8 :     : A4A9 :      : SET I <- 0x4A9 (L10)
+0x2CA :     : D9B4 :      : DRAW v9 vB 4
+0x2CC :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x2CE :     : 652A :      : SET v5 <- 2A
+0x2D0 :     : 6700 :      : SET v7 <- 00
+0x2D2 :     : 8750 :      : SET v7 <- v5
+0x2D4 :     : 472A :      : SKP v7 != 2A
+0x2D6 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x2D8 :     : DAB4 :      : DRAW vA vB 4
+0x2DA :     : 7B05 :      : ADD vB 05
+0x2DC :     : A4C9 :      : SET I <- 0x4C9 (L18)
+0x2DE :     : D8B4 :      : DRAW v8 vB 4
+0x2E0 :     : A4AD :      : SET I <- 0x4AD (L11)
+0x2E2 :     : D9B4 :      : DRAW v9 vB 4
+0x2E4 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x2E6 :     : 660B :      : SET v6 <- 0B
+0x2E8 :     : 672A :      : SET v7 <- 2A
+0x2EA :     : 8761 :      : OR v7 v6
+0x2EC :     : 472B :      : SKP v7 != 2B
+0x2EE :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x2F0 :     : DAB4 :      : DRAW vA vB 4
+0x2F2 :     : 7B05 :      : ADD vB 05
+0x2F4 :     : A4C9 :      : SET I <- 0x4C9 (L18)
+0x2F6 :     : D8B4 :      : DRAW v8 vB 4
+0x2F8 :     : A4B1 :      : SET I <- 0x4B1 (L12)
+0x2FA :     : D9B4 :      : DRAW v9 vB 4
+0x2FC :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x2FE :     : 6678 :      : SET v6 <- 78
+0x300 :     : 671F :      : SET v7 <- 1F
+0x302 :     : 8762 :      : AND v7 v6
+0x304 :     : 4718 :      : SKP v7 != 18
+0x306 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x308 :     : DAB4 :      : DRAW vA vB 4
+0x30A :     : 7B05 :      : ADD vB 05
+0x30C :     : A4C9 :      : SET I <- 0x4C9 (L18)
+0x30E :     : D8B4 :      : DRAW v8 vB 4
+0x310 :     : A4B5 :      : SET I <- 0x4B5 (L13)
+0x312 :     : D9B4 :      : DRAW v9 vB 4
+0x314 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x316 :     : 6678 :      : SET v6 <- 78
+0x318 :     : 671F :      : SET v7 <- 1F
+0x31A :     : 8763 :      : XOR v7 v6
+0x31C :     : 4767 :      : SKP v7 != 67
+0x31E :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x320 :     : DAB4 :      : DRAW vA vB 4
+0x322 :     : 6822 :      : SET v8 <- 22
+0x324 :     : 6926 :      : SET v9 <- 26
+0x326 :     : 6A2B :      : SET vA <- 2B
+0x328 :     : 6B01 :      : SET vB <- 01
+0x32A :     : A4C9 :      : SET I <- 0x4C9 (L18)
+0x32C :     : D8B4 :      : DRAW v8 vB 4
+0x32E :     : A4B9 :      : SET I <- 0x4B9 (L14)
+0x330 :     : D9B4 :      : DRAW v9 vB 4
+0x332 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x334 :     : 668C :      : SET v6 <- 8C
+0x336 :     : 678C :      : SET v7 <- 8C
+0x338 :     : 8764 :      : ADD v7 v6
+0x33A :     : 4718 :      : SKP v7 != 18
+0x33C :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x33E :     : DAB4 :      : DRAW vA vB 4
+0x340 :     : 7B05 :      : ADD vB 05
+0x342 :     : A4C9 :      : SET I <- 0x4C9 (L18)
+0x344 :     : D8B4 :      : DRAW v8 vB 4
+0x346 :     : A4BD :      : SET I <- 0x4BD (L15)
+0x348 :     : D9B4 :      : DRAW v9 vB 4
+0x34A :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x34C :     : 668C :      : SET v6 <- 8C
+0x34E :     : 6778 :      : SET v7 <- 78
+0x350 :     : 8765 :      : SUB v7 v6
+0x352 :     : 47EC :      : SKP v7 != EC
+0x354 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x356 :     : DAB4 :      : DRAW vA vB 4
+0x358 :     : 7B05 :      : ADD vB 05
+0x35A :     : A4C9 :      : SET I <- 0x4C9 (L18)
+0x35C :     : D8B4 :      : DRAW v8 vB 4
+0x35E :     : A4C5 :      : SET I <- 0x4C5 (L17)
+0x360 :     : D9B4 :      : DRAW v9 vB 4
+0x362 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x364 :     : 6678 :      : SET v6 <- 78
+0x366 :     : 678C :      : SET v7 <- 8C
+0x368 :     : 8767 :      : MINUS v7 v6
+0x36A :     : 47EC :      : SKP v7 != EC
+0x36C :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x36E :     : DAB4 :      : DRAW vA vB 4
+0x370 :     : 7B05 :      : ADD vB 05
+0x372 :     : A4C9 :      : SET I <- 0x4C9 (L18)
+0x374 :     : D8B4 :      : DRAW v8 vB 4
+0x376 :     : A4C1 :      : SET I <- 0x4C1 (L16)
+0x378 :     : D9B4 :      : DRAW v9 vB 4
+0x37A :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x37C :     : 660F :      : SET v6 <- 0F
+0x37E :     : 8666 :      : SHR v6 v6
+0x380 :     : 4607 :      : SKP v6 != 07
+0x382 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x384 :     : DAB4 :      : DRAW vA vB 4
+0x386 :     : 7B05 :      : ADD vB 05
+0x388 :     : A4C9 :      : SET I <- 0x4C9 (L18)
+0x38A :     : D8B4 :      : DRAW v8 vB 4
+0x38C :     : A4E1 :      : SET I <- 0x4E1 (L20)
+0x38E :     : D9B4 :      : DRAW v9 vB 4
+0x390 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x392 :     : 66E0 :      : SET v6 <- E0
+0x394 :     : 866E :      : SHL v6 v6
+0x396 :     : 46C0 :      : SKP v6 != C0
+0x398 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x39A :     : DAB4 :      : DRAW vA vB 4
+0x39C :     : 7B05 :      : ADD vB 05
+0x39E :     : A4E5 :      : SET I <- 0x4E5 (L21)
+0x3A0 :     : D8B4 :      : DRAW v8 vB 4
+0x3A2 :     : A4C1 :      : SET I <- 0x4C1 (L16)
+0x3A4 :     : D9B4 :      : DRAW v9 vB 4
+0x3A6 :     : A49E :      : SET I <- 0x49E (L06)
+0x3A8 :     : F165 :      : RESTORE v1
+0x3AA :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x3AC :     : 30AA :      : SKP v0 = AA
+0x3AE :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x3B0 :     : 3155 :      : SKP v1 = 55
+0x3B2 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x3B4 :     : DAB4 :      : DRAW vA vB 4
+0x3B6 :     : 6832 :      : SET v8 <- 32
+0x3B8 :     : 6936 :      : SET v9 <- 36
+0x3BA :     : 6A3B :      : SET vA <- 3B
+0x3BC :     : 6B01 :      : SET vB <- 01
+0x3BE :     : A4E5 :      : SET I <- 0x4E5 (L21)
+0x3C0 :     : D8B4 :      : DRAW v8 vB 4
+0x3C2 :     : A4BD :      : SET I <- 0x4BD (L15)
+0x3C4 :     : D9B4 :      : DRAW v9 vB 4
+0x3C6 :     : A49E :      : SET I <- 0x49E (L06)
+0x3C8 :     : 6000 :      : SET v0 <- 00
+0x3CA :     : 6130 :      : SET v1 <- 30
+0x3CC :     : F155 :      : SAVE v1
+0x3CE :     : A49E :      : SET I <- 0x49E (L06)
+0x3D0 :     : F065 :      : RESTORE v0
+0x3D2 :     : 8100 :      : SET v1 <- v0
+0x3D4 :     : A49F :      : SET I <- 0x49F (L07)
+0x3D6 :     : F065 :      : RESTORE v0
+0x3D8 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x3DA :     : 3030 :      : SKP v0 = 30
+0x3DC :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x3DE :     : 3100 :      : SKP v1 = 00
+0x3E0 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x3E2 :     : DAB4 :      : DRAW vA vB 4
+0x3E4 :     : 7B05 :      : ADD vB 05
+0x3E6 :     : A4E5 :      : SET I <- 0x4E5 (L21)
+0x3E8 :     : D8B4 :      : DRAW v8 vB 4
+0x3EA :     : A4B5 :      : SET I <- 0x4B5 (L13)
+0x3EC :     : D9B4 :      : DRAW v9 vB 4
+0x3EE :     : A49E :      : SET I <- 0x49E (L06)
+0x3F0 :     : 6689 :      : SET v6 <- 89
+0x3F2 :     : F633 :      : BCD v6
+0x3F4 :     : F265 :      : RESTORE v2
+0x3F6 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x3F8 :     : 3001 :      : SKP v0 = 01
+0x3FA :     : 1432 :      : JMP 0x432 (L04)
+0x3FC :     : 3103 :      : SKP v1 = 03
+0x3FE :     : 1432 :      : JMP 0x432 (L04)
+0x400 :     : 3207 :      : SKP v2 = 07
+0x402 :     : 1432 :      : JMP 0x432 (L04)
+0x404 :     : A49E :      : SET I <- 0x49E (L06)
+0x406 :     : 6641 :      : SET v6 <- 41
+0x408 :     : F633 :      : BCD v6
+0x40A :     : F265 :      : RESTORE v2
+0x40C :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x40E :     : 3000 :      : SKP v0 = 00
+0x410 :     : 1432 :      : JMP 0x432 (L04)
+0x412 :     : 3106 :      : SKP v1 = 06
+0x414 :     : 1432 :      : JMP 0x432 (L04)
+0x416 :     : 3205 :      : SKP v2 = 05
+0x418 :     : 1432 :      : JMP 0x432 (L04)
+0x41A :     : A49E :      : SET I <- 0x49E (L06)
+0x41C :     : 6604 :      : SET v6 <- 04
+0x41E :     : F633 :      : BCD v6
+0x420 :     : F265 :      : RESTORE v2
+0x422 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x424 :     : 3000 :      : SKP v0 = 00
+0x426 :     : 1432 :      : JMP 0x432 (L04)
+0x428 :     : 3100 :      : SKP v1 = 00
+0x42A :     : 1432 :      : JMP 0x432 (L04)
+0x42C :     : 3204 :      : SKP v2 = 04
+0x42E :     : 1432 :      : JMP 0x432 (L04)
+0x430 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x432 : L04 : DAB4 :      : DRAW vA vB 4
+0x434 :     : 7B05 :      : ADD vB 05
+0x436 :     : A4E5 :      : SET I <- 0x4E5 (L21)
+0x438 :     : D8B4 :      : DRAW v8 vB 4
+0x43A :     : A4E1 :      : SET I <- 0x4E1 (L20)
+0x43C :     : D9B4 :      : DRAW v9 vB 4
+0x43E :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x440 :     : 6604 :      : SET v6 <- 04
+0x442 :     : F61E :      : ADD I v6
+0x444 :     : DAB4 :      : DRAW vA vB 4
+0x446 :     : 7B05 :      : ADD vB 05
+0x448 :     : A4E9 :      : SET I <- 0x4E9 (L22)
+0x44A :     : D8B4 :      : DRAW v8 vB 4
+0x44C :     : A4ED :      : SET I <- 0x4ED (L23)
+0x44E :     : D9B4 :      : DRAW v9 vB 4
+0x450 :     : A4A5 :      : SET I <- 0x4A5 (L09)
+0x452 :     : 66FF :      : SET v6 <- FF
+0x454 :     : 760A :      : ADD v6 0A
+0x456 :     : 3609 :      : SKP v6 = 09
+0x458 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x45A :     : 8666 :      : SHR v6 v6
+0x45C :     : 3604 :      : SKP v6 = 04
+0x45E :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x460 :     : 66FF :      : SET v6 <- FF
+0x462 :     : 600A :      : SET v0 <- 0A
+0x464 :     : 8604 :      : ADD v6 v0
+0x466 :     : 3609 :      : SKP v6 = 09
+0x468 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x46A :     : 8666 :      : SHR v6 v6
+0x46C :     : 3604 :      : SKP v6 = 04
+0x46E :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x470 :     : 66FF :      : SET v6 <- FF
+0x472 :     : 866E :      : SHL v6 v6
+0x474 :     : 8666 :      : SHR v6 v6
+0x476 :     : 367F :      : SKP v6 = 7F
+0x478 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x47A :     : 8666 :      : SHR v6 v6
+0x47C :     : 866E :      : SHL v6 v6
+0x47E :     : 367E :      : SKP v6 = 7E
+0x480 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x482 :     : 6605 :      : SET v6 <- 05
+0x484 :     : 76F6 :      : ADD v6 F6
+0x486 :     : 36FB :      : SKP v6 = FB
+0x488 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x48A :     : 6605 :      : SET v6 <- 05
+0x48C :     : 8605 :      : SUB v6 v0
+0x48E :     : 36FB :      : SKP v6 = FB
+0x490 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x492 :     : 6605 :      : SET v6 <- 05
+0x494 :     : 8067 :      : MINUS v0 v6
+0x496 :     : 30FB :      : SKP v0 = FB
+0x498 :     : A4A1 :      : SET I <- 0x4A1 (L08)
+0x49A :     : DAB4 :      : DRAW vA vB 4
+0x49C : L05 : 149C :      : JMP 0x49C (L05)
+0x49E : L06 : AA55 :      :
+0x4A0 :     : 0000 :      :
+0x4A2 :     : A040 :      :
+0x4A4 :     : A000 :      :
+0x4A6 :     : A0C0 :      :
+0x4A8 :     : 80E0 :      :
+0x4AA :     : A0A0 :      :
+0x4AC :     : E0C0 :      :
+0x4AE :     : 4040 : "@@" :
+0x4B0 :     : E0E0 :      :
+0x4B2 :     : 20C0 :      :
+0x4B4 :     : E0E0 :      :
+0x4B6 :     : 6020 : "` " :
+0x4B8 :     : E0A0 :      :
+0x4BA :     : E020 :      :
+0x4BC :     : 20E0 :      :
+0x4BE :     : C020 :      :
+0x4C0 :     : C060 :      :
+0x4C2 :     : 80E0 :      :
+0x4C4 :     : E0E0 :      :
+0x4C6 :     : 2040 : " @" :
+0x4C8 :     : 40E0 :      :
+0x4CA :     : E0A0 :      :
+0x4CC :     : E0E0 :      :
+0x4CE :     : E020 :      :
+0x4D0 :     : C040 :      :
+0x4D2 :     : A0E0 :      :
+0x4D4 :     : A0C0 :      :
+0x4D6 :     : E0A0 :      :
+0x4D8 :     : E0E0 :      :
+0x4DA :     : 8080 :      :
+0x4DC :     : E0C0 :      :
+0x4DE :     : A0A0 :      :
+0x4E0 :     : C0E0 :      :
+0x4E2 :     : C080 :      :
+0x4E4 :     : E0E0 :      :
+0x4E6 :     : 80C0 :      :
+0x4E8 :     : 8000 :      :
+0x4EA :     : A0A0 :      :
+0x4EC :     : 40A0 :      :
+0x4EE :     : 40A0 :      :
+0x4F0 :     : A00A :      :
+0x4F2 :     : AEA2 :      :
+0x4F4 :     : 4238 : "B8" :
+0x4F6 :     : 0830 :      :
