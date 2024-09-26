@@ -39,10 +39,5 @@ Chip8 interpreter/simulator/debugger, written in Haskell.
 
 ## Example usage
 
-    stack build
-
-    stack run games/PONG2
-    stack run games/BRIX
-
-    stack run -- games/BRIX --dump
-    stack run -- games/BRIX --full
+    stack run run roms/pong2.ch8
+    stack run dis roms/pong2.ch8

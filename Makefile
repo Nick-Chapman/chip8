@@ -1,29 +1,49 @@
-top: run
-all: gen-all
+top: all
+all: ch8s diss
 
-default = self-BRIX
+default = self-brix
 
-run: gen/$(default).ch8
-	stack run gen/$(default).ch8
+external = ibm maze pong2 brix invaders tetris
+internal = life three evens pi scroll scroll-what bf self mini-self
+bfs = bf-reverse bf-fibs bf-collatz
+metas = self-ibm self-maze self-pong2 self-brix self-pi
 
-all = life three evens pi scroll-what bf-reverse bf-fibs bf-collatz self self-MAZE self-PONG2 self-BRIX self-pi
-# self-bf-fibs self-invaders
+all = $(external) $(internal) $(bfs) $(metas)
 
-gen-ch8s = $(patsubst %, gen/%.ch8, $(all))
+ch8s: $(patsubst %, roms/%.ch8, $(all))
+diss: $(patsubst %, dis/%.dis, $(all))
 
-gen-all: gen $(gen-ch8s)
+.PRECIOUS: roms/%self-%.ch8
+roms/self-%.ch8: roms/self.ch8 roms/%.ch8
+	cat $^ > $@
+
+# assemble (from Haskell DSL)
+
+ass-%: roms/%.ch8
 	@ echo -n
 
-gen/%.ch8: app/*.hs
-	stack run -- --assemble $* || rm $@
+.PRECIOUS: roms/%.ch8
 
-gen: ; @mkdir -p $@
+roms/%.ch8: app/*.hs
+	stack run ass $* > $@ || rm $@
 
-gen/self-%.ch8: gen/self.ch8 games/%
-	cat $^ > $@
+roms/bf-%.ch8: bf/%.b app/*.hs
+	stack run ass bf $* > $@ || rm $@
 
-gen/self-%.ch8: gen/self.ch8 gen/%.ch8
-	cat $^ > $@
+# disassemble (.ch8 file)
 
-gen/self-%.ch8: gen/self.ch8 games/%.ch8
-	cat $^ > $@
+dis-%: dis/%.dis
+	@ echo -n
+
+.PRECIOUS: dis/%.dis
+
+dis/%.dis: roms/%.ch8
+	stack run dis $^ > $@ || rm $@
+
+# run (.ch8 file)
+
+run: run-$(default)
+	@ echo -n
+
+run-%: roms/%.ch8
+	stack run run $^

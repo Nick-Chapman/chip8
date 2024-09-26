@@ -1,40 +1,27 @@
+
 module Main (main) where
 
---import Control.Monad (when)
 import Data.List.Split(chunksOf)
 import Data.List.Extra(intercalate,upper)
 import Data.Set (Set)
 import Data.Word8 (Word8)
 import Graphics.Gloss.Interface.IO.Game as Gloss
---import Graphics.Gloss as Gloss
 import Prelude hiding (pred,pi)
 import System.Environment (getArgs)
 import qualified Data.ByteString as BS
 import qualified Data.Set as Set
-
 import Emulator(xmax,ymax,Byte,ChipState(..),Screen(..),ChipKeys,byteToInt)
 import qualified Emulator as EM
-
-import qualified Life (bytes)
-import qualified Pi (bytes)
-import qualified Scroll (bytes)
-import qualified Three (bytes)
-import qualified Evens (bytes)
---import qualified Bf (bytes)
-import qualified Bfw (bytes)
-import qualified Self (bytes,Control(..))
-
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
---maxHistory :: Int
---maxHistory = 2 --100
-
---debug :: Bool
---debug = True
-
-theScale :: Int
-theScale = 12
+import qualified Life (bytes)
+import qualified Three (bytes)
+import qualified Evens (bytes)
+import qualified Pi (bytes)
+import qualified Scroll (bytes)
+import qualified Bfw (bytes)
+import qualified Self (bytes,Control(..))
 
 ----------------------------------------------------------------------
 -- parameters of the Chip Machine
@@ -54,6 +41,9 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 ----------------------------------------------------------------------
 -- display parameters
 
+theScale :: Int
+theScale = 12
+
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (0,0)
 
@@ -61,82 +51,66 @@ nonFullWindowPos = (0,0)
 
 main :: IO ()
 main = do
-    args@Args{exec,dump,fileOpt} <- parseCommandLine <$> getArgs
-    progBytes <-
-        case fileOpt of
-            Right file -> readBytes file
-            Left (name,io) -> do
-                bytes <- io
-                writeBytes ("gen/"<>name<>".ch8") bytes
-                writeFile ("gen/"<>name<>".asm") $ EM.showDisassemble bytes
-                return bytes
-    if dump then putStrLn $ EM.showDisassemble progBytes else pure ()
-    if exec then do rands <- EM.randBytes; runChip8 args rands progBytes else pure ()
+  args <- getArgs
+  mode <- parseCommandLine args
+  run mode
 
-type Internal = (String,IO [Byte])
+data Mode
+  = Ass { bytes :: [Byte] }
+  | Dis { chip8file :: String }
+  | Run { chip8file :: String, full :: Bool }
 
-data Args = Args
-  { exec :: Bool -- execute the simulator
-  , full :: Bool -- .. in full screen
-  , dump :: Bool -- dump the chip ASM to stdout
-    -- (ASM and .ch8) is always wrtten to gen/ for Internal games (when assembled from Haskell)
-  , fileOpt :: Either Internal FilePath
-  }
+parseCommandLine :: [String] -> IO Mode
+parseCommandLine = \case
+  ["ass",name] -> pure $ Ass { bytes = maybe err id $ Map.lookup name registered }
+    where err = error (show ("unknown internal name",name))
 
+  ["ass","bf",name] -> do
+    bfProg <- readFile ("bf/" ++ name ++ ".b")
+    let keepBFchars c = c `elem` "+-<>.,[]"
+    let bytes = Bfw.bytes (filter keepBFchars bfProg)
+    pure $ Ass { bytes }
 
-internals :: Map String (IO [Byte])
-internals =
+  ["dis",chip8file] -> pure $ Dis { chip8file }
+  ["run",chip8file] -> pure $ Run { chip8file, full = False }
+  ["full",chip8file] -> pure $ Run { chip8file, full = True }
+  xs ->
+    error (show ("parseCommandLine",xs))
+
+run :: Mode -> IO ()
+run = \case
+  Ass bytes -> printBytes bytes
+
+  Dis { chip8file } -> do
+    bytes <- readBytes chip8file
+    putStr (EM.showDisassemble bytes)
+
+  Run { chip8file, full } -> do
+    bytes <- readBytes chip8file
+    rands <- EM.randBytes
+    runChip8 chip8file full rands bytes
+
+registered :: Map String [Byte]
+registered =
   Map.fromList
-  [ ("life", return Life.bytes)
-  , ("pi", return Pi.bytes)
-  , ("scroll", return Scroll.bytes)
-  , ("scroll-what", return (Scroll.bytes ++ map (fromIntegral . fromEnum) "Message for you."))
-  , ("three", return Three.bytes)
-  , ("evens", return Evens.bytes)
-  , mkBfInternal "reverse"
-  , mkBfInternal "fibs"
-  , mkBfInternal "collatz"
-  , mkBfInternal "factor"
-  , ("self", do
-        return (Self.bytes Self.WithPause)
-    )
+  [ ("life", Life.bytes)
+  , ("three", Three.bytes)
+  , ("evens", Evens.bytes)
+  , ("pi", Pi.bytes)
+  , ("scroll", Scroll.bytes)
+  , ("scroll-what", Scroll.bytes ++ map (fromIntegral . fromEnum) "Message for you.")
+  , ("mini-self", Self.bytes Self.NoControl)
+  , ("self", Self.bytes Self.WithPause)
+  , ("bf", Bfw.bytes [])
   ]
 
+----------------------------------------------------------------------
 
-mkBfInternal :: String -> (String, IO [Byte])
-mkBfInternal name =
-  ("bf-" ++ name,
-    do
-      bfProg <- readFile ("bf/" ++ name ++ ".b")
-      return (Bfw.bytes (filter keepBFchars bfProg))
-  )
-  where keepBFchars c = c `elem` "+-<>.,[]"
-
-
-parseCommandLine :: [String] -> Args
-parseCommandLine = loop args0
-  where
-    def = Right "games/BRIX"
-    args0 = Args { exec = True, dump = False, full = False, fileOpt = def }
-    loop args = \case
-      [] -> args
-      "--assemble":xs -> loop (args { exec = False, dump = False }) xs
-      "--dump":xs -> loop (args { dump = True, exec = False }) xs
-      "--full":xs -> loop (args { full = True }) xs
-      xs@('-':_):_ -> error (show xs)
-      name:xs ->
-        loop (args { fileOpt = thing }) xs
-        where thing =
-                case Map.lookup name internals of
-                  Just bytes -> Left (name,bytes)
-                  Nothing -> Right name
-
-
-writeBytes :: FilePath -> [Byte] -> IO ()
-writeBytes path xs = do
+printBytes :: [Byte] -> IO ()
+printBytes xs = do
     let ws :: [Word8] = map (fromIntegral . byteToInt) xs
     let bs :: BS.ByteString = BS.pack ws
-    BS.writeFile path bs
+    BS.putStr bs
 
 readBytes :: FilePath -> IO [Byte]
 readBytes path = do
@@ -145,8 +119,8 @@ readBytes path = do
     let xs :: [Byte] = map fromIntegral ws
     return xs
 
-runChip8 :: Args -> [Byte] -> [Byte] -> IO ()
-runChip8 Args{fileOpt,full} rands progBytes = do
+runChip8 :: String -> Bool -> [Byte] -> [Byte] -> IO ()
+runChip8 name full rands progBytes = do
     Gloss.playIO dis black fps model0
         (\  m -> return $ pictureModel m)
         (\e m -> return $ handleEventModel model0 e m)
@@ -156,7 +130,7 @@ runChip8 Args{fileOpt,full} rands progBytes = do
         dis = if full then FullScreen else InWindow title size nonFullWindowPos
         size = (xmax * theScale + 2 + 2*extraX, ymax * theScale + 2 + 2*extraY)
         title = "Chip8: " <> name
-        name = case fileOpt of Right file -> file; Left (name, _) -> name
+        --name = case fileOpt of Right file -> file; Left (name, _) -> name
 
 ----------------------------------------------------------------------
 -- making pictures
