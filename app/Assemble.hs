@@ -6,7 +6,6 @@ module Assemble (
 
     halt,
     break,
-    crash, -- TODO: causes inconsistent self-emultaion; use panic instead
     panic,
     jump,
     draw,
@@ -85,9 +84,6 @@ break :: Asm()
 break = do
     waitKeyUp 4
     emit $ OpWaitKeyPress (Reg 0)
-
-crash :: Asm ()
-crash = jump 0
 
 panic :: Byte -> Asm ()
 panic b = Emit [0,b]

@@ -113,7 +113,7 @@ bytes control = assemble $ mdo
           setI (templateSetupIndex+1)
           readTemp
           opAdd rTemp mask
-          -- TODO: should deal with carry into lo-nibble of hi-byte. (bug in Pi example?)
+          -- TODO: should deal with carry into lo-nibble of hi-byte. (need example -- dump all mem!)
           -- ifCarry (panic 0x2) -- TODO : wip
           setI (templateSetupIndex+1)
           storeTemp

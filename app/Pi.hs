@@ -13,7 +13,6 @@ asm = do
         WithReg $ \r3 -> do
           WithReg $ \r4 -> do
             displayPI r1 r2 r3 r4
-    crash
 
 displayPI :: Reg -> Reg -> Reg -> Reg -> Asm ()
 displayPI rd rx ry rn = do
@@ -118,4 +117,4 @@ displayPI rd rx ry rn = do
   line 40
   wipeTop 30
 
-  crash
+  halt

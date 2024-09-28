@@ -42,7 +42,7 @@ asm = do
         copyMemBytes screenSizeInBytes a2 a1
         --break
         cls
-    crash
+    panic 0xA
 
 setupInitialState :: Addr -> Asm ()
 setupInitialState addr = do
