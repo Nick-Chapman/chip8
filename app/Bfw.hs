@@ -17,13 +17,10 @@ bytes bfCode = assemble $ mdo
   mem <- Later Here
   pure ()
 
---panic :: Byte -> Asm ()
---panic b = Emit [0,b]
-
 executeBF :: Wide -> Addr -> Addr -> Reg -> Reg -> Reg -> Reg -> Asm ()
 executeBF pc progAddr mem mp x y nest = mdo
 
-  setWa pc progAddr
+  setWide pc progAddr
 
   setReg nest 0
   setReg x 1

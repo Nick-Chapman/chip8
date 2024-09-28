@@ -17,9 +17,9 @@ bytes control = assemble $ mdo
   let R {slide,sp,pc,op,mask} = allocateRegs
 
   -- The object program expects to be loaded at 0x200 , but is at a different location here
-  setWa slide (addrOfInt (addrToInt objLoadAddr - 0x200))
-  setWa pc objLoadAddr
-  setWa sp stackSpace
+  setWide slide (addrOfInt (addrToInt objLoadAddr - 0x200))
+  setWide pc objLoadAddr
+  setWide sp stackSpace
 
   next <- Here
 
@@ -114,10 +114,9 @@ bytes control = assemble $ mdo
           readTemp
           inPlaceAdd rTemp mask
           -- TODO: should deal with carry into lo-nibble of hi-byte. (bug in Pi example?)
-
+          -- ifCarry (panic 0x2) -- TODO : wip
           setI (templateSetupIndex+1)
           storeTemp
-
           jump next
 
   let
@@ -206,6 +205,8 @@ checkControl = \case
     -- wait until released
     do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
     -- and pressed and released again
+    -- TODO: reinstate the simpler "touch and hold Z" for pause
+    -- instead of the click-on/click-off implemented in the following two lines
     do loop <- Here ; emit (OpSkipKey rTemp) ; jump loop
     do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
     showState
@@ -270,12 +271,3 @@ allocateRegs = R
   , x = Reg 10
   , y = Reg 11
   }
-
-
-storeWide :: Wide -> Addr -> Asm ()
-storeWide w addr = do
-  let Wide hi lo = w
-  setI addr
-  storeI hi
-  setI (addr+1)
-  storeI lo

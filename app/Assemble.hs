@@ -6,7 +6,8 @@ module Assemble (
 
     halt,
     break,
-    crash,
+    crash, -- TODO: causes inconsistent self-emultaion; use panic instead
+    panic,
     jump,
     draw,
     cls,
@@ -20,6 +21,7 @@ module Assemble (
     incrementReg,
     decrementReg,
 
+    ifCarry,
     ifRegIs,
     ifRegIsNot,
     ifRegNotZero,
@@ -51,7 +53,7 @@ module Assemble (
     assemble,
 
     waitKey, incReg, rTemp, readTemp, storeTemp, readI,storeI,
-    Wide(..),withWide,setWa,addWide,subWide,addWa,setWr,shiftLw,setIw,readW,incWide,decWide,
+    Wide(..),withWide,storeWide,setWide,addWide,subWide,addWa,setWr,shiftLw,setIw,readW,incWide,decWide,
 
     bytesOfString,
     insertString,
@@ -87,6 +89,9 @@ break = do
 
 crash :: Asm ()
 crash = jump 0
+
+panic :: Byte -> Asm ()
+panic b = Emit [0,b]
 
 jump :: Addr -> Asm ()
 jump a = emit $ OpJump a
@@ -127,6 +132,10 @@ incrementReg reg = emit $ OpAddLit reg 1
 
 decrementReg :: Reg -> Asm ()
 decrementReg reg = emit $ OpAddLit reg 0xFF
+
+
+ifCarry :: Asm () -> Asm ()
+ifCarry code = ifRegIs 1 (Reg NF) code
 
 -- TODO: better to take Reg before Byte
 ifRegIs :: Byte -> Reg -> Asm () -> Asm ()
@@ -383,15 +392,23 @@ withWide f =
       WithReg $ \r2 -> do
         f (Wide r1 r2)
 
-setWa :: Wide -> Addr -> Asm () -- set a wide register from a literal address
---setWa (Wide rhi rlo) (Addr n1 n2 n3) = do -- <<loop>>. why?
-setWa w a = do
+setWide :: Wide -> Addr -> Asm () -- set a wide register from a literal address
+--setWide (Wide rhi rlo) (Addr n1 n2 n3) = do -- <<loop>>. why?
+setWide w a = do
   let (Wide rhi rlo) = w
   let (Addr n1 n2 n3) = a
   let hi = Byte N0 n1
   let lo = Byte n2 n3
   setReg rhi hi
   setReg rlo lo
+
+storeWide :: Wide -> Addr -> Asm ()
+storeWide w addr = do
+  let Wide hi lo = w
+  setI addr
+  storeI hi
+  setI (addr+1)
+  storeI lo
 
 addWide :: Wide -> Wide -> Asm () -- in place
 addWide w1 w2 = do

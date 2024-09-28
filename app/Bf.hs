@@ -18,9 +18,6 @@ bytes bfCode= assemble $ mdo
   mem <- Later Here
   pure ()
 
---panic :: Byte -> Asm ()
---panic b = Emit [0,b]
-
 executeBF :: Addr -> Byte -> Addr -> Reg -> Reg -> Reg -> Reg -> Reg -> Asm ()
 executeBF prog progSize mem pc mp x y nest = mdo
 

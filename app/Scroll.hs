@@ -57,7 +57,7 @@ scrollMessage font message rx ry rn mp fp = do
           waitKey
           cls
 
-  setWa mp message
+  setWide mp message
 
   loop <- Here
   readW mp rn
