@@ -32,7 +32,7 @@ displayPI rd rx ry rn = do
       incReg rx 5
   let
     put n = do
-      setReg rd n
+      setLit rd n
       storeDigitSpriteI rd
       putI
   let
@@ -42,47 +42,47 @@ displayPI rd rx ry rn = do
 
   let
     scrollup n = mdo
-      setReg rn n
-      setReg rx 11
+      setLit rn n
+      setLit rx 11
       loop <- Here
       setI decimals
       increaseI rn
       incReg rn 1 -- move to next elem of data
       readI rd
       storeDigitSpriteI rd
-      setReg ry 2
+      setLit ry 2
       draw 5 (rx,ry)
-      setReg ry 8
+      setLit ry 8
       draw 5 (rx,ry)
       incReg rx 5
-      ifRegIs (n+10) rn $ jump after
+      ifRegEq rn (n+10) $ jump after
       jump loop
       after <- Here
       pure ()
 
   let
     wipeTop n = mdo
-      setReg rn n
-      setReg rx 11 -- TODO: compute these 2*5+1
+      setLit rn n
+      setLit rx 11
       loop <- Here
       setI decimals
       increaseI rn
       incReg rn 1 -- move to next elem of data
       readI rd
       storeDigitSpriteI rd
-      setReg ry 2
+      setLit ry 2
       draw 5 (rx,ry)
       incReg rx 5
-      ifRegIs (n+10) rn $ jump after
+      ifRegEq rn (n+10) $ jump after
       jump loop
       after <- Here
       pure ()
 
   let
     line n = mdo
-      setReg rn n -- first elem of digit data
-      setReg ry 8
-      setReg rx 11
+      setLit rn n -- first elem of digit data
+      setLit ry 8
+      setLit rx 11
       loop <- Here
       setI decimals
       increaseI rn
@@ -90,13 +90,13 @@ displayPI rd rx ry rn = do
       readI rd
       storeDigitSpriteI rd
       putI
-      ifRegIs (n+10) rn $ jump after
+      ifRegEq rn (n+10) $ jump after
       jump loop
       after <- Here
       pure ()
 
-  setReg ry 7
-  setReg rx 1
+  setLit ry 7
+  setLit rx 1
   put 3
   putPoint
 
@@ -117,6 +117,5 @@ displayPI rd rx ry rn = do
 
   line 40
   wipeTop 30
-  --scrollup 40
 
   crash

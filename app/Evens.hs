@@ -18,9 +18,9 @@ asm = mdo
 go :: Reg -> Reg -> Reg -> Asm ()
 go x y n = do
 
-  setReg x 1
-  setReg y 1
-  setReg n 2
+  setLit x 1
+  setLit y 1
+  setLit n 2
   loop <- Here
   storeDigitSpriteI n
   draw 5 (x,y)

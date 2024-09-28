@@ -392,7 +392,7 @@ stepModel model = do
     let cs2 = EM.tick nDelayTicks cs1
     cs2
 
-fractionalModSeries :: Int -> (Int,Int) -> Int -- TODO: a comment on this would be nice
+fractionalModSeries :: Int -> (Int,Int) -> Int -- a comment on this would be nice
 fractionalModSeries n (a,b) =
     (a `div` b) + (if (x * n) `mod` b < x then 1 else 0)
     where x = a `mod` b
@@ -406,7 +406,7 @@ nTimes n f = foldl (.) id $ replicate n f
 data Model = Model
     { keys :: !Keys
     , cs :: !ChipState
-    , ss :: !SimState -- TODO: inline SimState into Model
+    , ss :: !SimState -- maybe inline SimState into Model
     , csHistory :: !() --[ChipState]
     , frame :: !Int
     }

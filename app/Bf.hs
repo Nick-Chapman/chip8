@@ -21,9 +21,9 @@ bytes bfCode= assemble $ mdo
 executeBF :: Addr -> Byte -> Addr -> Reg -> Reg -> Reg -> Reg -> Reg -> Asm ()
 executeBF prog progSize mem pc mp x y nest = mdo
 
-  setReg nest 0
-  setReg x 1
-  setReg y 1
+  setLit nest 0
+  setLit x 1
+  setLit y 1
 
   let nextOp = incReg pc 1
   let prevOp = incReg pc 255
@@ -32,8 +32,8 @@ executeBF prog progSize mem pc mp x y nest = mdo
   let decrementTemp = incReg rTemp 255
 
   let
-    isOp c code =
-      ifRegIs (fromIntegral $ Char.ord c) rTemp code
+    isOp c asm =
+      ifRegEq rTemp (fromIntegral $ Char.ord c) asm
 
     isNotOp :: Char -> Op -> Asm ()
     isNotOp c maybeSkipped = do
@@ -62,12 +62,12 @@ executeBF prog progSize mem pc mp x y nest = mdo
     storeTemp
 
   let
-    maskReg r1 v = WithReg $ \r2 -> do setReg r2 v ; inPlaceAnd r1 r2
+    maskReg r1 v = WithReg $ \r2 -> do setLit r2 v ; opAnd r1 r2
 
     dot = mdo
       readCell
 
-      ifRegIs 10 rTemp $ do
+      ifRegEq rTemp 10 $ do
         setI box
         jump doDraw
 
@@ -78,10 +78,10 @@ executeBF prog progSize mem pc mp x y nest = mdo
       incReg x 5
 
       emit (OpSkipEqLit x 61) ; emit (OpJump next)
-      setReg x 1
+      setLit x 1
       incReg y 6
       emit (OpSkipEqLit y 31) ; emit (OpJump next)
-      setReg y 1
+      setLit y 1
       --waitKey
       cls
       jump next
@@ -118,7 +118,7 @@ executeBF prog progSize mem pc mp x y nest = mdo
       emit (OpSkipEqLit rTemp 0) ; emit (OpJump next)
       scan <- Here
       nextOp
-      --ifRegIs progSize pc $ panic 0xA -- save 6 bytes - test/skip/panic
+      --ifRegEq pc progSize $ panic 0xA -- save 6 bytes - test/skip/panic
       readOp
       isOp '[' $ do incReg nest 1; jump scan
       isNotOp ']' (OpJump scan)
@@ -131,7 +131,7 @@ executeBF prog progSize mem pc mp x y nest = mdo
       emit (OpSkipNotEqLit rTemp 0) ; emit (OpJump next)
       scan <- Here
       prevOp
-      --ifRegIs 255 pc $ panic 0xB -- save another 6 bytes
+      --ifRegEq pc 255 $ panic 0xB -- save another 6 bytes
       readOp
       isOp ']' $ do incReg nest 1; jump scan
       isNotOp '[' (OpJump scan)
@@ -139,7 +139,7 @@ executeBF prog progSize mem pc mp x y nest = mdo
       incReg nest 255
       jump scan
 
-  ifRegIs progSize pc $ halt
+  ifRegEq pc progSize $ halt
   readOp
   isOp '.' $ dot
   isOp ',' $ comma

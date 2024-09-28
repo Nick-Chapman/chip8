@@ -47,59 +47,59 @@ bytes control = assemble $ mdo
   let
     op00EE = do -- Return
       let Wide oph opl = op
-      ifRegIs 0x00 oph $ do
-        ifRegIs 0xEE opl $ do
+      ifRegEq oph 0x00 $ do
+        ifRegEq opl 0xEE $ do
           pullPCfromStack
           jump next
 
     op1NNN = do -- Jump
       let Wide oph _ = op
-      setReg rTemp 0xF0
-      inPlaceAnd rTemp oph
-      ifRegIs 0x10 rTemp $ do
+      setLit rTemp 0xF0
+      opAnd rTemp oph
+      ifRegEq rTemp 0x10 $ do
         setPC op
         jump next
 
     op2NNN = do -- Call
       let Wide oph _ = op
-      setReg rTemp 0xF0
-      inPlaceAnd rTemp oph
-      ifRegIs 0x20 rTemp $ do
+      setLit rTemp 0xF0
+      opAnd rTemp oph
+      ifRegEq rTemp 0x20 $ do
         pushPCtoStack
         setPC op
         jump next
 
     opANNN = do -- Set Index
       let Wide oph _ = op
-      setReg rTemp 0xF0
-      inPlaceAnd rTemp oph
-      ifRegIs 0xA0 rTemp $ do
+      setLit rTemp 0xF0
+      opAnd rTemp oph
+      ifRegEq rTemp 0xA0 $ do
         addWide op slide
         storeWide op templateSetupIndex
         jump next
 
     opFX29 = do  -- Set Font Character
       let Wide oph opl = op
-      setReg rTemp 0xF0
-      inPlaceAnd rTemp oph
-      ifRegIs 0xF0 rTemp $ do
-        ifRegIs 0x29 opl $ do
+      setLit rTemp 0xF0
+      opAnd rTemp oph
+      ifRegEq rTemp 0xF0 $ do
+        ifRegEq opl 0x29 $ do
           -- TODO: handle case where X gets changed before the sprite is drawn
           storeWide op templateSetupIndex
           jump next
 
     opFX1E = do -- Add to Index
       let Wide oph opl = op
-      setReg rTemp 0xF0
-      inPlaceAnd rTemp oph
-      ifRegIs 0xF0 rTemp $ do
-        ifRegIs 0x1E opl $ do
-          setReg mask 0x0F
-          inPlaceAnd oph mask
+      setLit rTemp 0xF0
+      opAnd rTemp oph
+      ifRegEq rTemp 0xF0 $ do
+        ifRegEq opl 0x1E $ do
+          setLit mask 0x0F
+          opAnd oph mask
           setI objBank
           increaseI oph
           readTemp
-          copyReg rTemp mask -- using mask as 2nd temp
+          setReg mask rTemp -- using mask as 2nd temp
 
           -- We handle FX1E by incrementing the NNN in the ANNN instruction at templateSetupIndex.
           -- This assumes that Index was set by an ANNN instruction.
@@ -112,7 +112,7 @@ bytes control = assemble $ mdo
 
           setI (templateSetupIndex+1)
           readTemp
-          inPlaceAdd rTemp mask
+          opAdd rTemp mask
           -- TODO: should deal with carry into lo-nibble of hi-byte. (bug in Pi example?)
           -- ifCarry (panic 0x2) -- TODO : wip
           setI (templateSetupIndex+1)
@@ -127,10 +127,10 @@ bytes control = assemble $ mdo
     setPC op = do
       let Wide oph opl = op
       let Wide pch pcl = pc
-      setReg mask 0x0F
-      inPlaceAnd oph mask
-      copyReg oph pch
-      copyReg opl pcl
+      setLit mask 0x0F
+      opAnd oph mask
+      setReg pch oph
+      setReg pcl opl
       addWide pc slide
 
     pushPCtoStack = do
@@ -196,12 +196,12 @@ checkControl = \case
     pure ()
 
   WithPause -> mdo
-    setReg rTemp 0xA -- TODO: generalize which is the control key
+    setLit rTemp 0xA -- TODO: generalize which is the control key
     -- check if the control key A is pressed...
     emit (OpSkipKey rTemp)
     jump done
     showState
-    setReg rTemp 0xA
+    setLit rTemp 0xA
     -- wait until released
     do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
     -- and pressed and released again
@@ -228,8 +228,8 @@ showState = do
 
   let R {slide,pc,op,mask,x,y} = allocateRegs
 
-  setReg x 0
-  setReg y 27
+  setLit x 0
+  setLit y 27
   let
     showNib r = do
       storeDigitSpriteI r
@@ -237,14 +237,14 @@ showState = do
       incReg x 5
 
     showByte r = do
-      copyReg r rTemp
-      setReg mask 0xF0
-      inPlaceAnd rTemp mask
-      inPlaceShiftR 4 rTemp
+      setReg rTemp r
+      setLit mask 0xF0
+      opAnd rTemp mask
+      opShiftR 4 rTemp
       showNib rTemp
-      copyReg r rTemp
-      setReg mask 0x0F
-      inPlaceAnd rTemp mask
+      setReg rTemp r
+      setLit mask 0x0F
+      opAnd rTemp mask
       showNib rTemp
 
     showWide w = do

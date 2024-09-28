@@ -449,7 +449,7 @@ exec i = case i of
         b <- Read x
         StoreI (addAddr a $ byteToInt b)
 
-    OpWaitKeyPress x -> -- TODO: first, should wait for keys to be released
+    OpWaitKeyPress x -> -- TODO: should wait afterwards for key to be released
         AnyKey >>= \case Nothing -> Stall
                          Just nib -> Write x (byteOfNibs N0 nib)
 
@@ -689,7 +689,7 @@ instance Num Addr where
 instance Show Addr where show a = printf "0x%03X" (addrToInt a)
 
 addr :: Nib -> Nib -> Nib -> Addr
-addr = Addr -- TODO: inline if keep this rep
+addr = Addr
 
 nextInstr :: Addr -> Addr
 nextInstr a = addAddr a 2
@@ -732,7 +732,7 @@ byteNibs :: Byte -> (Nib,Nib)
 byteNibs (Byte n1 n2) = (n1,n2)
 
 byteOfNibs :: Nib -> Nib -> Byte
-byteOfNibs = Byte -- TODO: inline if keep this rep
+byteOfNibs = Byte
 
 byte1 :: Byte
 byte1 = Byte N0 N1

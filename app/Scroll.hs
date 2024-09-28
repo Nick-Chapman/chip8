@@ -39,21 +39,21 @@ scrollMessage font message rx ry rn mp fp = do
     offsetSpace r = do
       incReg r (fromIntegral (256 - Char.ord ' '))
 
-  setReg rx 0
-  setReg ry 0
+  setLit rx 0
+  setLit ry 0
   let
     putCharI :: Reg -> Asm ()
     putCharI rn = do
-      ifRegIs 10 rn $ do incReg rn 22 -- newline --> space
+      ifRegEq rn 10 $ do incReg rn 22 -- newline --> space
       offsetSpace rn
       setFontI rn
       draw 8 (rx,ry) -- height of 8
       incReg rx 8 -- width of 8
-      ifRegIs 64 rx $ do
-        setReg rx 0
+      ifRegEq rx 64 $ do
+        setLit rx 0
         incReg ry 8
-        ifRegIs 32 ry $ do
-          setReg ry 0
+        ifRegEq ry 32 $ do
+          setLit ry 0
           waitKey
           cls
 
@@ -61,7 +61,7 @@ scrollMessage font message rx ry rn mp fp = do
 
   loop <- Here
   readW mp rn
-  ifRegNotZero rn $ do
+  ifRegNotEq rn 0 $ do
     putCharI rn
     incWide mp
     jump loop

@@ -1,6 +1,6 @@
 module Assemble (
 
-    Reg(..), Addr, Byte, --reexport
+    Reg(..), Addr, Byte,
 
     emit,
 
@@ -16,15 +16,14 @@ module Assemble (
     withInitReg,
     copy,
 
-    copyReg,
+    setLit,
     setReg,
     incrementReg,
     decrementReg,
 
     ifCarry,
-    ifRegIs,
-    ifRegIsNot,
-    ifRegNotZero,
+    ifRegEq,
+    ifRegNotEq,
     loopFor,
     loopForR,
     waitKeyUp,
@@ -34,12 +33,12 @@ module Assemble (
     insertBytes,
     insertBytesLater,
 
-    inPlaceAnd,
-    inPlaceOr,
-    inPlaceAdd,
-    inPlaceSub,
-    inPlaceShiftL,
-    inPlaceShiftR,
+    opAnd,
+    opOr,
+    opAdd,
+    opSub,
+    opShiftL,
+    opShiftR,
 
     writeMem,
     readMem,
@@ -117,15 +116,14 @@ withInitReg v k = do
 copy :: Reg -> (Reg -> Asm a) -> Asm a
 copy x k = do
     WithReg $ \y -> do
-        copyReg x y
+        setReg y x
         k y
 
--- TODO: better to take args in opposite order
-copyReg :: Reg -> Reg -> Asm ()
-copyReg source target = emit $ OpStore target source
+setLit :: Reg -> Byte -> Asm ()
+setLit x v = emit $ OpStoreLit x v
 
-setReg :: Reg -> Byte -> Asm ()
-setReg x v = emit $ OpStoreLit x v
+setReg :: Reg -> Reg -> Asm ()
+setReg target source = emit $ OpStore target source
 
 incrementReg :: Reg -> Asm ()
 incrementReg reg = emit $ OpAddLit reg 1
@@ -135,31 +133,17 @@ decrementReg reg = emit $ OpAddLit reg 0xFF
 
 
 ifCarry :: Asm () -> Asm ()
-ifCarry code = ifRegIs 1 (Reg NF) code
+ifCarry code = ifRegEq (Reg NF) 1 code
 
--- TODO: better to take Reg before Byte
-ifRegIs :: Byte -> Reg -> Asm () -> Asm ()
-ifRegIs n r act = do
+ifRegEq :: Reg -> Byte -> Asm () -> Asm ()
+ifRegEq r n act = do
     emit $ OpSkipEqLit r n
     jumpOver act
 
-ifRegIsNot :: Byte -> Reg -> Asm () -> Asm ()
-ifRegIsNot n r act = do
+ifRegNotEq :: Reg -> Byte -> Asm () -> Asm ()
+ifRegNotEq r n act = do
     emit $ OpSkipNotEqLit r n
     jumpOver act
-
-ifRegNotZero :: Reg -> Asm () -> Asm ()
-ifRegNotZero r asm = do
-    emit $ OpSkipNotEqLit r 0
-    jumpOver asm
-
-_loopFor :: (Int,Int) -> (Reg -> Asm ()) -> Asm ()
-_loopFor (a,b) k = do
-    withInitReg (fromIntegral a) $ \x -> do
-        forever $ do
-            k x
-            incrementReg x
-            emit $ OpSkipEqLit x (fromIntegral b)
 
 loopFor :: (Int,Int) -> (Reg -> Asm ()) -> Asm ()
 loopFor (a,b) k = do
@@ -224,24 +208,24 @@ insertBytesLater bs = do
         return q
 
 
-inPlaceAnd :: Reg -> Reg -> Asm ()
-inPlaceAnd x y = emit $ OpAnd x y
+opAnd :: Reg -> Reg -> Asm ()
+opAnd x y = emit $ OpAnd x y
 
-inPlaceOr :: Reg -> Reg -> Asm ()
-inPlaceOr x y = emit $ OpOr x y
+opOr :: Reg -> Reg -> Asm ()
+opOr x y = emit $ OpOr x y
 
-inPlaceAdd :: Reg -> Reg -> Asm ()
-inPlaceAdd x y = emit $ OpAdd x y
+opAdd :: Reg -> Reg -> Asm ()
+opAdd x y = emit $ OpAdd x y
 
-inPlaceSub :: Reg -> Reg -> Asm ()
-inPlaceSub x y = emit $ OpSub x y
+opSub :: Reg -> Reg -> Asm ()
+opSub x y = emit $ OpSub x y
 
-inPlaceShiftL :: Int -> Reg -> Asm ()
-inPlaceShiftL n r = if n < 0 then error "inPlaceShiftL" else
+opShiftL :: Int -> Reg -> Asm ()
+opShiftL n r = if n < 0 then error "opShiftL" else
     sequence_ (replicate n $ emit $ OpShiftL r r)
 
-inPlaceShiftR :: Int -> Reg -> Asm ()
-inPlaceShiftR n r = if n < 0 then error "inPlaceShiftR" else
+opShiftR :: Int -> Reg -> Asm ()
+opShiftR n r = if n < 0 then error "opShiftR" else
     sequence_ (replicate n $ emit $ OpShiftR r r)
 
 readMem :: Addr -> Reg -> (Reg -> Asm ()) -> Asm ()
@@ -254,7 +238,7 @@ readMemAtI :: (Reg -> Asm ()) -> Asm ()
 readMemAtI k = do
     emit $ OpRestoreRegs (Reg 0)
     WithReg $ \r -> do
-        copyReg (Reg 0) r
+        setReg r (Reg 0)
         k r
 
 writeMem :: Addr -> Reg -> Reg -> Asm ()
@@ -265,7 +249,7 @@ writeMem addr offset v = do
 
 writeMemAtI :: Reg -> Asm ()
 writeMemAtI r = do
-    copyReg r (Reg 0)
+    setReg (Reg 0) r
     emit $ OpSaveRegs (Reg 0)
 
 setI :: Addr -> Asm ()
@@ -343,8 +327,6 @@ assembleAsm asm free q1 q2 = do
             (x,[],bs1++bs2)
 
 
-
-
 padEven :: Num a => [a] -> [a]
 padEven xs = xs ++ (if length xs `mod` 2 == 0 then [] else [0])
 
@@ -377,11 +359,11 @@ storeTemp = do
 readI :: Reg -> Asm ()
 readI r = do
   readTemp
-  copyReg rTemp r
+  setReg r rTemp
 
 storeI :: Reg -> Asm ()
 storeI r = do
-  copyReg r rTemp
+  setReg rTemp r
   storeTemp
 
 data Wide = Wide Reg Reg
@@ -392,15 +374,14 @@ withWide f =
       WithReg $ \r2 -> do
         f (Wide r1 r2)
 
-setWide :: Wide -> Addr -> Asm () -- set a wide register from a literal address
---setWide (Wide rhi rlo) (Addr n1 n2 n3) = do -- <<loop>>. why?
+setWide :: Wide -> Addr -> Asm ()
 setWide w a = do
   let (Wide rhi rlo) = w
   let (Addr n1 n2 n3) = a
   let hi = Byte N0 n1
   let lo = Byte n2 n3
-  setReg rhi hi
-  setReg rlo lo
+  setLit rhi hi
+  setLit rlo lo
 
 storeWide :: Wide -> Addr -> Asm ()
 storeWide w addr = do
@@ -410,55 +391,55 @@ storeWide w addr = do
   setI (addr+1)
   storeI lo
 
-addWide :: Wide -> Wide -> Asm () -- in place
+addWide :: Wide -> Wide -> Asm ()
 addWide w1 w2 = do
   let (Wide hi1 lo1) = w1
   let (Wide hi2 lo2) = w2
-  inPlaceAdd lo1 lo2
+  opAdd lo1 lo2
   emit $ OpSkipEqLit (Reg NF) 0
   incrementReg hi1
-  inPlaceAdd hi1 hi2
+  opAdd hi1 hi2
 
-subWide :: Wide -> Wide -> Asm () -- in place
+subWide :: Wide -> Wide -> Asm ()
 subWide w1 w2 = do
   let (Wide hi1 lo1) = w1
   let (Wide hi2 lo2) = w2
-  inPlaceSub lo1 lo2
+  opSub lo1 lo2
   emit $ OpSkipNotEqLit (Reg NF) 0
   decrementReg hi1
-  inPlaceSub hi1 hi2
+  opSub hi1 hi2
 
 addWa :: Wide -> Addr -> Asm ()
 addWa w a = do
   let (Wide rhi rlo) = w
   let (Addr n1 n2 n3) = a
-  setReg rTemp (Byte n2 n3)
-  inPlaceAdd rlo rTemp
+  setLit rTemp (Byte n2 n3)
+  opAdd rlo rTemp
   emit $ OpSkipEqLit (Reg NF) 0
   incrementReg rhi
-  setReg rTemp (Byte N0 n1)
-  inPlaceAdd rhi rTemp
+  setLit rTemp (Byte N0 n1)
+  opAdd rhi rTemp
 
 setWr :: Wide -> Reg -> Asm ()
 setWr w r = do
   let (Wide rhi rlo) = w
-  setReg rhi 0
-  copyReg r rlo
+  setLit rhi 0
+  setReg rlo r
 
 shiftLw :: Wide -> Asm ()
 shiftLw w = do
   let (Wide rhi rlo) = w
   emit $ OpShiftL rhi rhi
-  setReg rTemp 1
+  setLit rTemp 1
   emit $ OpShiftL rlo rlo
   emit $ OpSkipEqLit (Reg NF) 0
-  inPlaceOr rhi rTemp
+  opOr rhi rTemp
 
 setIw :: Wide -> Asm ()
 setIw wm = mdo
   let (Wide rhi rlo) = wm
-  setReg rTemp 0xA0
-  inPlaceOr rTemp rhi
+  setLit rTemp 0xA0
+  opOr rTemp rhi
   setI smc; storeTemp
   setI (smc+1) ; storeI rlo
   smc <- Here ; Emit [0x55,0x55]

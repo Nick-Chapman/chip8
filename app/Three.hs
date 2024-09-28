@@ -18,8 +18,8 @@ asm = mdo
 go :: Reg -> Reg -> Reg -> Asm ()
 go rx ry rn = do
 
-  setReg rx 1
-  setReg ry 2
-  setReg rn 3
+  setLit rx 1
+  setLit ry 2
+  setLit rn 3
   storeDigitSpriteI rn
   draw 5 (rx,ry)

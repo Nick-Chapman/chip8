@@ -51,8 +51,8 @@ setupInitialState addr = do
         WithReg $ \o2 -> do
             body <- insertSubroutineLater $ copyMemBytesOffset 9 (aGosper,o1) (addr,o2)
             flip mapM_ [0..4] $ \i -> do
-                setReg o1 (fromIntegral (i*9::Int))
-                setReg o2 (fromIntegral (i*sizeY+1))
+                setLit o1 (fromIntegral (i*9::Int))
+                setLit o2 (fromIntegral (i*sizeY+1))
                 body
 
 copyMemBytesOffset :: Int -> (Addr,Reg) -> (Addr,Reg) -> Asm ()
@@ -144,26 +144,26 @@ lifeStepCell p2tab a (x,y) a2 = do
         withInitReg 0 $ \neigbourCount -> do
             -- do we need this extra register copying?
             readCell p2tab a (x,y) $ \v ->
-                copyReg v currentlyOn
+                setReg currentlyOn v
             countNeighbours p2tab (a,x,y) $ \c ->
-                copyReg c neigbourCount
+                setReg neigbourCount c
             ifRemainAliveOrBeBorn currentlyOn neigbourCount $
                 setCell p2tab a2 (x,y)
 
 ifRemainAliveOrBeBorn :: Reg -> Reg -> Asm () -> Asm ()
 ifRemainAliveOrBeBorn on count act = do
     withInitReg 0 $ \flag -> do
-        let setFlag = setReg flag 1
-        ifRegIs 3 count $ setFlag
-        ifRegNotZero on $ ifRegIs 2 count $ setFlag
-        ifRegIs 1 flag $ act
+        let setFlag = setLit flag 1
+        ifRegEq count 3 $ setFlag
+        ifRegNotEq on 0 $ ifRegEq count 2 $ setFlag
+        ifRegEq flag 1 $ act
 
 countNeighbours :: Addr -> (Addr,Reg,Reg) -> (Reg -> Asm ()) -> Asm ()
 countNeighbours p2tab (a,x,y) k = do
     withInitReg 0 $ \count -> do
         foreachCellNeigbour (x,y) $ do
             readCell p2tab a (x,y) $ \v -> do
-                ifRegNotZero v $
+                ifRegNotEq v 0 $
                     incrementReg count
         k count
 
@@ -172,8 +172,8 @@ foreachCellNeigbour (x,y) act0 = do
     withInitReg maskXv $ \maskX -> do
         withInitReg maskYv $ \maskY -> do
             act <- insertSubroutineLater act0 -- avoid code duplication
-            let wrapX = inPlaceAnd x maskX
-            let wrapY = inPlaceAnd y maskY
+            let wrapX = opAnd x maskX
+            let wrapY = opAnd y maskY
             incrementReg x; wrapX; act
             incrementReg y; wrapY; act
             decrementReg x; wrapX; act
@@ -220,49 +220,49 @@ copyMemBytes n a1 a2 = do
 mod8 :: Reg -> (Reg -> Asm a) -> Asm a
 mod8 x k = do
     withInitReg 0x7 $ \mask -> do
-        inPlaceAnd mask x
+        opAnd mask x
         k mask
 
 mul8 :: Reg -> (Reg -> Asm a) -> Asm a
 mul8 x k = do
     copy x $ \y -> do
-        inPlaceShiftL 3 y
+        opShiftL 3 y
         k y
 
 div8mul32 :: Reg -> (Reg -> Asm a) -> Asm a
 div8mul32 x k = do
     withInitReg 0xF8 $ \mask -> do
-        inPlaceAnd mask x
-        inPlaceShiftL 2 mask
+        opAnd mask x
+        opShiftL 2 mask
         k mask
 
 div8mul16 :: Reg -> (Reg -> Asm a) -> Asm a
 div8mul16 x k = do
     withInitReg 0xF8 $ \mask -> do
-        inPlaceAnd mask x
-        inPlaceShiftL 1 mask
+        opAnd mask x
+        opShiftL 1 mask
         k mask
 
 div8mul8 :: Reg -> (Reg -> Asm a) -> Asm a
 div8mul8 x k = do
     withInitReg 0xF8 $ \mask -> do
-        inPlaceAnd mask x
+        opAnd mask x
         k mask
 
 logicalAnd :: Reg -> Reg -> (Reg -> Asm a) -> Asm a
 logicalAnd x y k = do
     copy x $ \res -> do
-        inPlaceAnd res y
+        opAnd res y
         k res
 
 logicalOr :: Reg -> Reg -> (Reg -> Asm a) -> Asm a
 logicalOr x y k = do
     copy x $ \res -> do
-        inPlaceOr res y
+        opOr res y
         k res
 
 add :: Reg -> Reg -> (Reg -> Asm a) -> Asm a
 add a b k = do
     copy a $ \res -> do
-        inPlaceAdd res b
+        opAdd res b
         k res
