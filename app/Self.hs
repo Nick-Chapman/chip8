@@ -34,8 +34,13 @@ bytes control = assemble $ mdo
   opANNN
   storeWide op templateOp
   switchObjectContext
-  templateSetupIndex <- Here; setI 0
-  templateOp <- Here; emit (OpSkipEq (Reg 5) (Reg 5))
+  (templateSetTemp,templateSetupIndex) <-
+    preservingTempOver $ do
+    -- use 9s templates to show up better in disassembly
+    t1 <- Here ; setLit rTemp 0x99
+    t2 <- Here ; setI 0x999
+    return (t1,t2)
+  templateOp <- Here; Emit [0x99,0x90] -- looks like a skip to improve disassembly
   jump noSkip
   switchMetaContext
   bumpPC
@@ -84,8 +89,14 @@ bytes control = assemble $ mdo
       opAnd rTemp oph
       ifRegEq rTemp 0xF0 $ do
         ifRegEq opl 0x29 $ do
-          -- TODO: handle case where X gets changed before the sprite is drawn
-          storeWide op templateSetupIndex
+          -- FX29 --> F029
+          setLit rTemp 0xF0 ; setI templateSetupIndex ; storeTemp
+          setLit rTemp 0x29 ; setI (templateSetupIndex+1) ; storeTemp
+          setLit mask 0x0F
+          opAnd oph mask
+          readBankRegisterAsTemp objBank oph
+          setI (templateSetTemp+1)
+          storeTemp
           jump next
 
     opFX1E = do -- Add to Index
@@ -96,9 +107,7 @@ bytes control = assemble $ mdo
         ifRegEq opl 0x1E $ do
           setLit mask 0x0F
           opAnd oph mask
-          setI objBank
-          increaseI oph
-          readTemp
+          readBankRegisterAsTemp objBank oph
           setReg mask rTemp -- using mask as 2nd temp
 
           -- We handle FX1E by incrementing the NNN in the ANNN instruction at templateSetupIndex.
@@ -267,3 +276,19 @@ allocateRegs = R
   , x = Reg 10
   , y = Reg 11
   }
+
+preservingTempOver :: Asm a -> Asm a
+preservingTempOver asm = mdo
+  setI (after+1)
+  storeTemp
+  res <- asm
+  after <- Here
+  setLit rTemp 0
+  pure res
+
+
+readBankRegisterAsTemp :: Addr -> Reg -> Asm ()
+readBankRegisterAsTemp bank r = do
+  setI bank
+  increaseI r
+  readTemp

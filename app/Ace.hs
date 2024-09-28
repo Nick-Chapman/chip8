@@ -1,7 +1,7 @@
 module Ace (bytes) where
 
 -- This program should output "ACE".
--- It's designed to provoke a bug in Self.hs where it outputs "BAD".
+-- It was designed to provoke a bug in Self.hs (now fixed) where it output "BAD".
 
 import Prelude hiding (break)
 import Assemble
