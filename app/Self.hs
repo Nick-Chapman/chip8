@@ -114,7 +114,7 @@ bytes control = assemble $ mdo
           readTemp
           opAdd rTemp mask
           -- TODO: should deal with carry into lo-nibble of hi-byte. (need example -- dump all mem!)
-          -- ifCarry (panic 0x2) -- TODO : wip
+          ifCarry (panic 0x2)
           setI (templateSetupIndex+1)
           storeTemp
           jump next
@@ -182,8 +182,7 @@ bytes control = assemble $ mdo
   objBank <- Here ; Emit (replicate 16 0)
   metaBank <- Here ; Emit (replicate 16 0)
 
-  -- TODO: how much space is needed for the stack?
-  stackSpace <- Here ; Emit (replicate 16 0)
+  stackSpace <- Here ; Emit (replicate 32 0) -- 16 levels of nesting
 
   objLoadAddr <- Here
   pure ()
@@ -196,19 +195,16 @@ checkControl = \case
     pure ()
 
   WithPause -> mdo
-    setLit rTemp 0xA -- TODO: generalize which is the control key
-    -- check if the control key A is pressed...
-    emit (OpSkipKey rTemp)
+    -- simple "touch and hold Z" for pause
+    setLit rTemp 0xA
+    emit (OpSkipKey rTemp) -- pause key pressed?
     jump done
     showState
     setLit rTemp 0xA
-    -- wait until released
-    do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
-    -- and pressed and released again
-    -- TODO: reinstate the simpler "touch and hold Z" for pause
-    -- instead of the click-on/click-off implemented in the following two lines
-    do loop <- Here ; emit (OpSkipKey rTemp) ; jump loop
-    do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
+    do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop -- wait until released
+    -- "click-on/click-off" implemented by adding the following two lines:
+    -- do loop <- Here ; emit (OpSkipKey rTemp) ; jump loop
+    -- do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
     showState
     done <- Here
     pure ()

@@ -1,9 +1,9 @@
 0x200 :     : 6101 :      : SET v1 <- 01
-0x202 :     : 62B8 :      : SET v2 <- B8
+0x202 :     : 62CE :      : SET v2 <- CE
 0x204 :     : 6503 :      : SET v5 <- 03
-0x206 :     : 66B8 :      : SET v6 <- B8
+0x206 :     : 66CE :      : SET v6 <- CE
 0x208 :     : 6303 :      : SET v3 <- 03
-0x20A :     : 64A8 :      : SET v4 <- A8
+0x20A :     : 64AE :      : SET v4 <- AE
 0x20C : L02 : 60A0 :      : SET v0 <- A0
 0x20E :     : 8051 :      : OR v0 v5
 0x210 :     : A21A :      : SET I <- 0x21A (L03)
@@ -42,170 +42,170 @@
 0x252 :     : 1266 :      : JMP 0x266 (L07)
 0x254 :     : 3829 :      : SKP v8 = 29
 0x256 :     : 1266 :      : JMP 0x266 (L07)
-0x258 :     : A362 :      : SET I <- 0x362 (L21)
+0x258 :     : A368 :      : SET I <- 0x368 (L22)
 0x25A :     : 8070 :      : SET v0 <- v7
 0x25C :     : F055 :      : SAVE v0
-0x25E :     : A363 :      : SET I <- 0x363 (L22)
+0x25E :     : A369 :      : SET I <- 0x369 (L23)
 0x260 :     : 8080 :      : SET v0 <- v8
 0x262 :     : F055 :      : SAVE v0
 0x264 :     : 120C :      : JMP 0x20C (L02)
 0x266 : L07 : 60F0 :      : SET v0 <- F0
 0x268 :     : 8072 :      : AND v0 v7
 0x26A :     : 30F0 :      : SKP v0 = F0
-0x26C :     : 128A :      : JMP 0x28A (L08)
+0x26C :     : 1290 :      : JMP 0x290 (L09)
 0x26E :     : 381E :      : SKP v8 = 1E
-0x270 :     : 128A :      : JMP 0x28A (L08)
+0x270 :     : 1290 :      : JMP 0x290 (L09)
 0x272 :     : 690F :      : SET v9 <- 0F
 0x274 :     : 8792 :      : AND v7 v9
-0x276 :     : A388 :      : SET I <- 0x388 (L26)
+0x276 :     : A38E :      : SET I <- 0x38E (L27)
 0x278 :     : F71E :      : ADD I v7
 0x27A :     : F065 :      : RESTORE v0
 0x27C :     : 8900 :      : SET v9 <- v0
-0x27E :     : A363 :      : SET I <- 0x363 (L22)
+0x27E :     : A369 :      : SET I <- 0x369 (L23)
 0x280 :     : F065 :      : RESTORE v0
 0x282 :     : 8094 :      : ADD v0 v9
-0x284 :     : A363 :      : SET I <- 0x363 (L22)
-0x286 :     : F055 :      : SAVE v0
-0x288 :     : 120C :      : JMP 0x20C (L02)
-0x28A : L08 : 3700 :      : SKP v7 = 00
-0x28C :     : 12C8 :      : JMP 0x2C8 (L13)
-0x28E :     : 38EE :      : SKP v8 = EE
-0x290 :     : 12C8 :      : JMP 0x2C8 (L13)
-0x292 :     : 4400 :      : SKP v4 != 00
-0x294 :     : 73FF :      : ADD v3 FF
-0x296 :     : 74FF :      : ADD v4 FF
-0x298 :     : 60A0 :      : SET v0 <- A0
-0x29A :     : 8031 :      : OR v0 v3
-0x29C :     : A2A6 :      : SET I <- 0x2A6 (L09)
-0x29E :     : F055 :      : SAVE v0
-0x2A0 :     : A2A7 :      : SET I <- 0x2A7 (L10)
-0x2A2 :     : 8040 :      : SET v0 <- v4
+0x284 :     : 3F01 :      : SKP vF = 01
+0x286 :     : 128A :      : JMP 0x28A (L08)
+0x288 :     : 0002 :      : ???(0002)
+0x28A : L08 : A369 :      : SET I <- 0x369 (L23)
+0x28C :     : F055 :      : SAVE v0
+0x28E :     : 120C :      : JMP 0x20C (L02)
+0x290 : L09 : 3700 :      : SKP v7 = 00
+0x292 :     : 12CE :      : JMP 0x2CE (L14)
+0x294 :     : 38EE :      : SKP v8 = EE
+0x296 :     : 12CE :      : JMP 0x2CE (L14)
+0x298 :     : 4400 :      : SKP v4 != 00
+0x29A :     : 73FF :      : ADD v3 FF
+0x29C :     : 74FF :      : ADD v4 FF
+0x29E :     : 60A0 :      : SET v0 <- A0
+0x2A0 :     : 8031 :      : OR v0 v3
+0x2A2 :     : A2AC :      : SET I <- 0x2AC (L10)
 0x2A4 :     : F055 :      : SAVE v0
-0x2A6 : L09 : 5555 :      : ???(5555)
-0x2A8 :     : F065 :      : RESTORE v0
-0x2AA :     : 8600 :      : SET v6 <- v0
-0x2AC :     : 4400 :      : SKP v4 != 00
-0x2AE :     : 73FF :      : ADD v3 FF
-0x2B0 :     : 74FF :      : ADD v4 FF
-0x2B2 :     : 60A0 :      : SET v0 <- A0
-0x2B4 :     : 8031 :      : OR v0 v3
-0x2B6 :     : A2C0 :      : SET I <- 0x2C0 (L11)
-0x2B8 :     : F055 :      : SAVE v0
-0x2BA :     : A2C1 :      : SET I <- 0x2C1 (L12)
-0x2BC :     : 8040 :      : SET v0 <- v4
+0x2A6 :     : A2AD :      : SET I <- 0x2AD (L11)
+0x2A8 :     : 8040 :      : SET v0 <- v4
+0x2AA :     : F055 :      : SAVE v0
+0x2AC : L10 : 5555 :      : ???(5555)
+0x2AE :     : F065 :      : RESTORE v0
+0x2B0 :     : 8600 :      : SET v6 <- v0
+0x2B2 :     : 4400 :      : SKP v4 != 00
+0x2B4 :     : 73FF :      : ADD v3 FF
+0x2B6 :     : 74FF :      : ADD v4 FF
+0x2B8 :     : 60A0 :      : SET v0 <- A0
+0x2BA :     : 8031 :      : OR v0 v3
+0x2BC :     : A2C6 :      : SET I <- 0x2C6 (L12)
 0x2BE :     : F055 :      : SAVE v0
-0x2C0 : L11 : 5555 :      : ???(5555)
-0x2C2 :     : F065 :      : RESTORE v0
-0x2C4 :     : 8500 :      : SET v5 <- v0
-0x2C6 :     : 120C :      : JMP 0x20C (L02)
-0x2C8 : L13 : 60F0 :      : SET v0 <- F0
-0x2CA :     : 8072 :      : AND v0 v7
-0x2CC :     : 3010 :      : SKP v0 = 10
-0x2CE :     : 12E2 :      : JMP 0x2E2 (L14)
-0x2D0 :     : 690F :      : SET v9 <- 0F
-0x2D2 :     : 8792 :      : AND v7 v9
-0x2D4 :     : 8570 :      : SET v5 <- v7
-0x2D6 :     : 8680 :      : SET v6 <- v8
-0x2D8 :     : 8624 :      : ADD v6 v2
-0x2DA :     : 3F00 :      : SKP vF = 00
-0x2DC :     : 7501 :      : ADD v5 01
-0x2DE :     : 8514 :      : ADD v5 v1
-0x2E0 :     : 120C :      : JMP 0x20C (L02)
-0x2E2 : L14 : 60F0 :      : SET v0 <- F0
-0x2E4 :     : 8072 :      : AND v0 v7
-0x2E6 :     : 3020 :      : SKP v0 = 20
-0x2E8 :     : 1330 :      : JMP 0x330 (L19)
-0x2EA :     : 60A0 :      : SET v0 <- A0
-0x2EC :     : 8031 :      : OR v0 v3
-0x2EE :     : A2F8 :      : SET I <- 0x2F8 (L15)
-0x2F0 :     : F055 :      : SAVE v0
-0x2F2 :     : A2F9 :      : SET I <- 0x2F9 (L16)
-0x2F4 :     : 8040 :      : SET v0 <- v4
+0x2C0 :     : A2C7 :      : SET I <- 0x2C7 (L13)
+0x2C2 :     : 8040 :      : SET v0 <- v4
+0x2C4 :     : F055 :      : SAVE v0
+0x2C6 : L12 : 5555 :      : ???(5555)
+0x2C8 :     : F065 :      : RESTORE v0
+0x2CA :     : 8500 :      : SET v5 <- v0
+0x2CC :     : 120C :      : JMP 0x20C (L02)
+0x2CE : L14 : 60F0 :      : SET v0 <- F0
+0x2D0 :     : 8072 :      : AND v0 v7
+0x2D2 :     : 3010 :      : SKP v0 = 10
+0x2D4 :     : 12E8 :      : JMP 0x2E8 (L15)
+0x2D6 :     : 690F :      : SET v9 <- 0F
+0x2D8 :     : 8792 :      : AND v7 v9
+0x2DA :     : 8570 :      : SET v5 <- v7
+0x2DC :     : 8680 :      : SET v6 <- v8
+0x2DE :     : 8624 :      : ADD v6 v2
+0x2E0 :     : 3F00 :      : SKP vF = 00
+0x2E2 :     : 7501 :      : ADD v5 01
+0x2E4 :     : 8514 :      : ADD v5 v1
+0x2E6 :     : 120C :      : JMP 0x20C (L02)
+0x2E8 : L15 : 60F0 :      : SET v0 <- F0
+0x2EA :     : 8072 :      : AND v0 v7
+0x2EC :     : 3020 :      : SKP v0 = 20
+0x2EE :     : 1336 :      : JMP 0x336 (L20)
+0x2F0 :     : 60A0 :      : SET v0 <- A0
+0x2F2 :     : 8031 :      : OR v0 v3
+0x2F4 :     : A2FE :      : SET I <- 0x2FE (L16)
 0x2F6 :     : F055 :      : SAVE v0
-0x2F8 : L15 : 5555 :      : ???(5555)
-0x2FA :     : 8050 :      : SET v0 <- v5
+0x2F8 :     : A2FF :      : SET I <- 0x2FF (L17)
+0x2FA :     : 8040 :      : SET v0 <- v4
 0x2FC :     : F055 :      : SAVE v0
-0x2FE :     : 7401 :      : ADD v4 01
-0x300 :     : 4400 :      : SKP v4 != 00
-0x302 :     : 7301 :      : ADD v3 01
-0x304 :     : 60A0 :      : SET v0 <- A0
-0x306 :     : 8031 :      : OR v0 v3
-0x308 :     : A312 :      : SET I <- 0x312 (L17)
-0x30A :     : F055 :      : SAVE v0
-0x30C :     : A313 :      : SET I <- 0x313 (L18)
-0x30E :     : 8040 :      : SET v0 <- v4
+0x2FE : L16 : 5555 :      : ???(5555)
+0x300 :     : 8050 :      : SET v0 <- v5
+0x302 :     : F055 :      : SAVE v0
+0x304 :     : 7401 :      : ADD v4 01
+0x306 :     : 4400 :      : SKP v4 != 00
+0x308 :     : 7301 :      : ADD v3 01
+0x30A :     : 60A0 :      : SET v0 <- A0
+0x30C :     : 8031 :      : OR v0 v3
+0x30E :     : A318 :      : SET I <- 0x318 (L18)
 0x310 :     : F055 :      : SAVE v0
-0x312 : L17 : 5555 :      : ???(5555)
-0x314 :     : 8060 :      : SET v0 <- v6
+0x312 :     : A319 :      : SET I <- 0x319 (L19)
+0x314 :     : 8040 :      : SET v0 <- v4
 0x316 :     : F055 :      : SAVE v0
-0x318 :     : 7401 :      : ADD v4 01
-0x31A :     : 4400 :      : SKP v4 != 00
-0x31C :     : 7301 :      : ADD v3 01
-0x31E :     : 690F :      : SET v9 <- 0F
-0x320 :     : 8792 :      : AND v7 v9
-0x322 :     : 8570 :      : SET v5 <- v7
-0x324 :     : 8680 :      : SET v6 <- v8
-0x326 :     : 8624 :      : ADD v6 v2
-0x328 :     : 3F00 :      : SKP vF = 00
-0x32A :     : 7501 :      : ADD v5 01
-0x32C :     : 8514 :      : ADD v5 v1
-0x32E :     : 120C :      : JMP 0x20C (L02)
-0x330 : L19 : 60F0 :      : SET v0 <- F0
-0x332 :     : 8072 :      : AND v0 v7
-0x334 :     : 30A0 :      : SKP v0 = A0
-0x336 :     : 134E :      : JMP 0x34E (L20)
-0x338 :     : 8824 :      : ADD v8 v2
-0x33A :     : 3F00 :      : SKP vF = 00
-0x33C :     : 7701 :      : ADD v7 01
-0x33E :     : 8714 :      : ADD v7 v1
-0x340 :     : A362 :      : SET I <- 0x362 (L21)
-0x342 :     : 8070 :      : SET v0 <- v7
-0x344 :     : F055 :      : SAVE v0
-0x346 :     : A363 :      : SET I <- 0x363 (L22)
-0x348 :     : 8080 :      : SET v0 <- v8
+0x318 : L18 : 5555 :      : ???(5555)
+0x31A :     : 8060 :      : SET v0 <- v6
+0x31C :     : F055 :      : SAVE v0
+0x31E :     : 7401 :      : ADD v4 01
+0x320 :     : 4400 :      : SKP v4 != 00
+0x322 :     : 7301 :      : ADD v3 01
+0x324 :     : 690F :      : SET v9 <- 0F
+0x326 :     : 8792 :      : AND v7 v9
+0x328 :     : 8570 :      : SET v5 <- v7
+0x32A :     : 8680 :      : SET v6 <- v8
+0x32C :     : 8624 :      : ADD v6 v2
+0x32E :     : 3F00 :      : SKP vF = 00
+0x330 :     : 7501 :      : ADD v5 01
+0x332 :     : 8514 :      : ADD v5 v1
+0x334 :     : 120C :      : JMP 0x20C (L02)
+0x336 : L20 : 60F0 :      : SET v0 <- F0
+0x338 :     : 8072 :      : AND v0 v7
+0x33A :     : 30A0 :      : SKP v0 = A0
+0x33C :     : 1354 :      : JMP 0x354 (L21)
+0x33E :     : 8824 :      : ADD v8 v2
+0x340 :     : 3F00 :      : SKP vF = 00
+0x342 :     : 7701 :      : ADD v7 01
+0x344 :     : 8714 :      : ADD v7 v1
+0x346 :     : A368 :      : SET I <- 0x368 (L22)
+0x348 :     : 8070 :      : SET v0 <- v7
 0x34A :     : F055 :      : SAVE v0
-0x34C :     : 120C :      : JMP 0x20C (L02)
-0x34E : L20 : A364 :      : SET I <- 0x364 (L23)
-0x350 :     : 8070 :      : SET v0 <- v7
-0x352 :     : F055 :      : SAVE v0
-0x354 :     : A365 :      : SET I <- 0x365 (L24)
-0x356 :     : 8080 :      : SET v0 <- v8
+0x34C :     : A369 :      : SET I <- 0x369 (L23)
+0x34E :     : 8080 :      : SET v0 <- v8
+0x350 :     : F055 :      : SAVE v0
+0x352 :     : 120C :      : JMP 0x20C (L02)
+0x354 : L21 : A36A :      : SET I <- 0x36A (L24)
+0x356 :     : 8070 :      : SET v0 <- v7
 0x358 :     : F055 :      : SAVE v0
-0x35A :     : A398 :      : SET I <- 0x398 (L27)
-0x35C :     : FF55 :      : SAVE vF
-0x35E :     : A388 :      : SET I <- 0x388 (L26)
-0x360 :     : FF65 :      : RESTORE vF
-0x362 : L21 : A000 :      : SET I <- 0x000 (L01)
-0x364 : L23 : 5550 :      : SKP v5 = v5
-0x366 :     : 137E :      : JMP 0x37E (L25)
-0x368 :     : A388 :      : SET I <- 0x388 (L26)
-0x36A :     : FF55 :      : SAVE vF
-0x36C :     : A398 :      : SET I <- 0x398 (L27)
-0x36E :     : FF65 :      : RESTORE vF
-0x370 :     : 7601 :      : ADD v6 01
-0x372 :     : 4600 :      : SKP v6 != 00
-0x374 :     : 7501 :      : ADD v5 01
+0x35A :     : A36B :      : SET I <- 0x36B (L25)
+0x35C :     : 8080 :      : SET v0 <- v8
+0x35E :     : F055 :      : SAVE v0
+0x360 :     : A39E :      : SET I <- 0x39E (L28)
+0x362 :     : FF55 :      : SAVE vF
+0x364 :     : A38E :      : SET I <- 0x38E (L27)
+0x366 :     : FF65 :      : RESTORE vF
+0x368 : L22 : A000 :      : SET I <- 0x000 (L01)
+0x36A : L24 : 5550 :      : SKP v5 = v5
+0x36C :     : 1384 :      : JMP 0x384 (L26)
+0x36E :     : A38E :      : SET I <- 0x38E (L27)
+0x370 :     : FF55 :      : SAVE vF
+0x372 :     : A39E :      : SET I <- 0x39E (L28)
+0x374 :     : FF65 :      : RESTORE vF
 0x376 :     : 7601 :      : ADD v6 01
 0x378 :     : 4600 :      : SKP v6 != 00
 0x37A :     : 7501 :      : ADD v5 01
-0x37C :     : 120C :      : JMP 0x20C (L02)
-0x37E : L25 : A388 :      : SET I <- 0x388 (L26)
-0x380 :     : FF55 :      : SAVE vF
-0x382 :     : A398 :      : SET I <- 0x398 (L27)
-0x384 :     : FF65 :      : RESTORE vF
-0x386 :     : 120C :      : JMP 0x20C (L02)
-0x388 : L26 : 0000 :      :
-0x38A :     : 0000 :      :
-0x38C :     : 0000 :      :
-0x38E :     : 0000 :      :
+0x37C :     : 7601 :      : ADD v6 01
+0x37E :     : 4600 :      : SKP v6 != 00
+0x380 :     : 7501 :      : ADD v5 01
+0x382 :     : 120C :      : JMP 0x20C (L02)
+0x384 : L26 : A38E :      : SET I <- 0x38E (L27)
+0x386 :     : FF55 :      : SAVE vF
+0x388 :     : A39E :      : SET I <- 0x39E (L28)
+0x38A :     : FF65 :      : RESTORE vF
+0x38C :     : 120C :      : JMP 0x20C (L02)
+0x38E : L27 : 0000 :      :
 0x390 :     : 0000 :      :
 0x392 :     : 0000 :      :
 0x394 :     : 0000 :      :
 0x396 :     : 0000 :      :
-0x398 : L27 : 0000 :      :
+0x398 :     : 0000 :      :
 0x39A :     : 0000 :      :
 0x39C :     : 0000 :      :
-0x39E :     : 0000 :      :
+0x39E : L28 : 0000 :      :
 0x3A0 :     : 0000 :      :
 0x3A2 :     : 0000 :      :
 0x3A4 :     : 0000 :      :
@@ -218,3 +218,14 @@
 0x3B2 :     : 0000 :      :
 0x3B4 :     : 0000 :      :
 0x3B6 :     : 0000 :      :
+0x3B8 :     : 0000 :      :
+0x3BA :     : 0000 :      :
+0x3BC :     : 0000 :      :
+0x3BE :     : 0000 :      :
+0x3C0 :     : 0000 :      :
+0x3C2 :     : 0000 :      :
+0x3C4 :     : 0000 :      :
+0x3C6 :     : 0000 :      :
+0x3C8 :     : 0000 :      :
+0x3CA :     : 0000 :      :
+0x3CC :     : 0000 :      :
