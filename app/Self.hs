@@ -17,6 +17,10 @@ bytes control = assemble $ mdo
   let R {slide,sp,pc,op,mask} = allocateRegs
 
   -- The object program expects to be loaded at 0x200 , but is at a different location here
+  -- but cause disassembly of object programm (but all the jumps are off)
+  -- emit $ OpSkipEqLit rTemp 0
+  -- jump objLoadAddr -- never taken
+
   setWide slide (addrOfInt (addrToInt objLoadAddr - 0x200))
   setWide pc objLoadAddr
   setWide sp stackSpace
@@ -105,27 +109,42 @@ bytes control = assemble $ mdo
       opAnd rTemp oph
       ifRegEq rTemp 0xF0 $ do
         ifRegEq opl 0x1E $ do
-          setLit mask 0x0F
-          opAnd oph mask
-          readBankRegisterAsTemp objBank oph
-          setReg mask rTemp -- using mask as 2nd temp
 
           -- We handle FX1E by incrementing the NNN in the ANNN instruction at templateSetupIndex.
           -- This assumes that Index was set by an ANNN instruction.
 
           -- But if Index was set by FX29, then incrementing will produce an illegal instruction.
-          -- TODO: Make an example for this case. Detect it. Do something better than crash!
+          -- Current we just detect this will happen, and panic insead
+          -- TODO: Make an example for this case. Do something better than panic!
 
           -- Note any chip program which performs FX29 followed by FX1E is dancing on very thin ice,
           -- as it assumes how and where the hex-font is laid out in memory.
 
+          setI templateSetupIndex
+          readTemp
+          setLit mask 0xF0
+          opAnd rTemp mask
+          ifRegNotEq rTemp 0xA0 $ panic 0x1
+
+          setLit mask 0x0F
+          opAnd oph mask
+          readBankRegisterAsTemp objBank oph
+          setReg mask rTemp -- using mask as 2nd temp
+
           setI (templateSetupIndex+1)
           readTemp
           opAdd rTemp mask
-          -- TODO: should deal with carry into lo-nibble of hi-byte. (need example -- dump all mem!)
-          ifCarry (panic 0x2)
           setI (templateSetupIndex+1)
           storeTemp
+          ifNotCarry $ jump next
+
+          setI templateSetupIndex
+          readTemp
+          incrementReg rTemp
+          -- TODO: dont allow AF-->B0; wrap back to A0
+          setI templateSetupIndex
+          storeTemp
+
           jump next
 
   let

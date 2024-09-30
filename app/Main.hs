@@ -23,6 +23,7 @@ import qualified Scroll (bytes)
 import qualified Bfw (bytes)
 import qualified Self (bytes,Control(..))
 import qualified Ace (bytes)
+import qualified Dump (bytes)
 
 ----------------------------------------------------------------------
 -- parameters of the Chip Machine
@@ -43,7 +44,7 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 12
+theScale = 8
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (0,0)
@@ -109,6 +110,7 @@ registered =
   , ("self", Self.bytes Self.WithPause)
   , ("bf", Bfw.bytes [])
   , ("ace", Ace.bytes)
+  , ("dump", Dump.bytes)
   ]
 
   where message = "CHIP-8 is an interpreted programming language, developed by Joseph Weisbecker on his 1802 microprocessor. It was initially used on the COSMAC VIP and Telmac 1800, which were 8-bit microcomputers made in the mid-1970s. CHIP-8 was designed to be easy to program for, as well as using less memory than other programming languages like BASIC. Interpreters have been made for many devices, such as home computers, microcomputers, graphing calculators, mobile phones, and video game consoles."

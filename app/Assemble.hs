@@ -21,6 +21,8 @@ module Assemble (
     decrementReg,
 
     ifCarry,
+    ifNotCarry,
+    ifRegsMatch,
     ifRegEq,
     ifRegNotEq,
     loopFor,
@@ -50,7 +52,8 @@ module Assemble (
 
     assemble,
 
-    waitKey, incReg, rTemp, readTemp, storeTemp, readI,storeI,
+    waitKey,
+    incReg, rTemp, readTemp, storeTemp, readI,storeI,
     Wide(..),withWide,storeWide,setWide,addWide,subWide,addWa,setWr,shiftLw,setIw,readW,incWide,decWide,
 
     bytesOfString,
@@ -130,6 +133,14 @@ decrementReg reg = emit $ OpAddLit reg 0xFF
 
 ifCarry :: Asm () -> Asm ()
 ifCarry code = ifRegEq (Reg NF) 1 code
+
+ifNotCarry :: Asm () -> Asm ()
+ifNotCarry code = ifRegEq (Reg NF) 0 code
+
+ifRegsMatch :: Reg -> Reg -> Asm () -> Asm ()
+ifRegsMatch r1 r2 act = do
+    emit $ OpSkipEq r1 r2
+    jumpOver act
 
 ifRegEq :: Reg -> Byte -> Asm () -> Asm ()
 ifRegEq r n act = do

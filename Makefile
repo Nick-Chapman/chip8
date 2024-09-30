@@ -46,5 +46,5 @@ dis/%.dis: roms/%.ch8
 run: run-$(default)
 	@ echo -n
 
-run-%: roms/%.ch8
-	stack run run $^
+run-%: roms/%.ch8 dis-%
+	stack run run $<
