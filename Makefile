@@ -7,9 +7,12 @@ external = ibm maze pong2 brix invaders tetris 3-corax+ 4-flags 5-quirks 6-keypa
 
 internal = life three evens pi scroll scroll-what scroll-message bf self mini-self ace dump seven
 bfs = bf-reverse bf-fibs bf-collatz
-metas = self-ibm self-maze self-pong2 self-brix self-pi self-evens self-scroll-message self-self-evens self-self-ibm self-self-maze self-self-pong2 self-ace self-dump self-seven
 
-all = $(external) $(internal) $(bfs) $(metas)
+int = ibm maze three evens pi scroll-message ace dump seven brix pong2 bf-fibs bf-collatz
+self = $(patsubst %, self-%, $(int))
+self2 = $(patsubst %, self-self-%, $(int))
+
+all = $(external) $(internal) $(bfs) $(self) $(self2)
 
 ch8s: $(patsubst %, roms/%.ch8, $(all))
 diss: $(patsubst %, dis/%.dis, $(all))
