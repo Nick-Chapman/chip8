@@ -49,7 +49,7 @@ bytes = assemble $ mdo
   setLit one 1
 
   forever $ do
-    setI 0x200
+    setI 0x200 -- 0xCC0
     increaseI n
     mdo
       setLit i 0

@@ -141,7 +141,8 @@ bytes control = assemble $ mdo
           setI templateSetupIndex
           readTemp
           incrementReg rTemp
-          -- TODO: dont allow AF-->B0; wrap back to A0
+          -- dont allow AF-->B0; wrap back to A0
+          ifRegEq rTemp 0xB0 $ setLit rTemp 0xA0
           setI templateSetupIndex
           storeTemp
 

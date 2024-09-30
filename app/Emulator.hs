@@ -701,12 +701,13 @@ addAddr :: Addr -> Int -> Addr
 addAddr a i = addrOfInt (addrToInt a + i)
 
 addrOfInt :: Int -> Addr
-addrOfInt i = if bad then error $ "addrOfInt: " <> show i else a
+addrOfInt ii = if bad then error $ "addrOfInt: " <> show i else a
     where a = Addr n1 n2 n3
           bad = i < 0 || shiftR i 12 > 0
           n1 = nibOfInt (shiftR i 8 .&. 0xF)
           n2 = nibOfInt (shiftR i 4 .&. 0xF)
           n3 = nibOfInt (i .&. 0xF)
+          i = ii `mod` 0x1000 -- mod 4k (size of chip8 address space)
 
 addrToInt :: Addr -> Int
 addrToInt (Addr a b c) = (256 * nibToInt a) + (16 * nibToInt b) + nibToInt c
