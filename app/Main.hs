@@ -24,6 +24,7 @@ import qualified Bfw (bytes)
 import qualified Self (bytes,Control(..))
 import qualified Ace (bytes)
 import qualified Dump (bytes)
+import qualified Seven (bytes)
 
 ----------------------------------------------------------------------
 -- parameters of the Chip Machine
@@ -111,6 +112,7 @@ registered =
   , ("bf", Bfw.bytes [])
   , ("ace", Ace.bytes)
   , ("dump", Dump.bytes)
+  , ("seven", Seven.bytes)
   ]
 
   where message = "CHIP-8 is an interpreted programming language, developed by Joseph Weisbecker on his 1802 microprocessor. It was initially used on the COSMAC VIP and Telmac 1800, which were 8-bit microcomputers made in the mid-1970s. CHIP-8 was designed to be easy to program for, as well as using less memory than other programming languages like BASIC. Interpreters have been made for many devices, such as home computers, microcomputers, graphing calculators, mobile phones, and video game consoles."

@@ -312,3 +312,6 @@ readBankRegisterAsTemp bank r = do
   setI bank
   increaseI r
   readTemp
+
+--bad :: Asm ()
+--bad = Emit [0x0B, 0xAD]
