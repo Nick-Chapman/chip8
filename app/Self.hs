@@ -38,12 +38,13 @@ bytes control = assemble $ mdo
   opANNN
   storeWide op templateOp
   switchObjectContext
-  (templateSetTemp,templateSetupIndex) <-
+  (templateSetTemp,templateSetupIndex,templateSetTemp2) <-
     preservingTempOver $ do
     -- use 9s templates to show up better in disassembly
     t1 <- Here ; setLit rTemp 0x99
-    t2 <- Here ; setI 0x999
-    return (t1,t2)
+    t2 <- Here ; setI 0x999 -- replaced with either ANNN or FX29
+    t3 <- Here ; setLit rTemp 0 ; increaseI rTemp
+    return (t1,t2,t3)
   templateOp <- Here; Emit [0x99,0x90] -- looks like a skip to improve disassembly
   jump noSkip
   switchMetaContext
@@ -85,6 +86,9 @@ bytes control = assemble $ mdo
       ifRegEq rTemp 0xA0 $ do
         addWide op slide
         storeWide op templateSetupIndex
+        setLit rTemp 0
+        setI (templateSetTemp2+1)
+        storeTemp
         jump next
 
     opFX29 = do  -- Set Font Character
@@ -100,6 +104,9 @@ bytes control = assemble $ mdo
           opAnd oph mask
           readBankRegisterAsTemp objBank oph
           setI (templateSetTemp+1)
+          storeTemp
+          setLit rTemp 0
+          setI (templateSetTemp2+1)
           storeTemp
           jump next
 
@@ -124,7 +131,17 @@ bytes control = assemble $ mdo
           readTemp
           setLit mask 0xF0
           opAnd rTemp mask
-          ifRegNotEq rTemp 0xA0 $ panic 0x1
+          ifRegNotEq rTemp 0xA0 $ do
+            setLit mask 0x0F
+            opAnd oph mask
+            readBankRegisterAsTemp objBank oph
+            setReg mask rTemp -- using mask as 2nd temp
+            setI (templateSetTemp2+1)
+            readTemp
+            opAdd rTemp mask
+            setI (templateSetTemp2+1)
+            storeTemp
+            jump next
 
           setLit mask 0x0F
           opAnd oph mask
