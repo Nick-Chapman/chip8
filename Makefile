@@ -1,15 +1,15 @@
 top: all
 all: ch8s diss
 
-default = self-brix
+default = self-selfb-pi
 
 external = ibm maze pong2 brix invaders tetris 3-corax+ 4-flags 5-quirks 6-keypad
 
-internal = life three evens pi scroll scroll-what scroll-message bf self mini-self ace dump seven
+internal = life three evens pi scroll scroll-what scroll-message bf ace dump seven self selfb selfb-pi
 bfs = bf-reverse bf-fibs bf-collatz
 
 int = ibm maze three evens pi scroll-message ace dump seven brix pong2 bf-fibs bf-collatz
-self = $(patsubst %, self-%, $(int))
+self = $(patsubst %, self-%, $(int) selfb-pi)
 self2 = $(patsubst %, self-self-%, $(int))
 
 all = $(external) $(internal) $(bfs) $(self) $(self2)
@@ -17,8 +17,12 @@ all = $(external) $(internal) $(bfs) $(self) $(self2)
 ch8s: $(patsubst %, roms/%.ch8, $(all))
 diss: $(patsubst %, dis/%.dis, $(all))
 
-.PRECIOUS: roms/%self-%.ch8
+.PRECIOUS: roms/self-%.ch8
 roms/self-%.ch8: roms/self.ch8 roms/%.ch8
+	cat $^ > $@
+
+.PRECIOUS: roms/selfb-%.ch8
+roms/selfb-%.ch8: roms/selfb.ch8 roms/%.ch8
 	cat $^ > $@
 
 # assemble (from Haskell DSL)

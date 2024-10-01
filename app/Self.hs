@@ -7,14 +7,13 @@ import Prelude hiding (break)
 import Assemble
 import Emulator
 
-data Control = NoControl | WithPause | SingleStep
-
-data R = R { slide,sp,pc,op :: Wide , mask,x,y :: Reg }
+data Control = NoControl | WithPause Byte | SingleStep
 
 bytes :: Control -> [Byte]
 bytes control = assemble $ mdo
 
-  let R {slide,sp,pc,op,mask} = allocateRegs
+  let R {maxClobber,maxPreserve
+        ,slide,sp,pc,op,mask} = allocateRegs
 
   -- The object program expects to be loaded at 0x200 , but is at a different location here
   -- but cause disassembly of object programm (but all the jumps are off)
@@ -208,21 +207,20 @@ bytes control = assemble $ mdo
       readI opl
       decWide pc
 
-    saveAllRegs = emit $ OpSaveRegs (Reg 15)
-    restoreAllRegs = emit $ OpRestoreRegs (Reg 15)
+    saveRegs n = emit $ OpSaveRegs (Reg n)
+    restoreRegs n = emit $ OpRestoreRegs (Reg n)
 
-    -- TODO: reduce registers saved/restored when switching context
     switchMetaContext = do
       setI objBank
-      saveAllRegs
+      saveRegs maxClobber
       setI metaBank
-      restoreAllRegs
+      restoreRegs maxPreserve
 
     switchObjectContext = do
       setI metaBank
-      saveAllRegs
+      saveRegs maxPreserve
       setI objBank
-      restoreAllRegs
+      restoreRegs maxClobber
 
   -- Space to save obj/meta reg banks
   objBank <- Here ; Emit (replicate 16 0)
@@ -240,13 +238,13 @@ checkControl = \case
   NoControl -> mdo
     pure ()
 
-  WithPause -> mdo
+  WithPause keycode -> mdo
     -- simple "touch and hold Z" for pause
-    setLit rTemp 0xA
+    setLit rTemp keycode
     emit (OpSkipKey rTemp) -- pause key pressed?
     jump done
     showState
-    setLit rTemp 0xA
+    setLit rTemp keycode
     do loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop -- wait until released
     -- "click-on/click-off" implemented by adding the following two lines:
     -- do loop <- Here ; emit (OpSkipKey rTemp) ; jump loop
@@ -303,9 +301,13 @@ showState = do
   showWide op
 
 
+data R = R { maxClobber, maxPreserve :: Nib, slide,sp,pc,op :: Wide , mask,x,y :: Reg }
+
 allocateRegs :: R
 allocateRegs = R
-  { slide = Wide (Reg 1) (Reg 2)
+  { maxPreserve = 6
+  , maxClobber = 15
+  , slide = Wide (Reg 1) (Reg 2)
   , sp = Wide (Reg 3) (Reg 4)
   , pc = Wide (Reg 5) (Reg 6)
   , op = Wide (Reg 7) (Reg 8)

@@ -370,7 +370,7 @@
 0x4E2 :     : 8080 :      : SET v0 <- v8
 0x4E4 :     : F055 :      : SAVE v0
 0x4E6 :     : A530 :      : SET I <- 0x530 (L34)
-0x4E8 :     : FF55 :      : SAVE vF
+0x4E8 :     : F655 :      : SAVE v6
 0x4EA :     : A520 :      : SET I <- 0x520 (L33)
 0x4EC :     : FF65 :      : RESTORE vF
 0x4EE :     : A4FB :      : SET I <- 0x4FB (L29)
@@ -385,7 +385,7 @@
 0x500 :     : A520 :      : SET I <- 0x520 (L33)
 0x502 :     : FF55 :      : SAVE vF
 0x504 :     : A530 :      : SET I <- 0x530 (L34)
-0x506 :     : FF65 :      : RESTORE vF
+0x506 :     : F665 :      : RESTORE v6
 0x508 :     : 7601 :      : ADD v6 01
 0x50A :     : 4600 :      : SKP v6 != 00
 0x50C :     : 7501 :      : ADD v5 01
@@ -396,7 +396,7 @@
 0x516 : L32 : A520 :      : SET I <- 0x520 (L33)
 0x518 :     : FF55 :      : SAVE vF
 0x51A :     : A530 :      : SET I <- 0x530 (L34)
-0x51C :     : FF65 :      : RESTORE vF
+0x51C :     : F665 :      : RESTORE v6
 0x51E :     : 120C :      : JMP 0x20C (L01)
 0x520 : L33 : 0000 :      :
 0x522 :     : 0000 :      :
