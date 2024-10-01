@@ -4,7 +4,23 @@
 module Self (Control(..),bytes) where
 
 import Prelude hiding (break)
-import Assemble
+import Assemble {-
+  (assemble,Asm(Here,Later,Emit),panic
+  ,insertSubroutineLater
+  ,waitKey
+  ,emit
+  ,storeDigitSpriteI,draw
+  ,setLit,setReg,incrementReg,incReg
+  ,jump
+  ,ifRegEq,ifRegNotEq,ifNotCarry
+  ,setI,increaseI
+  ,opAnd,opAdd,opShiftR
+  ,rTemp,storeTemp,readTemp
+  ,Wide(..),setWide,storeWide
+  ,addWide,incWide,subWide,decWide
+  ,setIw
+  ,storeI,readI,readI2
+  ) -}
 import Emulator
 
 data Control = NoControl | WithPause Byte | SingleStep
@@ -13,7 +29,10 @@ bytes :: Control -> [Byte]
 bytes control = assemble $ mdo
 
   let R {maxClobber,maxPreserve
-        ,slide,sp,pc,op,mask} = allocateRegs
+        ,slide,sp,pc,op,temp2,ophh,ophl} = allocateRegs
+
+  let Wide pch pcl = pc
+  let Wide oph opl = op
 
   -- The object program expects to be loaded at 0x200 , but is at a different location here
   -- but cause disassembly of object programm (but all the jumps are off)
@@ -29,6 +48,7 @@ bytes control = assemble $ mdo
   readPC
   checkControl control
   bumpPC
+  decodeOp
   opFX29
   opFX1E
   op00EE
@@ -37,7 +57,7 @@ bytes control = assemble $ mdo
   opANNN
   storeWide op templateOp
   switchObjectContext
-  (templateSetTemp,templateSetupIndex,templateSetTemp2) <-
+  (templateSetPreLit,templateSetupIndex,templateSetPostLit) <-
     preservingTempOver $ do
     -- use 9s templates to show up better in disassembly
     t1 <- Here ; setLit rTemp 0x99
@@ -54,102 +74,87 @@ bytes control = assemble $ mdo
   jump next
 
   let
+    decodeOp = do
+      setLit ophh 0xF0
+      opAnd ophh oph
+      setLit ophl 0x0F
+      opAnd ophl oph
+
+  let
     op00EE = do -- Return
-      let Wide oph opl = op
       ifRegEq oph 0x00 $ do
         ifRegEq opl 0xEE $ do
           pullPCfromStack
           jump next
 
     op1NNN = do -- Jump
-      let Wide oph _ = op
-      setLit rTemp 0xF0
-      opAnd rTemp oph
-      ifRegEq rTemp 0x10 $ do
-        setPC op
+      ifRegEq ophh 0x10 $ do
+        setPC
         jump next
 
     op2NNN = do -- Call
-      let Wide oph _ = op
-      setLit rTemp 0xF0
-      opAnd rTemp oph
-      ifRegEq rTemp 0x20 $ do
+      ifRegEq ophh 0x20 $ do
         pushPCtoStack
-        setPC op
+        setPC
         jump next
 
     opANNN = do -- Set Index
-      let Wide oph _ = op
-      setLit rTemp 0xF0
-      opAnd rTemp oph
-      ifRegEq rTemp 0xA0 $ do
+      ifRegEq ophh 0xA0 $ do
         addWide op slide
         storeWide op templateSetupIndex
         setLit rTemp 0
-        setI (templateSetTemp2+1)
+        setI (templateSetPostLit+1)
         storeTemp
         jump next
 
     opFX29 = do  -- Set Font Character
-      let Wide oph opl = op
-      setLit rTemp 0xF0
-      opAnd rTemp oph
-      ifRegEq rTemp 0xF0 $ do
+      ifRegEq ophh 0xF0 $ do
         ifRegEq opl 0x29 $ do
           -- FX29 --> F029
           setLit rTemp 0xF0 ; setI templateSetupIndex ; storeTemp
           setLit rTemp 0x29 ; setI (templateSetupIndex+1) ; storeTemp
-          setLit mask 0x0F
-          opAnd oph mask
-          readBankRegisterAsTemp objBank oph
-          setI (templateSetTemp+1)
+          readBankRegisterAsTemp objBank ophl
+          setI (templateSetPreLit+1)
           storeTemp
           setLit rTemp 0
-          setI (templateSetTemp2+1)
+          setI (templateSetPostLit+1)
           storeTemp
           jump next
 
     opFX1E = do -- Add to Index
-      let Wide oph opl = op
-      setLit rTemp 0xF0
-      opAnd rTemp oph
-      ifRegEq rTemp 0xF0 $ do
+      ifRegEq ophh 0xF0 $ do
         ifRegEq opl 0x1E $ do
 
           -- We handle FX1E by incrementing the NNN in the ANNN instruction at templateSetupIndex.
           -- This assumes that Index was set by an ANNN instruction.
 
           -- But if Index was set by FX29, then incrementing will produce an illegal instruction.
-          -- Current we just detect this will happen, and panic insead
-          -- TODO: Make an example for this case. Do something better than panic!
+          -- So instead we increment a literal (at templateSetPostLit) which is assigned to a register,
+          -- given as an argument to an FX1E instruction placed after the templateSetupIndex.
 
           -- Note any chip program which performs FX29 followed by FX1E is dancing on very thin ice,
           -- as it assumes how and where the hex-font is laid out in memory.
 
           setI templateSetupIndex
           readTemp
-          setLit mask 0xF0
-          opAnd rTemp mask
+          setLit temp2 0xF0
+          opAnd rTemp temp2
           ifRegNotEq rTemp 0xA0 $ do
-            setLit mask 0x0F
-            opAnd oph mask
-            readBankRegisterAsTemp objBank oph
-            setReg mask rTemp -- using mask as 2nd temp
-            setI (templateSetTemp2+1)
+            readBankRegisterAsTemp objBank ophl
+            setReg temp2 rTemp
+            setI (templateSetPostLit+1)
             readTemp
-            opAdd rTemp mask
-            setI (templateSetTemp2+1)
+            opAdd rTemp temp2
+            setI (templateSetPostLit+1)
             storeTemp
             jump next
 
-          setLit mask 0x0F
-          opAnd oph mask
-          readBankRegisterAsTemp objBank oph
-          setReg mask rTemp -- using mask as 2nd temp
+          readBankRegisterAsTemp objBank ophl
+          setReg temp2 rTemp
 
           setI (templateSetupIndex+1)
           readTemp
-          opAdd rTemp mask
+          opAdd rTemp temp2
           setI (templateSetupIndex+1)
           storeTemp
           ifNotCarry $ jump next
@@ -169,17 +174,12 @@ bytes control = assemble $ mdo
       incWide pc
       incWide pc
 
-    setPC op = do
-      let Wide oph opl = op
-      let Wide pch pcl = pc
-      setLit mask 0x0F
-      opAnd oph mask
-      setReg pch oph
+    setPC = do
+      setReg pch ophl
       setReg pcl opl
       addWide pc slide
 
     pushPCtoStack = do
-      let Wide pch pcl = pc
       setIw sp
       storeI pch
       incWide sp
@@ -189,23 +189,15 @@ bytes control = assemble $ mdo
       pure ()
 
     pullPCfromStack = do
-      let Wide pch pcl = pc
+      decWide sp
       decWide sp
       setIw sp
-      readI pcl
-      decWide sp
-      setIw sp
-      readI pch
+      readI2 pc
       pure ()
 
     readPC = do
-      let Wide oph opl = op
       setIw pc
-      readI oph
-      incWide pc
-      setIw pc
-      readI opl
-      decWide pc
+      readI2 op
 
     saveRegs n = emit $ OpSaveRegs (Reg n)
     restoreRegs n = emit $ OpRestoreRegs (Reg n)
@@ -228,7 +220,7 @@ bytes control = assemble $ mdo
 
   stackSpace <- Here ; Emit (replicate 32 0) -- 16 levels of nesting
 
-  objLoadAddr <- Here
+  objLoadAddr <- Later Here
   pure ()
 
 
@@ -239,6 +231,9 @@ checkControl = \case
     pure ()
 
   WithPause keycode -> mdo
+
+    showState <- showStateSR
+
     -- simple "touch and hold Z" for pause
     setLit rTemp keycode
     emit (OpSkipKey rTemp) -- pause key pressed?
@@ -254,6 +249,8 @@ checkControl = \case
     pure ()
 
   SingleStep -> mdo
+    showState <- showStateSR
+
     showState
     -- press a key and release to advance instruction
     waitKey
@@ -262,58 +259,60 @@ checkControl = \case
     showState
 
 
--- TODO: first code to push into subroutine
-showState :: Asm ()
-showState = do
+showStateSR :: Asm (Asm ())
+showStateSR = insertSubroutineLater $ do
 
-  let R {slide,pc,op,mask,x,y} = allocateRegs
+  let R {slide,pc,op,x,y,nib} = allocateRegs
 
   setLit x 0
   setLit y 27
+
+  showNib <- insertSubroutineLater $ do
+    storeDigitSpriteI nib
+    draw 5 (x,y)
+    incReg x 5
+
+  showByte <- insertSubroutineLater $ do
+      setLit nib 0xF0
+      opAnd nib rTemp
+      opShiftR 4 nib
+      showNib
+      setLit nib 0x0F
+      opAnd nib rTemp
+      showNib
+
   let
-    showNib r = do
-      storeDigitSpriteI r
-      draw 5 (x,y)
-      incReg x 5
-
-    showByte r = do
-      setReg rTemp r
-      setLit mask 0xF0
-      opAnd rTemp mask
-      opShiftR 4 rTemp
-      showNib rTemp
-      setReg rTemp r
-      setLit mask 0x0F
-      opAnd rTemp mask
-      showNib rTemp
-
     showWide w = do
       let Wide hi lo = w
-      showByte hi
-      showByte lo
+      setReg rTemp hi
+      showByte
+      setReg rTemp lo
+      showByte
 
   -- slide PC back to be 0x200 relative (just for display)
   subWide pc slide
   showWide pc
   addWide pc slide
-
   incReg x 25
   showWide op
 
 
-data R = R { maxClobber, maxPreserve :: Nib, slide,sp,pc,op :: Wide , mask,x,y :: Reg }
+data R = R { maxClobber, maxPreserve :: Nib, slide,sp,pc,op :: Wide , temp2,x,y,nib,ophh,ophl :: Reg }
 
 allocateRegs :: R
 allocateRegs = R
-  { maxPreserve = 6
+  { maxPreserve = 7
   , maxClobber = 15
-  , slide = Wide (Reg 1) (Reg 2)
-  , sp = Wide (Reg 3) (Reg 4)
-  , pc = Wide (Reg 5) (Reg 6)
-  , op = Wide (Reg 7) (Reg 8)
-  , mask = Reg 9
-  , x = Reg 10
-  , y = Reg 11
+  , temp2 = Reg 1
+  , slide = Wide (Reg 2) (Reg 3)
+  , sp = Wide (Reg 4) (Reg 5)
+  , pc = Wide (Reg 6) (Reg 7)
+  , op = Wide (Reg 8) (Reg 9)
+  , ophh = Reg 10
+  , ophl = Reg 11
+  , x = Reg 12
+  , y = Reg 13
+  , nib = Reg 14
   }
 
 preservingTempOver :: Asm a -> Asm a

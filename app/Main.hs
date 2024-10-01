@@ -112,7 +112,7 @@ registered =
 --  , ("self", Self.bytes Self.NoControl)
   , ("self", Self.bytes (Self.WithPause 0xA))
   , ("selfb", Self.bytes (Self.WithPause 0xB))
---  , ("mini-self", Self.bytes Self.NoControl)
+  , ("mini-self", Self.bytes Self.NoControl)
   , ("bf", Bfw.bytes [])
   , ("ace", Ace.bytes)
   , ("dump", Dump.bytes)
