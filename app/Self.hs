@@ -39,12 +39,14 @@ bytes control = assemble $ mdo
   -- emit $ OpSkipEqLit rTemp 0
   -- jump objLoadAddr -- never taken
 
-  setWide slide (addrOfInt (addrToInt objLoadAddr - 0x200))
-  setWide pc objLoadAddr
+  let offset = addrOfInt (addrToInt objLoadAddr - 0x200)
+
+  -- TODO: use restore for reg init
+
+  setWide pc 0x200
   setWide sp stackSpace
 
   next <- Here
-
   readPC
   checkControl control
   bumpPC
@@ -64,13 +66,14 @@ bytes control = assemble $ mdo
     t2 <- Here ; setI 0x999 -- replaced with either ANNN or FX29
     t3 <- Here ; setLit rTemp 0 ; increaseI rTemp
     return (t1,t2,t3)
-  templateOp <- Here; Emit [0x99,0x90] -- looks like a skip to improve disassembly
+  -- templateOp looks like a skip to improve disassembly
+  templateOp <- Here; Emit [0x99,0x90]
   jump noSkip
   switchMetaContext
   bumpPC
   jump next
   noSkip <- Here
-  switchMetaContext
+  switchMetaContext -- TODO: dedup?
   jump next
 
   let
@@ -100,12 +103,15 @@ bytes control = assemble $ mdo
 
     opANNN = do -- Set Index
       ifRegEq ophh 0xA0 $ do
+        setWide slide offset
         addWide op slide
         storeWide op templateSetupIndex
         setLit rTemp 0
         setI (templateSetPostLit+1)
         storeTemp
         jump next
+
+    -- TODO: share ophh test for FX29 and FX1E
 
     opFX29 = do  -- Set Font Character
       ifRegEq ophh 0xF0 $ do
@@ -137,6 +143,7 @@ bytes control = assemble $ mdo
 
           setI templateSetupIndex
           readTemp
+          -- TODO: test for 0xF0 special case; and avoid mask
           setLit temp2 0xF0
           opAnd rTemp temp2
           ifRegNotEq rTemp 0xA0 $ do
@@ -177,26 +184,25 @@ bytes control = assemble $ mdo
     setPC = do
       setReg pch ophl
       setReg pcl opl
-      addWide pc slide
+
+    -- TODO: setIw as subroutine
 
     pushPCtoStack = do
       setIw sp
-      storeI pch
+      storeI2 pc
       incWide sp
-      setIw sp
-      storeI pcl
       incWide sp
-      pure ()
 
     pullPCfromStack = do
       decWide sp
       decWide sp
       setIw sp
       readI2 pc
-      pure ()
 
     readPC = do
-      setIw pc
+      setWide slide offset
+      addWide slide pc
+      setIw slide
       readI2 op
 
     saveRegs n = emit $ OpSaveRegs (Reg n)
@@ -214,11 +220,12 @@ bytes control = assemble $ mdo
       setI objBank
       restoreRegs maxClobber
 
+  -- 16 levels of subroutine nesting
+  stackSpace <- Here ; Emit (replicate 32 0)
+
   -- Space to save obj/meta reg banks
   objBank <- Here ; Emit (replicate 16 0)
-  metaBank <- Here ; Emit (replicate 16 0)
-
-  stackSpace <- Here ; Emit (replicate 32 0) -- 16 levels of nesting
+  metaBank <- Here ; Emit (replicate (1+nibToInt maxPreserve) 0)
 
   objLoadAddr <- Later Here
   pure ()
@@ -262,7 +269,7 @@ checkControl = \case
 showStateSR :: Asm (Asm ())
 showStateSR = insertSubroutineLater $ do
 
-  let R {slide,pc,op,x,y,nib} = allocateRegs
+  let R {pc,op,x,y,nib} = allocateRegs
 
   setLit x 0
   setLit y 27
@@ -289,10 +296,7 @@ showStateSR = insertSubroutineLater $ do
       setReg rTemp lo
       showByte
 
-  -- slide PC back to be 0x200 relative (just for display)
-  subWide pc slide
   showWide pc
-  addWide pc slide
   incReg x 25
   showWide op
 
@@ -301,12 +305,13 @@ data R = R { maxClobber, maxPreserve :: Nib, slide,sp,pc,op :: Wide , temp2,x,y,
 
 allocateRegs :: R
 allocateRegs = R
-  { maxPreserve = 7
+  { maxPreserve = 5
   , maxClobber = 15
   , temp2 = Reg 1
-  , slide = Wide (Reg 2) (Reg 3)
-  , sp = Wide (Reg 4) (Reg 5)
-  , pc = Wide (Reg 6) (Reg 7)
+  , sp = Wide (Reg 2) (Reg 3)
+  , pc = Wide (Reg 4) (Reg 5)
+
+  , slide = Wide (Reg 6) (Reg 7)
   , op = Wide (Reg 8) (Reg 9)
   , ophh = Reg 10
   , ophl = Reg 11

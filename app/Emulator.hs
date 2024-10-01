@@ -17,7 +17,7 @@ module Emulator (
     Reg(..),
     Regs,
     regValue,
-    Nib(..), nibKey,
+    Nib(..), nibKey, nibToInt,
     Addr(..), baseProgram, nextInstr, addAddr, addrOfInt, addrToInt
 
     ) where
@@ -69,6 +69,7 @@ showLocatedOp :: Set Addr -> Map Addr Lab -> (Addr,Op) -> String
 showLocatedOp reachSet aMap (a,op) =
     show a
     <> " : " <> case Map.lookup a aMap of Just lab -> show lab; Nothing -> "   "
+    <> " "   <> case Map.lookup (a+1) aMap of Just lab -> show lab; Nothing -> "   "
     <> " : " <> show (encode op)
     <> " : " <>
     if Set.member a reachSet

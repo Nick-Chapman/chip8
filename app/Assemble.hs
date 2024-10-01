@@ -55,7 +55,7 @@ module Assemble (
     waitKey,
     incReg, rTemp, readTemp, storeTemp, readI,storeI,
     Wide(..),withWide,storeWide,setWide,addWide,subWide,addWa,setWr,shiftLw,setIw,readW,incWide,decWide,
-    readI2,
+    readI2,storeI2,
 
     bytesOfString,
     insertString,
@@ -476,6 +476,9 @@ decWide w = do
 readTemp2 :: Asm ()
 readTemp2 = emit $ OpRestoreRegs (Reg 1)
 
+storeTemp2 :: Asm ()
+storeTemp2 = do emit $ OpSaveRegs (Reg 1)
+
 readI2 :: Wide -> Asm ()
 readI2 w = do
   let (Wide hi lo) = w
@@ -483,3 +486,9 @@ readI2 w = do
   setReg hi (Reg 0)
   setReg lo (Reg 1)
 
+storeI2 :: Wide -> Asm ()
+storeI2 w = do
+  let (Wide hi lo) = w
+  setReg (Reg 0) hi
+  setReg (Reg 1) lo
+  storeTemp2
