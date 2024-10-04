@@ -5,22 +5,20 @@ import Assemble
 import Emulator (Op(..))
 import qualified Data.Char as Char
 
-bytes :: String -> [Byte]
-bytes bfCode = assemble $ mdo
+bytes :: [Byte]
+bytes = assemble $ mdo
   withWide $ \w1 -> do
-    WithReg $ \r1 -> do
-      WithReg $ \r2 -> do
-        WithReg $ \r3 -> do
-          WithReg $ \r4 -> do
-            executeBF w1 prog mem r1 r2 r3 r4
-  prog <- insertBytesLater (bytesOfString bfCode)
-  mem <- Later Here
+    withWide $ \w2 -> do
+      WithReg $ \r1 -> do
+        WithReg $ \r2 -> do
+          WithReg $ \r3 -> do
+            WithReg $ \r4 -> do
+              executeBF w1 w2 prog r1 r2 r3 r4
+  prog <- Later Here
   pure ()
 
-executeBF :: Wide -> Addr -> Addr -> Reg -> Reg -> Reg -> Reg -> Asm ()
-executeBF pc progAddr mem mp x y nest = mdo
-
-  setWide pc progAddr
+executeBF :: Wide -> Wide -> Addr -> Reg -> Reg -> Reg -> Reg -> Asm ()
+executeBF mp pc progAddr x y nest charToStore = mdo
 
   setLit nest 0
   setLit x 1
@@ -44,7 +42,15 @@ executeBF pc progAddr mem mp x y nest = mdo
       emit (OpSkipEqLit rTemp (fromIntegral $ Char.ord c))
       emit maybeSkipped
 
-  jump start
+  setWide pc progAddr
+
+  -- initialize memory-pointer to begin after the program text, with one zero byte separation.
+  setWide mp progAddr
+  forever $ do
+    setIw mp
+    incWide mp
+    readTemp
+    isOp0 $ jump start
 
   next <- Here -- after each op is executed we return to here
   nextOp
@@ -55,14 +61,13 @@ executeBF pc progAddr mem mp x y nest = mdo
     readTemp
 
   readCell <- insertSubroutineLater $ do
-    setI mem
-    increaseI mp
+    setIw mp
     readTemp
 
   storeCell <- insertSubroutineLater $ do
-    setI mem
-    increaseI mp
-    storeTemp
+    setReg charToStore rTemp
+    setIw mp
+    storeI charToStore
 
   let
     maskReg r1 v = WithReg $ \r2 -> do setLit r2 v ; opAnd r1 r2
@@ -93,7 +98,7 @@ executeBF pc progAddr mem mp x y nest = mdo
       waitKey
       storeCell
       --compensates for bug in haskell chip8 emulator...
-      --loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
+      loop <- Here ; emit (OpSkipNotKey rTemp) ; jump loop
       jump next
 
     plus = do
@@ -109,11 +114,12 @@ executeBF pc progAddr mem mp x y nest = mdo
       jump next
 
     langle = do
-      incReg mp 255
+      -- no checking we dont move too far left
+      decWide mp
       jump next
 
     rangle = do
-      incReg mp 1
+      incWide mp
       jump next
 
     lsquare = do
@@ -121,8 +127,8 @@ executeBF pc progAddr mem mp x y nest = mdo
       emit (OpSkipEqLit rTemp 0) ; emit (OpJump next)
       scan <- Here
       nextOp
-      --ifRegEq pc progSize $ panic 0xA -- save 6 bytes - test/skip/panic
       readOp
+      isOp0 $ panic 0xA
       isOp '[' $ do incReg nest 1; jump scan
       isNotOp ']' (OpJump scan)
       emit (OpSkipNotEqLit nest 0) ; emit (OpJump next)
@@ -134,8 +140,8 @@ executeBF pc progAddr mem mp x y nest = mdo
       emit (OpSkipNotEqLit rTemp 0) ; emit (OpJump next)
       scan <- Here
       prevOp
-      --ifRegEq pc 255 $ panic 0xB -- save another 6 bytes
       readOp
+      isOp0 $ panic 0xB
       isOp ']' $ do incReg nest 1; jump scan
       isNotOp '[' (OpJump scan)
       emit (OpSkipNotEqLit nest 0) ; emit (OpJump next)
@@ -151,8 +157,9 @@ executeBF pc progAddr mem mp x y nest = mdo
   isOp '<' $ langle
   isOp '>' $ rangle
   isOp '[' $ lsquare
-  isNotOp ']' (OpJump next)
-  rsquare
+  isOp ']' $ rsquare
+  --panic 0xC
+  jump next
 
   box <- Here; Emit [0,0,0x40,0,0,0]
   pure ()

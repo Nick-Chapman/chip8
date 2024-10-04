@@ -52,7 +52,7 @@ showDisassemble :: [Byte] -> String
 showDisassemble bytes =
     unlines $ map (showLocatedOp reachSet amap) $ zip addrs ops
     where
-        instructions = pairUpBytes bytes
+        instructions = pairUpBytes (bytes ++ [0,0])
         a0 = baseProgram
         addrs = map (addAddr a0) $ map (2*) [0..]
         ops = map decode instructions
@@ -139,11 +139,12 @@ nextPC pc = \case
 ----------------------------------------------------------------------
 -- Instruction
 
+
 pairUpBytes :: [Byte] -> [Instruction]
 pairUpBytes = \case
     b1:b2:rest -> Instruction b1 b2 : pairUpBytes rest
     [] -> []
-    [_] -> [] -- error "stray byte"
+    [b] -> [Instruction b 0] --error "stray byte"
 
 data Instruction = Instruction Byte Byte -- 16 bits, 2 bytes, 4 nibbles
 instance Show Instruction where show (Instruction b1 b2) = show b1 <> show b2

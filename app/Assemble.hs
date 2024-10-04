@@ -369,7 +369,7 @@ readI r = do
   readTemp
   setReg r rTemp
 
-storeI :: Reg -> Asm ()
+storeI :: Reg -> Asm () --rename storeReg
 storeI r = do
   setReg rTemp r
   storeTemp

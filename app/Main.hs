@@ -14,6 +14,7 @@ import Emulator(xmax,ymax,Byte,ChipState(..),Screen(..),ChipKeys,byteToInt)
 import qualified Emulator as EM
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Assemble (bytesOfString)
 
 import qualified Life (bytes)
 import qualified Three (bytes)
@@ -45,7 +46,7 @@ fps = 50 -- this can be changed (but is fixed for the simulation)
 -- display parameters
 
 theScale :: Int
-theScale = 8
+theScale = 16
 
 nonFullWindowPos :: (Int,Int)
 nonFullWindowPos = (0,0)
@@ -75,7 +76,7 @@ parseCommandLine = \case
   ["ass","bf",name] -> do
     bfProg <- readFile ("bf/" ++ name ++ ".b")
     let keepBFchars c = c `elem` "+-<>.,[]"
-    let bytes = Bfw.bytes (filter keepBFchars bfProg)
+    let bytes = Bfw.bytes ++ bytesOfString (filter keepBFchars bfProg)
     pure $ Ass { bytes }
 
   ["dis",chip8file] -> pure $ Dis { chip8file }
@@ -113,7 +114,7 @@ registered =
   , ("self", Self.bytes (Self.WithPause 0xA))
   , ("selfb", Self.bytes (Self.WithPause 0xB))
   , ("mini-self", Self.bytes Self.NoControl)
-  , ("bf", Bfw.bytes [])
+  , ("bf", Bfw.bytes)
   , ("ace", Ace.bytes)
   , ("dump", Dump.bytes)
   , ("seven", Seven.bytes)
